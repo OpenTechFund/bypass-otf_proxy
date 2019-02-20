@@ -1,0 +1,7 @@
+[MIRROR]
+site_to_mirror = https://www.site.com
+local_files = <path-to-production-html>/site_name
+copy_debug = True
+copy_parser = html5lib
+copy_overwrite = True
+project_name = Urdu VOA Mirror

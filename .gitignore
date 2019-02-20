@@ -1,0 +1,3 @@
+*.cfg
+Pipfile.lock
+.venv
