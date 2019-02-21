@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 pywebcopy = "*"
 docopt = "*"
+sh = "*"
 
 [dev-packages]
 

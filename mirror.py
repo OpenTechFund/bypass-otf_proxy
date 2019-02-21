@@ -1,12 +1,13 @@
 """
 Mirror functions
 
-Usage: mirror.py [-h] [--config=PATH_TO_CONFIG] [--clog=LEVEL]...
+Usage: mirror.py [-h] [--config=PATH_TO_CONFIG] [--clog=LEVEL] [--driver=driver]...
 
 Options:
  -h --help
  --config=CONFIG  configuraton file
  --clog=LEVEL logging level
+ --driver=[wget, pywebcopy]  Which copy driver to use
 """
 import datetime
 import time
@@ -15,6 +16,8 @@ import logging
 import pywebcopy
 from pywebcopy import save_website
 from pywebcopy import config
+import sh
+from sh import wget
 import configparser
 from docopt import docopt
 
@@ -23,6 +26,10 @@ DEFAULT_CONFIG = 'mirror.cfg'
 if __name__ == '__main__':
     ARGUMENTS = docopt(__doc__)
     CONFIG_FILE = ARGUMENTS['--config']
+    if not ARGUMENTS['--driver']:
+        driver = 'wget'
+    else:
+        driver = ARGUMENTS['--driver'][0].lower()
     if not ARGUMENTS['--clog']:
         clog = 'INFO'
     else:
@@ -65,30 +72,42 @@ if __name__ == '__main__':
     local_files = mirror_config.get('MIRROR', 'local_files')
     parser = mirror_config.get('MIRROR', 'copy_parser')
     name = mirror_config.get('MIRROR', 'project_name')
-
     if mirror_config.get('MIRROR', 'copy_debug') == 'True':
         copy_debug = True
     else:
         copy_debug = False
 
-    if mirror_config.get('MIRROR', 'copy_overwrite') == 'True':
-        copy_overwrite = True
-    else:
-        copy_overwrite = False
+    if driver == 'pywebcopy': # use pywebcopy as the mirror driver
+        if mirror_config.get('MIRROR', 'copy_overwrite') == 'True':
+            copy_overwrite = True
+        else:
+            copy_overwrite = False
 
-    pywebcopy.config.setup_config(url, local_files, name)
-    pywebcopy.config['ALLOWED_FILE_EXT'] = [
-        '.html', '.css', '.json', '.js',
-        '.xml','.svg', '.gif', '.ico',
-        '.jpeg', '.jpg', '.png', '.ttf',
-        '.eot', '.otf', '.woff', '', '.b', '.pwcf']
-    pywebcopy.config['DEBUG'] = copy_debug
+        pywebcopy.config.setup_config(url, local_files, name)
+        pywebcopy.config['ALLOWED_FILE_EXT'] = [
+            '.html', '.css', '.json', '.js',
+            '.xml','.svg', '.gif', '.ico',
+            '.jpeg', '.jpg', '.png', '.ttf',
+            '.eot', '.otf', '.woff', '', '.b', '.pwcf']
+        pywebcopy.config['DEBUG'] = copy_debug
 
-    logger.info("Starting Crawl...")
-    
-    save_website(
-        url=url,
-        project_folder=local_files,
-)
+        logger.info("Starting Crawl...")
+        
+        save_website(
+            url=url,
+            project_folder=local_files,
+        )
+    else: # use wget, which may be more reliable
+        if copy_debug:
+            sh.wget('-v',
+                    '--mirror',
+                    '--convert-links',
+                    f'--directory-prefix={local_files}',
+                    f'{url}')
+        else:
+            sh.wget('--mirror',
+                    '--convert-links',
+                    f'--directory-prefix={local_files}',
+                    f'{url}')
 
 exit()

@@ -5,3 +5,4 @@ copy_debug = True
 copy_parser = html5lib
 copy_overwrite = True
 project_name = Urdu VOA Mirror
+log_file = <path-to-log-file>
