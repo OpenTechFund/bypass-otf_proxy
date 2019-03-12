@@ -1,0 +1,87 @@
+[
+    {
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "{{log_group}}",
+        "awslogs-region": "us-west-2",
+        "awslogs-stream-prefix": "ecs"
+      }
+    },
+    "portMappings": [
+      {
+        "hostPort": 80,
+        "protocol": "tcp",
+        "containerPort": 80
+      }
+    ],
+    "memory": 123,
+    "memoryReservation": 123,
+    "cpu": 123,
+    "environment": [
+      {
+        "name": "HTTP_PROTOCOL",
+        "value": "https"
+      },
+      {
+        "name": "TARGET_SERVER",
+        "value": "{{target_server}}"
+      }
+    ],
+    "image": "{{proxy_image}}",
+    "disableNetworking": false,
+    "interactive": false,
+    "healthCheck": {
+      "command": [
+        "CMD-SHELL",
+        "curl -f http://localhost/ || exit 1"
+      ]
+    },
+    "essential": true,
+    "pseudoTerminal": false,
+    "readonlyRootFilesystem": false,
+    "privileged": false,
+    "name": "nginx"
+  },
+  {
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "{{log_group}}",
+        "awslogs-region": "us-west-2",
+        "awslogs-stream-prefix": "ecs"
+      }
+    },
+    "cpu": 123,
+    "environment": [
+      {
+        "name": "CF_TUNNEL_CERT_BASE64",
+        "value": "LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JR0hBZ0VBTUJNR0J5cUdTTTQ5QWdFR0NDcUdTTTQ5QXdFSEJHMHdhd0lCQVFRZ2xsN1Q5dU1iWmEyS2xkVGUKUitZZTBiZDh5cExkVU5EaHp3T1YzUE5meGN5aFJBTkNBQVFBUisxdzF4TTdJd3FnN0ZVZXQySmNpSGo5RlFibwpNY0gwSXhwZDZQQjFHZ1RkOVVUQ0IvT2RpK0xwaW1MN1ZPOWgzdnFZbWUrODdIa2o3ZGdsSStCRgotLS0tLUVORCBQUklWQVRFIEtFWS0tLS0tCi0tLS0tQkVHSU4gQ0VSVElGSUNBVEUtLS0tLQpNSUlETXpDQ0F0cWdBd0lCQWdJVUxBOVo0c2Y5TEloRVdreGQrR0o5UGFjVDRuWXdDZ1lJS29aSXpqMEVBd0l3CmdZOHhDekFKQmdOVkJBWVRBbFZUTVJNd0VRWURWUVFJRXdwRFlXeHBabTl5Ym1saE1SWXdGQVlEVlFRSEV3MVQKWVc0Z1JuSmhibU5wYzJOdk1Sa3dGd1lEVlFRS0V4QkRiRzkxWkVac1lYSmxMQ0JKYm1NdU1UZ3dOZ1lEVlFRTApFeTlEYkc5MVpFWnNZWEpsSUU5eWFXZHBiaUJUVTB3Z1JVTkRJRU5sY25ScFptbGpZWFJsSUVGMWRHaHZjbWwwCmVUQWVGdzB4T1RBeU1qVXlNRFU0TURCYUZ3MHpOREF5TWpFeU1EVTRNREJhTUdJeEdUQVhCZ05WQkFvVEVFTnMKYjNWa1JteGhjbVVzSUVsdVl5NHhIVEFiQmdOVkJBc1RGRU5zYjNWa1JteGhjbVVnVDNKcFoybHVJRU5CTVNZdwpKQVlEVlFRREV4MURiRzkxWkVac1lYSmxJRTl5YVdkcGJpQkRaWEowYVdacFkyRjBaVEJaTUJNR0J5cUdTTTQ5CkFnRUdDQ3FHU000OUF3RUhBMElBQkFCSDdYRFhFenNqQ3FEc1ZSNjNZbHlJZVAwVkJ1Z3h3ZlFqR2wzbzhIVWEKQk4zMVJNSUg4NTJMNHVtS1l2dFU3MkhlK3BpWjc3enNlU1B0MkNVajRFV2pnZ0UrTUlJQk9qQU9CZ05WSFE4QgpBZjhFQkFNQ0JhQXdIUVlEVlIwbEJCWXdGQVlJS3dZQkJRVUhBd0lHQ0NzR0FRVUZCd01CTUF3R0ExVWRFd0VCCi93UUNNQUF3SFFZRFZSME9CQllFRk1Eb3JlR0x5RnhqOHJaU1luY2Fpd2RrODdEck1COEdBMVVkSXdRWU1CYUEKRklVd1hUc3FjTlR0MVpKbkIvM3JPYlFhRGppbk1FUUdDQ3NHQVFVRkJ3RUJCRGd3TmpBMEJnZ3JCZ0VGQlFjdwpBWVlvYUhSMGNEb3ZMMjlqYzNBdVkyeHZkV1JtYkdGeVpTNWpiMjB2YjNKcFoybHVYMlZqWTE5allUQTNCZ05WCkhSRUVNREF1Z2hZcUxtSjVjR0Z6YzJObGJuTnZjbk5vYVhBdWIzSm5naFJpZVhCaGMzTmpaVzV6YjNKemFHbHcKTG05eVp6QThCZ05WSFI4RU5UQXpNREdnTDZBdGhpdG9kSFJ3T2k4dlkzSnNMbU5zYjNWa1pteGhjbVV1WTI5dApMMjl5YVdkcGJsOWxZMk5mWTJFdVkzSnNNQW9HQ0NxR1NNNDlCQU1DQTBjQU1FUUNJQW1PTkgrLzJzeUZtcCthClk5dFJmVDJ4M2xpaWZPNndic2VBTnJQRnpsSW5BaUF2Z1pPZVZVZ1p6YlVnQytBOXdDakxjVnMydXQrQmRNMjAKZSt1K3NwTXhDQT09Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0KLS0tLS1CRUdJTiBBUkdPIFRVTk5FTCBUT0tFTi0tLS0tCk9Ea3pZbVptTXpRME1qTTJNRGhsTVdGaE1XWmlZVEl5TnpFek1qVXlZemtLZGpFdU1DMDVPVFEzTW1NM05XVTQKTTJRNE5tTmxNV0l4WVRjNVpXUmpZemRtWVdaa01qVmtOMlJoTURRME5XUXlOV1JqTWpZMlpqVXhOelJqT1RVeQpPVEppWVdKa0xUSmhZbVk0WW1GbU16TmxNMlpqT0RFMU1XUTBaVGt3T1dJMU9EQTFNMlF4TjJJME9HWmhZVE0zCllqQmtZakEwTnpFNE4yTTNNMlkxWVRWaVlUVm1NMk5rWWpBMk5tTTRZV1V6TVRRNU1qQXdaRFkxTXpWaE1qTmgKT0dZeU5UZ3laak0yWTJFM01EZGtNbUl5TWpnMU56VTVZamRqTlROaU1XUmxZbUV6WkROaExUaGpaV013WVdWawpORE14WkdWaU9XWmxNR0ZtWldaaVlqazNZelpoTURRMFptTmhNVEV4TURJNE9XRTVOMlpsWldObU5qWmhOalJqCk16SXhNVGRrTXprPQotLS0tLUVORCBBUkdPIFRVTk5FTCBUT0tFTi0tLS0tCg=="
+      },
+      {
+        "name": "CF_TUNNEL_HOSTNAME",
+        "value": "{{bypass_hostname}}"
+      },
+      {
+        "name": "CF_TUNNEL_ORIGIN_URL",
+        "value": "localhost:80"
+      }
+    ],
+    "memory": 123,
+    "memoryReservation": 123,
+    "image": "{{cloudflared_image}}",
+    "disableNetworking": false,
+    "interactive": false,
+    "healthCheck": {
+      "command": [
+        "CMD-SHELL",
+        "curl -f http://localhost/ || exit 1"
+      ]
+    },
+    "essential": true,
+    "pseudoTerminal": false,
+    "readonlyRootFilesystem": false,
+    "privileged": false,
+    "name": "cloudflared"
+  }
+]

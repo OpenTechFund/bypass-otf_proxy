@@ -4,9 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pywebcopy = "*"
-docopt = "*"
-sh = "*"
+"boto3" = "*"
 
 [dev-packages]
 

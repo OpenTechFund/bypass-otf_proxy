@@ -13,13 +13,19 @@ import datetime
 import time
 import os
 import logging
-import pywebcopy
-from pywebcopy import save_website
-from pywebcopy import config
+import sys
 import sh
 from sh import wget
 import configparser
 from docopt import docopt
+
+dir_path = os.path.dirname(os.path.realpath(__file__))
+pywebcopy_path = dir_path + '/../pywebcopy'
+sys.path.insert(0, pywebcopy_path )
+
+import pywebcopy
+from pywebcopy import save_website
+from pywebcopy import config
 
 DEFAULT_CONFIG = 'mirror.cfg'
 
@@ -90,6 +96,7 @@ if __name__ == '__main__':
             '.jpeg', '.jpg', '.png', '.ttf',
             '.eot', '.otf', '.woff', '', '.b', '.pwcf']
         pywebcopy.config['DEBUG'] = copy_debug
+        pywebcopy.config['BYPASS_ROBOTS'] = True
 
         logger.info("Starting Crawl...")
         

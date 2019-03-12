@@ -1,4 +1,1 @@
-pywebcopy
-docopt
-sh
-
+boto3
