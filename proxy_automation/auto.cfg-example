@@ -1,0 +1,14 @@
+[AWS]
+roleArn = 
+ecs_cpu = 256
+ecs_memory = 512
+profile = 
+region = us-west-2
+
+[CONTAINERS]
+proxy_image = danblah42/nginx-proxy-pass
+bypass_host = bypasscensorship.org
+cloudflared_image = chambana/cloudflared
+
+[CLUSTERS]
+cluster_name = 
