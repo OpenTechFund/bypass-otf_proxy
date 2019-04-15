@@ -1,0 +1,5 @@
+[FASTLY]
+FASTLY_API_KEY = "api_secret_key"
+FASTLY_USER = foo@example.com
+FASTLY_HOST = api.fastly.com
+FASTLY_SECURE = True
