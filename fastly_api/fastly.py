@@ -45,6 +45,5 @@ if __name__ == '__main__':
     fastly_domain = input("Fastly domain name?")
     target_service = services_list[service_target]
 
-    #First step, clone version
-    #version = api.version(args.service_id, args.version_id)
+
 

@@ -4,6 +4,57 @@ Utilities for Proxies
 import boto3
 import json
 import configparser
+import datetime
+
+def cdn(**kwargs):
+    """
+    creates new distribution
+    :params kwargs: <domain>
+    :returns nothing
+    """
+    configs = get_configs()
+
+    now = str(datetime.datetime.now())
+    session = boto3.Session(profile_name=configs['profile'])
+    client = session.client('cloudfront', region_name=configs['region'])
+
+    cdn_id = kwargs['domain'] + '1'
+    response = client.create_distribution(
+        DistributionConfig={
+            'CallerReference': now,
+            'Origins': {
+                'Quantity': 1,
+                'Items': [ 
+                    {
+                    'Id': cdn_id,
+                    'DomainName': kwargs['domain']
+                    }
+                ] 
+            },
+            'DefaultCacheBehavior': {
+                'TargetOriginId': cdn_id,
+                'ForwardedValues': {
+                    'QueryString': True,
+                    'Cookies': {
+                        'Forward': 'none'
+                    }
+                },
+                'TrustedSigners': {
+                    'Enabled': False,
+                    'Quantity': 0
+                },
+                'ViewerProtocolPolicy': 'redirect-to-https',
+                'MinTTL': 0
+            },
+            'Comment': 'CDN for ' + kwargs['domain'],
+            'PriceClass': 'PriceClass_All',
+            'Enabled': True,
+            'ViewerCertificate': {
+                'CloudFrontDefaultCertificate': True
+            }
+        }
+    )
+    print(f"Response: {response}")
 
 def get_configs():
     """
@@ -22,13 +73,8 @@ def get_configs():
 
     configs = {
         'profile': config.get('AWS', 'profile'),
-        'ecs_role_arn': config.get('AWS', 'roleArn'),
-        'proxy_image': config.get('CONTAINERS', 'proxy_image'),
-        'bypass_host': config.get('CONTAINERS', 'bypass_host'),
-        'cloudflared_image': config.get('CONTAINERS', 'cloudflared_image'),
-        'ecs_cpu': config.get('AWS', 'ecs_cpu'),
-        'ecs_memory': config.get('AWS', 'ecs_memory'),
-        'region': config.get('AWS', 'region')
+        'region': config.get('AWS', 'region'),
+        'repo': config.get('GITHUB', 'repo')
     }
 
     return configs

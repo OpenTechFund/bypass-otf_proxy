@@ -6,9 +6,11 @@ profile =
 region = us-west-2
 
 [CONTAINERS]
-proxy_image = danblah42/nginx-proxy-pass
-bypass_host = bypasscensorship.org
-cloudflared_image = chambana/cloudflared
+proxy_image = 
+bypass_host = 
+cloudflared_image = 
 
-[CLUSTERS]
-cluster_name = 
+[GITHUB]
+repo = 
+API_key = 
+file = 
