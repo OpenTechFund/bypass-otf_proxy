@@ -10,24 +10,18 @@ pipenv shell
 
 # Usage
 
-## Initial mirror setup
+## CDN/Github setup
 
-`python mirror.py --config=<name of config file>`
-
-## Cron setup
-
-use crontab file either globally or with single user
-
-# Serving Mirror
-
-## Docker
 ```
-mkdir -r <path-to-docker-project>/production
-cp ./docker-compose.yml <path-to-docker-project>/production
-cp ./production.conf <path-to-docker-project>/production
-
-cd <path-to-docker-project>/production
-docker-compose up -d
+cd proxy_automation
+python automation.py
 ```
 
-Check server URL for mirror
+The automation script will ask you for the domain, whether to add it to Cloudfront, the mirror Github repo, or both.
+If you want a cloudfront distro, it will create that for you, and tell you the domain.
+If you want to add to a Github repository, it will then ask for the mirror domains, and update them accordingly.
+
+All configurations for AWS and GitHub are in auto.cfg (see auto.cfg-example) You need:
+
+- an AWS account that has permission to create Cloudfront Distributions
+- a Github repo for mirrors that is read by the [Bypass Censorship Extension](https://github.com/OpenTechFund/bypass-censorship-extension) browser extension. 

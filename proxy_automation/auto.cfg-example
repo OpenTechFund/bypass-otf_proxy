@@ -5,11 +5,6 @@ ecs_memory = 512
 profile = 
 region = us-west-2
 
-[CONTAINERS]
-proxy_image = 
-bypass_host = 
-cloudflared_image = 
-
 [GITHUB]
 repo = 
 API_key = 

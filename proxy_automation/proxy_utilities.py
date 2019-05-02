@@ -5,6 +5,8 @@ import boto3
 import json
 import configparser
 import datetime
+from datetime import tzinfo
+from dateutil.tz import tzutc
 
 def cdn(**kwargs):
     """
@@ -18,7 +20,8 @@ def cdn(**kwargs):
     session = boto3.Session(profile_name=configs['profile'])
     client = session.client('cloudfront', region_name=configs['region'])
 
-    cdn_id = kwargs['domain'] + '1'
+    print(f"For domain: {kwargs['domain']}")
+    cdn_id = "Custom-" + kwargs['domain']
     response = client.create_distribution(
         DistributionConfig={
             'CallerReference': now,
@@ -27,7 +30,22 @@ def cdn(**kwargs):
                 'Items': [ 
                     {
                     'Id': cdn_id,
-                    'DomainName': kwargs['domain']
+                    'DomainName': kwargs['domain'],
+                    'CustomOriginConfig': {
+                        'HTTPPort': 80,
+                        'HTTPSPort': 443,
+                        'OriginProtocolPolicy': 'match-viewer',
+                        'OriginSslProtocols': {
+                            'Quantity': 3,
+                            'Items': [
+                                'TLSv1',
+                                'TLSv1.1',
+                                'TLSv1.2'
+                            ]
+                        },
+                        'OriginReadTimeout': 30,
+                        'OriginKeepaliveTimeout': 5
+                        }
                     }
                 ] 
             },
@@ -55,6 +73,19 @@ def cdn(**kwargs):
         }
     )
     print(f"Response: {response}")
+    distro_id = response['Distribution']['Id']
+    wait = input("Wait for distribution (y/N)?")
+    if wait.lower() == 'y':
+        print("And now we wait...")
+        waiter = client.get_waiter('distribution_deployed')
+        waiter.wait(
+            Id=distro_id,
+            WaiterConfig={
+                'Delay': 60,
+                'MaxAttempts':30
+            }
+        )
+    return response['Distribution']['DomainName']
 
 def get_configs():
     """
@@ -74,7 +105,9 @@ def get_configs():
     configs = {
         'profile': config.get('AWS', 'profile'),
         'region': config.get('AWS', 'region'),
-        'repo': config.get('GITHUB', 'repo')
+        'repo': config.get('GITHUB', 'repo'),
+        'API_key': config.get('GITHUB', 'API_key'),
+        'file': config.get('GITHUB', 'file')
     }
 
     return configs

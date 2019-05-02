@@ -1,2 +1,0 @@
-# Run mirror job once every day
-0 0 * * * <path-to-mirror-project>/.venv/bin/python <path-to-mirror-project>/mirror.py --config urduvoa.cfg
