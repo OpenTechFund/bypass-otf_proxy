@@ -1,2 +1,4 @@
 pygithub
 boto3
+requests
+requests-html

@@ -6,6 +6,9 @@ name = "pypi"
 [packages]
 "boto3" = "*"
 PyGithub = "*"
+requests = "*"
+requests-html = "*"
+lxml = "*"
 
 [dev-packages]
 
