@@ -17,27 +17,13 @@ def test_domain(domain):
     try:
         response = requests.get(https_domain)
         response_return = response.status_code
+        response_url = response.url
     except requests.exceptions.SSLError:
         response = requests.get(http_domain)
         response_return = response.status_code
+        response_url = response.url
         
-    return response_return
-
-def check_domain_content(**kwargs):
-    """
-    finds if the domain is found in the links in the page
-    :param kwargs: <domain>
-    :param kwargs: <mirror>
-    :returns number of links (domain is found) or 0 (no domain is found)
-    """
-    session = HTMLSession()
-    mirror = 'https://' + kwargs['mirror']
-    response = session.get(mirror)
-    instances = 0
-    for link in response.html.links:
-        if re.search(kwargs['domain'], link):
-            instances += 1
-    return instances
+    return response_return, response_url
 
 def domain_testing():
     """
@@ -55,19 +41,19 @@ def domain_testing():
     content_links = {}
     for domain in mirrors['sites']:
         print(f"Testing domain: {domain['main_domain']}...")
-        response = test_domain(domain['main_domain'])
+        response, url = test_domain(domain['main_domain'])
         print(f"Domain {domain['main_domain']}... Response code: {response}")
         if int(response/100) != 2: # some sort of error happened
             error_domains[domain['main_domain']] = response
         for mirror in domain['available_mirrors']:
-            mresp = test_domain(mirror)
-            domain_content = check_domain_content(mirror=mirror, domain=domain['main_domain'])
-            print(f"Mirror {mirror}... Response code: {mresp}, Domain Content: {domain_content}")
-            if (int(mresp/100) != 2): # some sort of error happened
+            mresp, murl = test_domain(mirror)
+            print(f"Mirror {mirror}... Response code: {mresp} ... URL: {murl}")
+            if (int(mresp/100) != 2) or (domain['main_domain'] in murl):
                 error = {
                     "main_domain": domain['main_domain'],
                     "error_mirror": mirror,
-                    "domain_content": domain_content
+                    "response_code": mresp,
+                    "url": murl
                 }
                 error_mirrors.append(error)
 
