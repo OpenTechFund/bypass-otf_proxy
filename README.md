@@ -3,7 +3,8 @@ Python App to set up and maintain mirrors.
 # Setup 
 
 ```
-export PIPENV_VENV_IN_PROJECT=1
+cd proxy_automation
+export PIPENV_VENV_IN_PROJECT=1 (optional)
 pipenv install
 pipenv shell
 ```
@@ -13,7 +14,6 @@ pipenv shell
 ## CDN/Github setup
 
 ```
-cd proxy_automation
 python automation.py
 ```
 
