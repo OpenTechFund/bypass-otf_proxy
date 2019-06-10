@@ -8,35 +8,43 @@ def add(**kwargs):
     function to add mirror to repository
     """
     configs = get_configs()
-
-    if 'mirrors' not in kwargs or not kwargs['mirrors']:
-        print("No mirrors defined!!")
-        return 
-
     g = Github(configs['API_key'])
+
+    if not kwargs['mirrors']:
+        num = input("How many mirrors to add?")
+        add_mirrors = []
+        for i in range(0, int(num)):
+            add_mirrors[i] = input(f"Mirror {i}?")
+    else:
+        add_mirrors = kwargs['mirrors']
 
     repo = g.get_repo(configs['repo'])
     mirrors_object = repo.get_file_contents(configs['file'])
     mirrors_decoded = mirrors_object.decoded_content
     mirrors = json.loads(str(mirrors_decoded, "utf-8"))
+    new_mirrors = dict(mirrors) # copy mirrors
 
     if not kwargs['pre']: # site is just a simple add
         sites_add = {
             "main_domain": kwargs['domain'],
-            "available_mirrors": kwargs['mirrors']
+            "available_mirrors": add_mirrors
         }
-        mirrors['sites'].append(sites_add)
+        new_mirrors['sites'].append(sites_add)
+        print(f"New Mirror: {sites_add}")
     else:
-        for site in mirrors['sites']:
-            if site['main_domain'] == kwargs['domain']:
+        for site in new_mirrors['sites']:
+            if site['main_domain'] in kwargs['domain']:
+                change = input(f"Change {site['main_domain']} (Y/n)?")
+                if change.lower() == 'n':
+                    continue
                 if not kwargs['add']:
-                    site['available_mirrors'] = kwargs['mirrors']
+                    site['available_mirrors'] = add_mirrors
                 else:
-                    site['available_mirrors'].extend(kwargs['mirrors'])
+                    site['available_mirrors'].extend(add_mirrors)
+                print(f"Revised Mirror: {site}")
 
-    new_mirrors = json.dumps(mirrors, indent=4)
-    new_file = base64.b64encode(bytes(new_mirrors, 'utf-8'))
-    print(f"New Mirrors: {new_mirrors}")
+    final_mirrors = json.dumps(new_mirrors, indent=4)
+    new_file = base64.b64encode(bytes(final_mirrors, 'utf-8'))
     if not kwargs['pre']:
         commit_msg = f"Updated with new site {kwargs['domain']} - generated from automation script"
     else:
@@ -45,7 +53,7 @@ def add(**kwargs):
     repo.update_file(
         configs['file'],
         commit_msg,
-        new_mirrors,
+        final_mirrors,
         mirrors_object.sha
         )
 

@@ -41,6 +41,7 @@ def domain_testing():
     error_domains = {}
     error_mirrors = []
     content_links = {}
+    mirrors_without_one_good = []
     for domain in mirrors['sites']:
         domains += 1
         print(f"Testing domain: {domain['main_domain']}...")
@@ -48,6 +49,7 @@ def domain_testing():
         print(f"Domain {domain['main_domain']}... Response code: {response}")
         if int(response/100) != 2: # some sort of error happened
             error_domains[domain['main_domain']] = response
+        one_good_mirror = False
         for mirror in domain['available_mirrors']:
             has_error = False
             mresp, murl = test_domain(mirror)
@@ -61,13 +63,19 @@ def domain_testing():
                 }
                 error_mirrors.append(error)
                 has_error = True
+            else:
+                one_good_mirror = True
         if has_error:
             errors += 1
+        if not one_good_mirror:
+            mirrors_without_one_good.append(domain)
 
     print("Domains with errors: ")
     print(error_domains)
     print("Mirrors with errors: ")
     print(error_mirrors)
     print(f"{errors} out of {domains} domains have errors")
+    print("Domains without one good mirror:")
+    print(mirrors_without_one_good)
 
     return
