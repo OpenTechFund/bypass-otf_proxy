@@ -9,6 +9,7 @@ PyGithub = "*"
 requests = "*"
 requests-html = "*"
 lxml = "*"
+azure = "*"
 
 [dev-packages]
 

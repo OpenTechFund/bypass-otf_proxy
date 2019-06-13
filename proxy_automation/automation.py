@@ -6,9 +6,10 @@ version 0.1
 import sys
 import configparser
 from proxy_utilities import cloudfront
-from add_to_repo import add
+from repo_utilities import add, check
 from mirror_tests import domain_testing
 from fastly_add import fastly_add
+from azure_cdn import azure_add
 
 if __name__ == '__main__':
 
@@ -20,8 +21,11 @@ if __name__ == '__main__':
             domain = input("Domain to add to distribution (return to quit)?")
             if not domain:
                 quit()
-            
-            services = ['cloudfront', 'fastly']
+            else:
+                current_mirrors = check(domain)
+                print(f"Current Mirrors: {current_mirrors}")
+
+            services = ['cloudfront', 'fastly', 'azure']
             mirrors = []
             for service in services:
                 add_service = input(f"Add {service} mirror (y/N)?")
@@ -37,12 +41,15 @@ if __name__ == '__main__':
                     mirror = fastly_add(domain=domain)
                     if mirror:
                         mirrors.append(mirror)
+                if service == 'azure':
+                    mirror = azure_add(domain=domain)
+                    if mirror:
+                        mirrors.append(mirror)
                 
             github = input(f"Add {domain} to GitHub (Y/n)?")
             if github.lower() == 'n':
                 continue
-            pre = input("Pre-existing (y/N)?")
-            if pre.lower() != 'y':
+            if current_mirrors[0] == 'no mirrors':
                 pre_exist = False
                 addm = False
             else:

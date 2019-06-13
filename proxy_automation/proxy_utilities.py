@@ -107,7 +107,11 @@ def get_configs():
         'region': config.get('AWS', 'region'),
         'repo': config.get('GITHUB', 'repo'),
         'API_key': config.get('GITHUB', 'API_key'),
-        'file': config.get('GITHUB', 'file')
+        'file': config.get('GITHUB', 'file'),
+        'azure_sub_id': config.get('AZURE', 'subscription_id'),
+        'azure_tenant_id': config.get('AZURE', 'tenant_id'),
+        'azure_app': config.get('AZURE', 'service_principal_app'),
+        'azure_key': config.get('AZURE', 'service_principal_key')
     }
 
     return configs
