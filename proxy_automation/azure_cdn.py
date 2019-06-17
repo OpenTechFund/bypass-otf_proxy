@@ -16,7 +16,6 @@ def azure_add(**kwargs):
 
     # Your service principal password
     KEY = configs['azure_key']
-    print(f"Key: {KEY}")
 
     print("Authenticating...")
     credentials = ServicePrincipalCredentials(
