@@ -1,7 +1,7 @@
 [AWS]
 roleArn = 
 profile = 
-region = us-west-2
+region = 
 
 [GITHUB]
 repo = 
@@ -9,7 +9,7 @@ API_key =
 file = 
 
 [AZURE]
-subscription_id = dd986aa2-cdc2-4
+subscription_id = 
 tenant_id = 
 service_principal_app = 
 service_principal_key = 
