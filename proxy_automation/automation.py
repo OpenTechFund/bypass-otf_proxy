@@ -25,7 +25,7 @@ if __name__ == '__main__':
                 current_mirrors = check(domain)
                 print(f"Current Mirrors: {current_mirrors}")
 
-            services = ['cloudfront', 'fastly', 'azure']
+            services = ['cloudfront', 'azure'] # took out 'fastly' since we can't add any more mirrors there.
             mirrors = []
             for service in services:
                 add_service = input(f"Add {service} mirror (y/N)?")

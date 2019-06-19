@@ -43,6 +43,9 @@ def fastly_add(**kwargs):
          # list backends
         backends = api.backends(svc['id'], svc['version'])
         print(f"Number of Backends: {len(backends)}")
+        for backend in backends:
+            backend_vars = vars(backend)
+            print(f"Backend: {backend_vars['_original_attrs']['hostname']}")
         count += 1
     domain = kwargs['domain']
     service_target = input(f"Service to add {domain} to?")

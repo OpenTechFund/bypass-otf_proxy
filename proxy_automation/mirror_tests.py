@@ -22,6 +22,9 @@ def test_domain(domain):
         response = requests.get(http_domain)
         response_return = response.status_code
         response_url = response.url
+    except:
+        print("Error!")
+        return 500, ""
         
     return response_return, response_url
 
