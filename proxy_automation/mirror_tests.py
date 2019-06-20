@@ -12,6 +12,7 @@ def test_domain(domain):
     :param domain
     :returns status code (int)
     """
+        
     https_domain = 'https://' + domain
     http_domain = 'http://' + domain
     try:
