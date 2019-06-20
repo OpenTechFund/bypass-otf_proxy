@@ -19,7 +19,12 @@ def test_domain(domain):
             'https': 'socks5h://localhost:9050'
             }
         full_domain = 'https://' + domain
-        r = session.get(full_domain, verify=False)
+        try:
+            r = session.get(full_domain, verify=False)
+        except:
+            print("TOR not properly configured!")
+            return 500, full_domain
+            
         return r.status_code, full_domain
     else:
         https_domain = 'https://' + domain

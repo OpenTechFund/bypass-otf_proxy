@@ -1,4 +1,5 @@
 pygithub
 boto3
 requests
+requests[socks]
 requests-html
