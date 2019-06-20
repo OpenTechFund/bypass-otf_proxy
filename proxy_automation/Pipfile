@@ -6,11 +6,12 @@ name = "pypi"
 [packages]
 "boto3" = "*"
 PyGithub = "*"
-requests = {extras = ["socks"], version = "*"}
+requests = {extras = ["socks"],version = "*"}
 requests-html = "*"
 lxml = "*"
 azure = "*"
 pysocks = "*"
+fastly = "*"
 
 [dev-packages]
 

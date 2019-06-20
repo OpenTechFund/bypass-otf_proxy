@@ -12,22 +12,31 @@ def test_domain(domain):
     :param domain
     :returns status code (int)
     """
+    if '.onion' in domain:
+        session = requests.session()
+        session.proxies = {
+            'http': 'socks5h://localhost:9050',
+            'https': 'socks5h://localhost:9050'
+            }
+        full_domain = 'https://' + domain
+        r = session.get(full_domain, verify=False)
+        return r.status_code, full_domain
+    else:
+        https_domain = 'https://' + domain
+        http_domain = 'http://' + domain
+        try:
+            response = requests.get(https_domain)
+            response_return = response.status_code
+            response_url = response.url
+        except requests.exceptions.SSLError:
+            response = requests.get(http_domain)
+            response_return = response.status_code
+            response_url = response.url
+        except:
+            print("Error!")
+            return 500, ""
         
-    https_domain = 'https://' + domain
-    http_domain = 'http://' + domain
-    try:
-        response = requests.get(https_domain)
-        response_return = response.status_code
-        response_url = response.url
-    except requests.exceptions.SSLError:
-        response = requests.get(http_domain)
-        response_return = response.status_code
-        response_url = response.url
-    except:
-        print("Error!")
-        return 500, ""
-        
-    return response_return, response_url
+        return response_return, response_url
 
 def domain_testing():
     """

@@ -5,8 +5,8 @@ Fastly Service Automation
 import os
 import sys
 import configparser
-sys.path.insert(0, 'fastly-py')
-import fastly
+#sys.path.insert(0, 'fastly-py')
+#import fastly
 
 def fastly_add(**kwargs):
     print("Getting configs...")
