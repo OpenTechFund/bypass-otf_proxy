@@ -45,7 +45,7 @@ def test_domain(domain):
 
 def domain_testing():
     """
-    Tests all domains and mirrors in repo
+    Tests domains and mirrors in repo
     """
     configs = get_configs()
     g = Github(configs['API_key'])
@@ -60,6 +60,18 @@ def domain_testing():
     error_mirrors = []
     content_links = {}
     mirrors_without_one_good = []
+    domains_with_onions = []
+    wtt = input("Test All, No onions, or Just onions (A/n/j/q)?")
+    if wtt.lower() == 'q':
+        return
+    elif wtt.lower() == 'n':
+        no_onions = True
+    elif wtt.lower() == 'j':
+        just_onions = True
+        no_onions = False
+    else:
+        just_onions = False
+        no_onions = False
     for domain in mirrors['sites']:
         domains += 1
         print(f"Testing domain: {domain['main_domain']}...")
@@ -68,8 +80,15 @@ def domain_testing():
         if int(response/100) != 2: # some sort of error happened
             error_domains[domain['main_domain']] = response
         one_good_mirror = False
+        has_onion = False
         for mirror in domain['available_mirrors']:
             has_error = False
+            if 'onion' in mirror:
+                has_onion = True
+                if no_onions:
+                    continue
+            if 'onion' not in mirror and just_onions:
+                continue
             mresp, murl = test_domain(mirror)
             print(f"Mirror {mirror}... Response code: {mresp} ... URL: {murl}")
             if (int(mresp/100) != 2) or (domain['main_domain'] in murl):
@@ -87,6 +106,8 @@ def domain_testing():
             errors += 1
         if not one_good_mirror:
             mirrors_without_one_good.append(domain)
+        if has_onion:
+            domains_with_onions.append(domain)
 
     print("Domains with errors: ")
     print(error_domains)
