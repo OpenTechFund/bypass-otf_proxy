@@ -41,7 +41,7 @@ def test_onion(onion):
         print("TOR not properly configured!")
         return 500, full_onion
         
-    return r.status_code, full_domain
+    return r.status_code, full_onion
 
 def domain_testing():
     """
