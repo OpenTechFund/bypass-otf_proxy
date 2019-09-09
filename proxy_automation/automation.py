@@ -5,7 +5,7 @@ version 0.1
 """
 import sys
 import configparser
-from proxy_utilities import cloudfront
+from aws_utils import cloudfront, ecs
 from repo_utilities import add, check
 from mirror_tests import domain_testing
 from fastly_add import fastly_add
@@ -22,10 +22,10 @@ if __name__ == '__main__':
             if not domain:
                 quit()
             else:
-                current_mirrors = check(domain)
-                print(f"Current Mirrors: {current_mirrors}")
+                exists, current_mirrors, current_onions = check(domain)
+                print(f"Preexisting: {exists}, current Mirrors: {current_mirrors}, current onions: {current_onions}")
 
-            services = ['cloudfront', 'azure'] # took out 'fastly' since we can't add any more mirrors there.
+            services = ['cloudfront', 'azure', 'ecs/docker'] # took out 'fastly' since we can't add any more mirrors there.
             mirrors = []
             for service in services:
                 add_service = input(f"Add {service} mirror (y/N)?")
@@ -45,25 +45,56 @@ if __name__ == '__main__':
                     mirror = azure_add(domain=domain)
                     if mirror:
                         mirrors.append(mirror)
+                if service == 'ecs/docker':
+                    mirror = ecs_add(domain=domain)
+                    if mirror:
+                        mirrors.append(mirror)
                 
             github = input(f"Add {domain} to GitHub (Y/n)?")
             if github.lower() == 'n':
                 continue
-            if current_mirrors[0] == 'no mirrors':
+            if not exists:
                 pre_exist = False
                 addm = False
+                skip = False
             else:
                 pre_exist = True
-                addm = input("Add to or replace mirrors (A/r)?")
+                addm = input("Add to or replace mirrors (or skip if just adding onions) (A/r/s)?")
                 if addm.lower() == 'r':
                     addm = False
+                elif addm.lower() == 's':
+                    skip = True
                 else:
                     addm = True
-            if not mirrors:
-                num = int(input("Number of mirrors?"))
-                for i in range(0,num):
-                    mirror = input('Mirror Site?')
-                    mirrors.append(mirror)
+                    skip = False
+            if not skip:
+                if not mirrors:
+                    num = int(input("Number of mirrors?"))
+                    for i in range(0,num):
+                        mirror = input('Mirror Site?')
+                        mirrors.append(mirror)
+                print("Adding to GitHub...")
+                add(domain=domain, mirrors=mirrors, pre=pre_exist, add=addm)
+                exists = True
+
+            onion = input(f"Add onions to {domain} (y/N)?")
+            if onion.lower() != 'y':
+                continue
+            onions = []
+            if not exists:
+                pre_exist = False
+                addo = False
+            else:
+                pre_exist = True
+                addo = input("Add to or replace onions (A/r)?")
+                if addo.lower() == 'r':
+                    addo = False
+                else:
+                    addo = True
+            num = int(input("Number of onions?"))
+            for i in range(0,num):
+                onion = input('Onion Site?')
+                onions.append(onion)
             print("Adding to GitHub...")
-            add(domain=domain, mirrors=mirrors, pre=pre_exist, add=addm)
-        
+            add(domain=domain, onions=onions, pre=pre_exist, add=addm)
+

@@ -10,8 +10,8 @@ requests = {extras = ["socks"],version = "*"}
 requests-html = "*"
 lxml = "*"
 azure = "*"
-pysocks = "*"
 fastly = "*"
+PySocks = "*"
 
 [dev-packages]
 
