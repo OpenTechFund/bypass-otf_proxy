@@ -21,13 +21,19 @@ def get_configs():
     configs = {
         'profile': config.get('AWS', 'profile'),
         'region': config.get('AWS', 'region'),
+        'roleArn': config.get('AWS', 'roleArn'),
         'repo': config.get('GITHUB', 'repo'),
         'API_key': config.get('GITHUB', 'API_key'),
         'file': config.get('GITHUB', 'file'),
         'azure_sub_id': config.get('AZURE', 'subscription_id'),
         'azure_tenant_id': config.get('AZURE', 'tenant_id'),
         'azure_app': config.get('AZURE', 'service_principal_app'),
-        'azure_key': config.get('AZURE', 'service_principal_key')
+        'azure_key': config.get('AZURE', 'service_principal_key'),
+        'mirror_docker_image': config.get('AWS', 'mirror_docker_image'),
+        'ecs_log_group': config.get('AWS', 'ecs_log_group'),
+        'subnet': config.get('AWS', 'subnet'),
+        'vpc': config.get('AWS', 'vpc'),
+        'security_group': config.get('AWS', 'security_group')
     }
 
     return configs

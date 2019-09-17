@@ -12,6 +12,7 @@ lxml = "*"
 azure = "*"
 fastly = "*"
 PySocks = "*"
+click = "*"
 
 [dev-packages]
 

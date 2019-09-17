@@ -1,7 +1,7 @@
 """
 Automation of Creation of CDN and...
 
-version 0.1
+version 0.2
 """
 import sys
 import configparser
@@ -11,11 +11,23 @@ from mirror_tests import domain_testing
 from fastly_add import fastly_add
 from azure_cdn import azure_add
 
+def domain_changes():
+    while True:
+        domain = input("Domain to change (return to quit)?")
+        if not domain:
+            quit()
+        else:
+            exists, current_mirrors, current_onions = check(domain)
+            print(f"Preexisting: {exists}, current Mirrors: {current_mirrors}, current onions: {current_onions}")
+    return
+
 if __name__ == '__main__':
 
-    action = input(f"Domain distribution/mirror or Testing of mirrors (D/t)?")
+    action = input(f"Domain distribution/mirror, Testing of mirrors or mirror changes (D/t/c)?")
     if action.lower() == 't':
         domain_testing()
+    elif action.lower() == 'c':
+        domain_changes()
     else:
         while True:
             domain = input("Domain to add to distribution (return to quit)?")
@@ -46,7 +58,7 @@ if __name__ == '__main__':
                     if mirror:
                         mirrors.append(mirror)
                 if service == 'ecs/docker':
-                    mirror = ecs_add(domain=domain)
+                    mirror = ecs(domain=domain)
                     if mirror:
                         mirrors.append(mirror)
                 
