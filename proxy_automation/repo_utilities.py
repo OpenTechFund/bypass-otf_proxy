@@ -3,9 +3,10 @@ import base64
 from github import Github
 from proxy_utilities import get_configs
 
-def add(**kwargs):
+def domain_list():
     """
-    function to add mirror to repository
+    Lists all domains in mirror
+    :returns list of domains from mirror.
     """
     configs = get_configs()
     g = Github(configs['API_key'])
@@ -21,40 +22,48 @@ def add(**kwargs):
     mirrors_object = repo.get_file_contents(configs['file'])
     mirrors_decoded = mirrors_object.decoded_content
     mirrors = json.loads(str(mirrors_decoded, "utf-8"))
+    
+    return mirrors
+
+def add(**kwargs):
+    """
+    function to add mirror to repository
+    """
+    configs = get_configs()
+    g = Github(configs['API_key'])
+   
+    repo = g.get_repo(configs['repo'])
+    mirrors_object = repo.get_file_contents(configs['file'])
+    mirrors_decoded = mirrors_object.decoded_content
+    mirrors = json.loads(str(mirrors_decoded, "utf-8"))
     new_mirrors = dict(mirrors) # copy mirrors
 
     if not kwargs['pre']: # site is just a simple add
-        if add_mirrors:
-            sites_add = {
+        if '.onion' not in kwargs['mirror']: # mirror not onion
+            site = {
                 "main_domain": kwargs['domain'],
-                "available_mirrors": add_new
+                "available_mirrors": kwargs['mirror']
             }
-            new_mirrors['sites'].append(sites_add)
-            print(f"New Mirror: {sites_add}")
-        else:
-            sites_add = {
+            new_mirrors['sites'].append(site)
+            print(f"New Mirror: {site}")
+        else: # onion not mirror
+            site = {
                 "main_domain": kwargs['domain'],
-                "available_onions": add_new
+                "available_onions": kwargs['mirror']
             }
-            new_mirrors['sites'].append(sites_add)
-            print(f"New Mirror: {sites_add}")
+            new_mirrors['sites'].append(site)
+            print(f"New Mirror: {site}")
     else:
         for site in new_mirrors['sites']:
             if site['main_domain'] in kwargs['domain']:
                 change = input(f"Change {site['main_domain']} (Y/n)?")
                 if change.lower() == 'n':
                     continue
-                if add_mirrors:
-                    if not kwargs['add']:
-                        site['available_mirrors'] = add_new
-                    else:
-                        site['available_mirrors'].extend(add_new)
+                if '.onion' not in kwargs['mirror']: # mirror not onion
+                    site['available_mirrors'].extend(add_new)
                     print(f"Revised Mirror: {site}")
-                else:
-                    if not kwargs['add']:
-                        site['available_onions'] = add_new
-                    else:
-                        site['available_onions'].extend(add_new)
+                else: # onion not mirror
+                    site['available_onions'].extend(add_new)
                     print(f"Revised Site: {site}")
 
     final_mirrors = json.dumps(new_mirrors, indent=4)
@@ -71,7 +80,7 @@ def add(**kwargs):
         mirrors_object.sha
         )
 
-    return
+    return site
     
 def check(domain):
     """

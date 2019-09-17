@@ -50,6 +50,7 @@ def domain_testing():
     configs = get_configs()
     g = Github(configs['API_key'])
     repo = g.get_repo(configs['repo'])
+    print(f"Repo: {repo} Configs: {configs}")
     mirrors_object = repo.get_file_contents(configs['file'])
     mirrors_decoded = mirrors_object.decoded_content
     mirrors = json.loads(str(mirrors_decoded, "utf-8"))
