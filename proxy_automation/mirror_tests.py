@@ -43,7 +43,7 @@ def test_onion(onion):
         
     return r.status_code, full_onion
 
-def domain_testing():
+def domain_testing(testing):
     """
     Tests domains, mirrors and onions in repo
     """
@@ -51,43 +51,31 @@ def domain_testing():
     g = Github(configs['API_key'])
     repo = g.get_repo(configs['repo'])
     print(f"Repo: {repo} Configs: {configs}")
-    mirrors_object = repo.get_file_contents(configs['file'])
+    mirrors_object = repo.get_contents(configs['file'])
     mirrors_decoded = mirrors_object.decoded_content
     mirrors = json.loads(str(mirrors_decoded, "utf-8"))
-
     errors = 0
     domains = 0
+    domain_errors = 0
     error_domains = {}
     error_mirrors = []
     content_links = {}
     mirrors_without_one_good = []
     domains_with_onions = []
-    tdom = input("Test Domains (y/N)?")
-    if tdom.lower() == 'y':
-        tdomains = True
-    else:
-        tdomains = False
-    wtt = input("Test All, No onions, or Just onions (A/n/j/q)?")
-    if wtt.lower() == 'q':
-        return
-    elif wtt.lower() == 'n':
-        no_onions = True
-    elif wtt.lower() == 'j':
-        just_onions = True
-        no_onions = False
-    else:
-        just_onions = False
-        no_onions = False
     for domain in mirrors['sites']:
         domains += 1
-        print(f"Testing domain: {domain['main_domain']}...")
-        if tdomains:
+        if testing == 'domains':
+            print(f"Testing domain: {domain['main_domain']}...")
             response, url = test_domain(domain['main_domain'])
             print(f"Domain {domain['main_domain']}... Response code: {response}")
             if int(response/100) != 2: # some sort of error happened
                 error_domains[domain['main_domain']] = response
+                domain_errors += 1
+            continue
+        print(f"Testing mirrors for domain: {domain['main_domain']}...")
         one_good_mirror = False
-        if not just_onions:
+        has_onion = False
+        if testing == 'noonions':
             for mirror in domain['available_mirrors']:
                 has_error = False
                 mresp, murl = test_domain(mirror)
@@ -103,10 +91,9 @@ def domain_testing():
                     has_error = True
                 else:
                     one_good_mirror = True
-        if not no_onions and 'available_onions' in domain:
-            has_onion = False
+        elif testing == 'onions' and 'avaliable_onions' in domain:
+            has_error = False
             for onion in domain['available_onions']:
-                has_error = False
                 has_onion = True
                 mresp, murl = test_onion(onion)
                 print(f"Onion {onion}... Response code: {mresp} ... URL: {murl}")
@@ -119,6 +106,11 @@ def domain_testing():
                     }
                     error_mirrors.append(error)
                     has_error = True
+                else:
+                    one_good_mirror = True
+        else: #testing onions, but domain has no onions
+            print(f"{domain['main_domain']} has no available onions.")
+            has_error = False
         if has_error:
             errors += 1
         if not one_good_mirror:
@@ -126,13 +118,20 @@ def domain_testing():
         if has_onion:
             domains_with_onions.append(domain)
 
-    print("Domains with errors: ")
-    print(error_domains)
-    print("Mirrors with errors: ")
-    print(error_mirrors)
-    print(f"{errors} out of {domains} domains have errors")
-    if not just_onions:
-        print("Domains without one good mirror:")
+    if testing == 'domains':
+        print("Domains with errors: ")
+        print(error_domains)
+    else:
+        print("Mirrors with errors: ")
+        print(error_mirrors)
+        print(f"{errors} out of {domains} domains have errors in mirrors or onions")
+        if testing == 'noonions':
+            print(f"{len(mirrors_without_one_good)} domains without one good mirror:")
+        elif testing == 'onions':
+            print(f"{len(mirrors_without_one_good)} domains without one good onion:")
+        else: # testing domains
+            print(f"{error_domains} domains have errors.")
+        
         print(mirrors_without_one_good)
 
     return

@@ -13,7 +13,8 @@ from azure_cdn import azure_add
 import click
 
 @click.command()
-@click.option('--testing', is_flag=True, default=False, help="Domain testing of available mirrors")
+@click.option('--testing', type=click.Choice(['onions', 'noonions', 'domains']),
+    help="Domain testing of available mirrors - choose onions, nonions, or domains")
 @click.option('--domain', help="Domain to add/change to mirror list", type=str)
 @click.option('--existing', type=str, help="Mirror exists already, just add to github.")
 @click.option('--delete_domain', is_flag=True, default=False, help="Delete a domain from list")
@@ -21,23 +22,23 @@ import click
 @click.option('--add_new', is_flag=True, default=True, help="Add new domain or mirror (default)")
 @click.option('--mirror_type', type=click.Choice(['cloudfront', 'azure', 'ecs', 'fastly', 'onion']), help="Type of mirror")
 @click.option('--replace', is_flag=True, default=False, help="Replace a mirror/onion for domain")
-@click.option('--github', is_flag=True, default=True, help="Add to github (default)")
+@click.option('--nogithub', is_flag=True, default=False, help="Add to github (default)")
 
 def automation(testing, domain, existing, delete_domain, domain_list,
-    add_new, mirror_type, replace, github):
+    add_new, mirror_type, replace, nogithub):
     if domain:
         if add_new:
-            new_add(domain=domain, mirror_type=mirror_type, github=github, existing=existing)
+            new_add(domain=domain, mirror_type=mirror_type, nogithub=nogithub, existing=existing)
         elif delete_domain:
-            delete_domain(domain, github)
+            delete_domain(domain, nogithub)
         elif replace:
-            replace_mirror(domain, github)
+            replace_mirror(domain, nogithub)
         else:
             print("Haven't defined enough to take action!")
             return
     else:
         if testing:
-            domain_testing()
+            domain_testing(testing)
         if domain_list:
             dlist = domain_list()
             print(f""" List of all domains, mirrors and onions
@@ -78,7 +79,7 @@ def new_add(**kwargs):
     :returns nothing
     """
     mirror = ""
-    exists, current_mirrors, current_onions = check(domain)
+    exists, current_mirrors, current_onions = check(kwargs['domain'])
     print(f"Preexisting: {exists}, current Mirrors: {current_mirrors}, current onions: {current_onions}")
     if not kwargs['existing']: #New domain and/or mirror
         pre_exist = False
@@ -99,17 +100,17 @@ def new_add(**kwargs):
         if not mirror:
             print(f"Sorry, mirror not created for {kwargs['domain']}!")
             return
-        elif not github:
+        elif nogithub:
             print(f"Mirror {mirror} added, but not added to Github as per your instructions!")
             return
     else: #adding existing mirror/onion
-        if not kwargs['github']:
+        if kwargs['nogithub']:
             print(f"You asked to add an existing mirror but then didn't want it added to github! Bye!")
             return
         mirror = kwargs['existing']
         pre_exist = True
         
-    domain_listing = add(domain=kwargs['domain'], mirror=mirror, pre=pre_exist)
+    domain_listing = add(domain=kwargs['domain'], mirror=[mirror], pre=pre_exist)
     print(f"New Domain listing: {domain_listing}")
     return
 

@@ -19,7 +19,7 @@ def domain_list():
         add_mirrors = False
    
     repo = g.get_repo(configs['repo'])
-    mirrors_object = repo.get_file_contents(configs['file'])
+    mirrors_object = repo.get_contents(configs['file'])
     mirrors_decoded = mirrors_object.decoded_content
     mirrors = json.loads(str(mirrors_decoded, "utf-8"))
     
@@ -33,7 +33,7 @@ def add(**kwargs):
     g = Github(configs['API_key'])
    
     repo = g.get_repo(configs['repo'])
-    mirrors_object = repo.get_file_contents(configs['file'])
+    mirrors_object = repo.get_contents(configs['file'])
     mirrors_decoded = mirrors_object.decoded_content
     mirrors = json.loads(str(mirrors_decoded, "utf-8"))
     new_mirrors = dict(mirrors) # copy mirrors
@@ -53,18 +53,26 @@ def add(**kwargs):
             }
             new_mirrors['sites'].append(site)
             print(f"New Mirror: {site}")
+        site_add = site
     else:
         for site in new_mirrors['sites']:
             if site['main_domain'] in kwargs['domain']:
                 change = input(f"Change {site['main_domain']} (Y/n)?")
                 if change.lower() == 'n':
                     continue
-                if '.onion' not in kwargs['mirror']: # mirror not onion
-                    site['available_mirrors'].extend(add_new)
+                if '.onion' not in kwargs['mirror'][0]: # mirror not onion
+                    if 'available_mirrors' in site:
+                        site['available_mirrors'].extend(kwargs['mirror'])
+                    else:
+                        site['available_mirrors'] = kwargs['mirror']
                     print(f"Revised Mirror: {site}")
                 else: # onion not mirror
-                    site['available_onions'].extend(add_new)
+                    if 'available_onions' in site:
+                        site['available_onions'].extend(kwargs['mirror'])
+                    else:
+                        site['available_onions'] = kwargs['mirror']
                     print(f"Revised Site: {site}")
+                site_add = site
 
     final_mirrors = json.dumps(new_mirrors, indent=4)
     new_file = base64.b64encode(bytes(final_mirrors, 'utf-8'))
@@ -80,7 +88,7 @@ def add(**kwargs):
         mirrors_object.sha
         )
 
-    return site
+    return site_add
     
 def check(domain):
     """
@@ -92,7 +100,7 @@ def check(domain):
     g = Github(configs['API_key'])
 
     repo = g.get_repo(configs['repo'])
-    mirrors_object = repo.get_file_contents(configs['file'])
+    mirrors_object = repo.get_contents(configs['file'])
     mirrors_decoded = mirrors_object.decoded_content
     mirrors = json.loads(str(mirrors_decoded, "utf-8"))
 
