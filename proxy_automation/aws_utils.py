@@ -1,6 +1,7 @@
 import boto3
 import json
 import datetime
+import time
 from datetime import tzinfo
 from dateutil.tz import tzutc
 from proxy_utilities import get_configs
@@ -88,6 +89,7 @@ def ecs(**kwargs):
     """
     Creates ECS task definition, and service using that definition
     :param kwargs: <domain>
+    :param kwargs: 
     :returns
     """
     configs = get_configs()
@@ -98,8 +100,8 @@ def ecs(**kwargs):
     if old_new.lower() != 'e':
         # First step, create (register) task definition
         name = input("Name of task definition?")
-        url = input(f"Specific URL to mirror of {kwargs['domain']}?")
-        replacement_urls = input("List of replacement URLs (comma-delimted, no spaces)?")
+        url = input(f"Specific URL to mirror (e.g. https://www.{kwargs['domain']}/something)?")
+        replacement_urls = input("List of replacement URLs (comma-delimted, no spaces, return for none)?")
         task_memory = input("Task Memory (512MiB)?")
         if not task_memory:
             task_memory = '512'
@@ -197,9 +199,28 @@ def ecs(**kwargs):
             }
         }
     )
-    print(f"Response: {response}")
-    
+    service = response['service']['serviceArn']
+    # Wait
+    print("Waiting for services to be stable...")
+    waiter = client.get_waiter('services_stable')
+    waiter.wait(cluster=cluster_arn, services=[service])  
+    # and wait some more 5 minutes for mirror to populate
+    print("Waiting for mirror to populate...")
+    time.sleep(300)          
 
-    # Third step, create the service with task definition
-    # Fourth step, verify?
-    return
+    # Super convoluted way to get DNS name for mirror
+    ec2_client = session.client('ec2', region_name=configs['region'])
+    task_arns = client.list_tasks(cluster=cluster_arn)['taskArns']
+    task_details = client.describe_tasks(cluster=cluster_arn, tasks=task_arns)
+    for task in task_details['tasks']:
+        print(f"Task: {task['taskDefinitionArn']}")
+        if task['taskDefinitionArn'] == task_definition_ARN:
+            net_details = task['attachments'][0]['details']                                                                                                                                                    
+            for detail in net_details:
+                if detail['name'] == 'networkInterfaceId':
+                    nets = ec2_client.describe_network_interfaces(NetworkInterfaceIds=[detail['value']])
+                    print(nets['NetworkInterfaces'][0]['Association'])
+                    mirror = nets['NetworkInterfaces'][0]['Association']['PublicIp']
+                    print(f"Mirror: {mirror}")
+
+    return mirror

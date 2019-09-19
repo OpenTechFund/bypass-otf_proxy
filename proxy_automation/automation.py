@@ -133,9 +133,10 @@ def new_add(**kwargs):
         if not mirror:
             print(f"Sorry, mirror not created for {kwargs['domain']}!")
             return
-        elif nogithub:
+        elif kwargs['nogithub']:
             print(f"Mirror {mirror} added, but not added to Github as per your instructions!")
             return
+        replace = False
     else: #adding existing mirror/onion
         if kwargs['nogithub']:
             print(f"You asked to add or replace an existing mirror but then didn't want it added to github! Bye!")
