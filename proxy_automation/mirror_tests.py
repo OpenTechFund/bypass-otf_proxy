@@ -5,6 +5,7 @@ from github import Github
 import requests
 from requests_html import HTMLSession
 from proxy_utilities import get_configs
+from repo_utilities import check
 
 def test_domain(domain):
     """
@@ -42,6 +43,30 @@ def test_onion(onion):
         return 500, full_onion
         
     return r.status_code, full_onion
+
+def mirror_detail(domain):
+    """
+    List and test mirrors for a domain
+    :arg domain
+    :returns nothing
+    """
+    print(f"Listing and Testing {domain}...")
+    exists, current_mirrors, current_onions = check(domain)
+    if not exists:
+        print(f"{domain} doesn't exist in the mirror list.")
+        return
+    print(f"Mirror list: {current_mirrors} Onions: {current_onions}")
+    mresp, murl = test_domain(domain)
+    print(f"Response code on domain: {mresp}, url: {murl}")
+    if current_mirrors:
+        for mirror in current_mirrors:
+            mresp, murl = test_domain(mirror)
+            print(f"Response code on mirror: {mresp}, url: {murl}")
+    if current_onions:
+        for onion in current_onions:
+            mresp, murl = test_onion(onion)
+            print(f"Onion {onion}... Response code: {mresp} ... URL: {murl}") 
+    return
 
 def domain_testing(testing):
     """

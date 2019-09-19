@@ -10,13 +10,6 @@ def domain_list():
     """
     configs = get_configs()
     g = Github(configs['API_key'])
-
-    if 'mirrors' in kwargs:
-        add_new = kwargs['mirrors']
-        add_mirrors = True
-    if 'onions' in kwargs:
-        add_new = kwargs['onions']
-        add_mirrors = False
    
     repo = g.get_repo(configs['repo'])
     mirrors_object = repo.get_contents(configs['file'])
@@ -25,18 +18,58 @@ def domain_list():
     
     return mirrors
 
-def add(**kwargs):
+def remove_domain(domain):
     """
-    function to add mirror to repository
+    Remove a domain from repository
+    :arg <domain>
+    :returns False or True
     """
+    mirrors = domain_list()
+    for mirror in mirrors['sites']:
+        if domain == mirror['main_domain']:
+            remove = input(f"Remove {mirror['main_domain']} (y/N)?")
+            if remove.lower() != 'y':
+                return False
+            mirrors['sites'].remove(mirror)
+            print(f"New Mirrors: {mirrors['sites']}")
+            commit_msg = f"Updated to remove domain {domain} - generated from automation script"
+            final_mirrors = json.dumps(mirrors, indent=4)
+            saved = save_mirrors(final_mirrors, commit_msg)
+            if saved:
+                return True
+            else:
+                return False
+
+def save_mirrors(mirrors, commit_msg):
     configs = get_configs()
     g = Github(configs['API_key'])
    
     repo = g.get_repo(configs['repo'])
     mirrors_object = repo.get_contents(configs['file'])
-    mirrors_decoded = mirrors_object.decoded_content
-    mirrors = json.loads(str(mirrors_decoded, "utf-8"))
+    new_file = base64.b64encode(bytes(mirrors, 'utf-8'))
+
+    result = repo.update_file(
+                configs['file'],
+                commit_msg,
+                mirrors,
+                mirrors_object.sha
+                )
+
+    if 'commit' in result:
+        return True
+    else:
+        return False
+
+def add(**kwargs):
+    """
+    function to add mirror to repository
+    """
+    mirrors = domain_list()
     new_mirrors = dict(mirrors) # copy mirrors
+    if 'replace' in kwargs and kwargs['replace']:
+        replace = True
+    else:
+        replace = False
 
     if not kwargs['pre']: # site is just a simple add
         if '.onion' not in kwargs['mirror']: # mirror not onion
@@ -61,33 +94,30 @@ def add(**kwargs):
                 if change.lower() == 'n':
                     continue
                 if '.onion' not in kwargs['mirror'][0]: # mirror not onion
-                    if 'available_mirrors' in site:
+                    if 'available_mirrors' in site and not replace:
                         site['available_mirrors'].extend(kwargs['mirror'])
+                    elif replace:
+                        site['available_mirrors'] = [x if (x != kwargs['replace']) else kwargs['mirror'][0] for x in site['available_mirrors']]
                     else:
                         site['available_mirrors'] = kwargs['mirror']
                     print(f"Revised Mirror: {site}")
                 else: # onion not mirror
-                    if 'available_onions' in site:
+                    if 'available_onions' in site and not replace:
                         site['available_onions'].extend(kwargs['mirror'])
+                    elif replace:
+                        site['available_onions'] = [x if (x != kwargs['replace']) else kwargs['mirror'][0] for x in site['available_onions']]
                     else:
                         site['available_onions'] = kwargs['mirror']
                     print(f"Revised Site: {site}")
                 site_add = site
 
     final_mirrors = json.dumps(new_mirrors, indent=4)
-    new_file = base64.b64encode(bytes(final_mirrors, 'utf-8'))
     if not kwargs['pre']:
         commit_msg = f"Updated with new site {kwargs['domain']} - generated from automation script"
     else:
         commit_msg = f"Updated {kwargs['domain']} with new mirror or onion - generated from automation script"
-
-    repo.update_file(
-        configs['file'],
-        commit_msg,
-        final_mirrors,
-        mirrors_object.sha
-        )
-
+    result = save_mirrors(final_mirrors, commit_msg)
+    
     return site_add
     
 def check(domain):
