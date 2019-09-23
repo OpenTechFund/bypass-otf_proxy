@@ -36,6 +36,8 @@ To get a list of all domains and mirrors use:
 
 To get a list of one domain and it's mirrors (and test each) use:
 `python automation.py --mirror_detail --domain=domain.com`
+or just
+`python automation.py --domain=domain.com`
 
 ## Testing:
 
@@ -59,7 +61,7 @@ To add a new mirror, for Cloudfront, Fastly, Azure or ECS use:
 
 `python automation.py --domain=domain.com --mirror_type=cloudfront|fastly|azure|ecs|onion`
 
-(The cloudfront, fastly, azure and ecs processes are automated. The onion process is not yet.)
+(The cloudfront, fastly, azure and ecs processes are automated. The onion process is not.)
 
 If you want a cloudfront distro, it will create that for you, and tell you the domain. For Fastly and Azure, you'll have to specify the Fastly and Azure subdomain (Cloudfront specifies a subdomain for you, Fastly and Azure require you to define it.)
 
@@ -69,6 +71,8 @@ All configurations are in auto.cfg (see auto.cfg-example) You need:
 - a Fastly account that has permission to create new configurations
 - an Azure account with permissions to create new CDN distributions
 - a Github repo for mirrors in JSON format that is read by the [Bypass Censorship Extension](https://github.com/OpenTechFund/bypass-censorship-extension) browser extension. An example [is here](https://github.com/OpenTechFund/bypass-mirrors)
+
+If you want to add onions, the best method is using Alec Muffett's [EOTK (Enterprise Onion ToolKit)](https://github.com/alecmuffett/eotk). One way to mine vanity .onion addresses is to use [eschalot](https://github.com/ReclaimYourPrivacy/eschalot).
 
 ## Mirror replacement
 

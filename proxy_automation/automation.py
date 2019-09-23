@@ -31,10 +31,10 @@ def automation(testing, domain, existing, delete, domain_list, mirror_list,
             delete_domain(domain, nogithub)
         elif replace:
             replace_mirror(domain=domain, existing=existing, replace=replace, nogithub=nogithub)
-        elif mirror_list:
-            mirror_detail(domain)
-        else:
+        elif mirror_type or existing:
             new_add(domain=domain, mirror_type=mirror_type, nogithub=nogithub, existing=existing)
+        else:
+            mirror_detail(domain)
     else:
         if testing:
             domain_testing(testing)
@@ -101,6 +101,16 @@ def replace_mirror(**kwargs):
         )
 
     return
+
+def onion_add(**kwargs):
+    """
+    Not automated
+    :kwarg <domain>
+    :returns onion from user input
+    """
+    mirror = input(f"Name of onion for {kwargs['domain']}?")
+    return mirror
+
 
 def new_add(**kwargs):
     """

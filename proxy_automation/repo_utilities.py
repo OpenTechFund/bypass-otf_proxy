@@ -72,7 +72,7 @@ def add(**kwargs):
         replace = False
 
     if not kwargs['pre']: # site is just a simple add
-        if '.onion' not in kwargs['mirror']: # mirror not onion
+        if '.onion' not in kwargs['mirror'][0]: # mirror not onion
             site = {
                 "main_domain": kwargs['domain'],
                 "available_mirrors": kwargs['mirror']
@@ -89,7 +89,9 @@ def add(**kwargs):
         site_add = site
     else:
         for site in new_mirrors['sites']:
-            if site['main_domain'] in kwargs['domain']:
+            if ((site['main_domain'] == kwargs['domain']) or
+            ('www.' + site['main_domain'] == kwargs['domain']) or
+            ('www.' + kwargs['domain'] == site['main_domain'])):
                 change = input(f"Change {site['main_domain']} (Y/n)?")
                 if change.lower() == 'n':
                     continue
@@ -136,7 +138,8 @@ def check(domain):
 
     for site in mirrors['sites']:
         if ((site['main_domain'] == domain) or
-            ('www.' + site['main_domain'] == domain)):
+            ('www.' + site['main_domain'] == domain) or
+            ('www.' + domain == site['main_domain'])):
             exists = True
             if 'available_mirrors' in site:
                 available_mirrors = site['available_mirrors']
