@@ -16,6 +16,7 @@ import click
 @click.option('--testing', type=click.Choice(['onions', 'noonions', 'domains']),
     help="Domain testing of available mirrors - choose onions, nonions, or domains")
 @click.option('--domain', help="Domain to add/change to mirror list", type=str)
+@click.option('--proxy', type=str, help="Proxy server to use for testing/domain detail.")
 @click.option('--existing', type=str, help="Mirror exists already, just add to github.")
 @click.option('--replace', type=str, help="Mirror/onion to replace.")
 @click.option('--delete', is_flag=True, default=False, help="Delete a domain from list")
@@ -24,7 +25,7 @@ import click
 @click.option('--mirror_type', type=click.Choice(['cloudfront', 'azure', 'ecs', 'fastly', 'onion']), help="Type of mirror")
 @click.option('--nogithub', is_flag=True, default=False, help="Do not add to github")
 
-def automation(testing, domain, existing, delete, domain_list, mirror_list,
+def automation(testing, domain, proxy, existing, delete, domain_list, mirror_list,
     mirror_type, replace, nogithub):
     if domain:
         if delete:
@@ -34,10 +35,16 @@ def automation(testing, domain, existing, delete, domain_list, mirror_list,
         elif mirror_type or existing:
             new_add(domain=domain, mirror_type=mirror_type, nogithub=nogithub, existing=existing)
         else:
-            mirror_detail(domain)
+            if proxy:
+                mirror_detail(domain, proxy)
+            else:
+                mirror_detail(domain, False)
     else:
         if testing:
-            domain_testing(testing)
+            if proxy:
+                domain_testing(testing, proxy)
+            else:
+                domain_testing(testing, False)
         if domain_list:
             dlist = domain_list()
             print(f""" List of all domains, mirrors and onions

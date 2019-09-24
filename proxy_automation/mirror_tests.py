@@ -7,7 +7,7 @@ from requests_html import HTMLSession
 from proxy_utilities import get_configs
 from repo_utilities import check
 
-def test_domain(domain):
+def test_domain(domain, proxy):
     """
     Get response code from domain
     :param domain
@@ -15,12 +15,24 @@ def test_domain(domain):
     """
     https_domain = 'https://' + domain
     http_domain = 'http://' + domain
+    if proxy:
+        print(f"Using proxy: {proxy}...")
+        if 'https' in proxy:
+            request_proxy = { 'https' : proxy}
+        else:
+            request_proxy = { 'http': proxy}
     try:
-        response = requests.get(https_domain)
+        if proxy:
+            response = requests.get(https_domain, proxies=request_proxy)
+        else:
+            response = requests.get(https_domain)
         response_return = response.status_code
         response_url = response.url
     except requests.exceptions.SSLError:
-        response = requests.get(http_domain)
+        if proxy:
+            response = requests.get(http_domain, proxies=request_proxy)
+        else:
+            response = requests.get(http_domain)
         response_return = response.status_code
         response_url = response.url
     except:
@@ -44,7 +56,7 @@ def test_onion(onion):
         
     return r.status_code, full_onion
 
-def mirror_detail(domain):
+def mirror_detail(domain, proxy):
     """
     List and test mirrors for a domain
     :arg domain
@@ -56,11 +68,11 @@ def mirror_detail(domain):
         print(f"{domain} doesn't exist in the mirror list.")
         return
     print(f"Mirror list: {current_mirrors} Onions: {current_onions}")
-    mresp, murl = test_domain(domain)
+    mresp, murl = test_domain(domain, proxy)
     print(f"Response code on domain: {mresp}, url: {murl}")
     if current_mirrors:
         for mirror in current_mirrors:
-            mresp, murl = test_domain(mirror)
+            mresp, murl = test_domain(mirror, proxy)
             print(f"Response code on mirror: {mresp}, url: {murl}")
     if current_onions:
         for onion in current_onions:
@@ -68,7 +80,7 @@ def mirror_detail(domain):
             print(f"Onion {onion}... Response code: {mresp} ... URL: {murl}") 
     return
 
-def domain_testing(testing):
+def domain_testing(testing, proxy):
     """
     Tests domains, mirrors and onions in repo
     """
@@ -91,7 +103,7 @@ def domain_testing(testing):
         domains += 1
         if testing == 'domains':
             print(f"Testing domain: {domain['main_domain']}...")
-            response, url = test_domain(domain['main_domain'])
+            response, url = test_domain(domain['main_domain'], proxy)
             print(f"Domain {domain['main_domain']}... Response code: {response}")
             if int(response/100) != 2: # some sort of error happened
                 error_domains[domain['main_domain']] = response
@@ -103,7 +115,7 @@ def domain_testing(testing):
         if testing == 'noonions':
             for mirror in domain['available_mirrors']:
                 has_error = False
-                mresp, murl = test_domain(mirror)
+                mresp, murl = test_domain(mirror, proxy)
                 print(f"Mirror {mirror}... Response code: {mresp} ... URL: {murl}")
                 if (int(mresp/100) != 2) or (domain['main_domain'] in murl):
                     error = {
