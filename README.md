@@ -81,7 +81,7 @@ To replace one mirror with another use:
 `python automation.py --domain=domain.com --replace=oldmirror.com --existing=newmirror.com`
 
 or
-*(not implented yet)*
+*(implemented for ecs and cloudfront so far)*
 
 `python automation.py --domain=domain.com --replace=oldmirror.com --mirror_type=ecs|cloudfront|fastly|azure`
 
