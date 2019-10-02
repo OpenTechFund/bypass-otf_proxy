@@ -5,11 +5,11 @@ version 0.3
 """
 import sys
 import configparser
-from aws_utils import cloudfront, ecs
+from aws_utils import cloudfront_add, ecs_add, cloudfront_replace, ecs_replace
 from repo_utilities import add, check, domain_list, remove_domain
 from mirror_tests import domain_testing, mirror_detail
-from fastly_add import fastly_add
-from azure_cdn import azure_add
+from fastly_add import fastly_add, fastly_replace
+from azure_cdn import azure_add, azure_replace
 import click
 
 @click.command()
@@ -31,7 +31,7 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
         if delete:
             delete_domain(domain, nogithub)
         elif replace:
-            replace_mirror(domain=domain, existing=existing, replace=replace, nogithub=nogithub)
+            replace_mirror(domain=domain, existing=existing, replace=replace, nogithub=nogithub, mirror_type=mirror_type)
         elif mirror_type or existing:
             new_add(domain=domain, mirror_type=mirror_type, nogithub=nogithub, existing=existing)
         else:
@@ -85,8 +85,8 @@ def replace_mirror(**kwargs):
     """
     Replace Mirror or Onion
     :kwarg <domain>
-    :kwarg <existing>
     :kwarg <replace>
+    :kwarg [existing]
     :kwarg [mirror_type]
     :kwarg [nogithub]
     :returns nothing
@@ -99,14 +99,37 @@ def replace_mirror(**kwargs):
     else:
         if 'mirror_type' not in kwargs:
             kwargs['mirror_type'] = False
-        new_add(
-            domain=kwargs['domain'],
-            nogithub=kwargs['nogithub'],
-            existing=kwargs['existing'],
-            replace=kwargs['replace'],
-            mirror_type=kwargs['mirror_type']
-        )
+        if 'existing' in kwargs and kwargs['existing']: # replacing with existing...
+            if kwargs['nogithub']:
+                print("You wanted to replace with existing but didn't want it added to github! Bye!")
+                return
+            domain_listing = add(domain=kwargs['domain'], 
+                                 mirror=[kwargs['existing']], 
+                                 pre=exists,
+                                 replace=kwargs['replace']
+                                )
+        else: # need to create a new murror from the old
+            if 'mirror_type' not in kwargs:
+                print("Need to define --mirror_type=fastly/ecs/azure/cloudfront/onion")
+                return
+            if kwargs['mirror_type'] == 'fastly':
+                mirror = fastly_replace(kwargs['domain'], kwargs['replace'])
+            elif kwargs['mirror_type'] == 'cloudfront':
+                mirror = cloudfront_replace(kwargs['domain'], kwargs['replace'])
+            elif kwargs['mirror_type'] == 'ecs':
+                mirror = ecs_replace(kwargs['domain'], kwargs['replace'])
+            elif kwargs['mirror_type'] == 'azure':
+                mirror = azure_replace(kwargs['domain'], kwargs['replace'])
+            elif kwargs['mirror_type'] == 'onion':
+                mirror = onion_add(kwargs['domain'], kwargs['replace'])
+            else:
+                print("Incorrect mirror definition! Must be one of: fastly/ecs/azure/cloudfront/onion")
+                return
 
+            domain_listing = add(domain=kwargs['domain'],
+                                 mirror=[mirror],
+                                 pre=exists,
+                                 replace=kwargs['replace'])
     return
 
 def onion_add(**kwargs):
@@ -126,7 +149,6 @@ def new_add(**kwargs):
     :kwarg <mirror_type>
     :kwarg [existing]
     :kwarg [nogithub]
-    :kwarg [replace]
     :returns nothing
     """
     mirror = ""
@@ -135,11 +157,11 @@ def new_add(**kwargs):
     if not kwargs['existing']: #New mirror
         print(f"Adding distribution to {kwargs['mirror_type']} ...")
         if kwargs['mirror_type'] == 'cloudfront':
-            mirror = cloudfront(domain=kwargs['domain'])
+            mirror = cloudfront_add(domain=kwargs['domain'])
         elif kwargs['mirror_type'] == 'azure':
             mirror = azure_add(domain=kwargs['domain'])
         elif kwargs['mirror_type'] == 'ecs':
-            mirror = ecs(domain=kwargs['domain'])
+            mirror = ecs_add(domain=kwargs['domain'])
         elif kwargs['mirror_type'] == 'fastly':
             mirror = fastly_add(domain=kwargs['domain'])
         elif kwargs['mirror_type'] == 'onion':
@@ -159,11 +181,8 @@ def new_add(**kwargs):
             print(f"You asked to add or replace an existing mirror but then didn't want it added to github! Bye!")
             return
         mirror = kwargs['existing']
-        if 'replace' in kwargs:
-            replace = kwargs['replace']
-        else:
-            replace = False
-    domain_listing = add(domain=kwargs['domain'], mirror=[mirror], pre=exists, replace=replace)
+
+    domain_listing = add(domain=kwargs['domain'], mirror=[mirror], pre=exists)
     print(f"New Domain listing: {domain_listing}")
     return
 

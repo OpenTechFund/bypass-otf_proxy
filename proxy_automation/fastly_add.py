@@ -118,10 +118,5 @@ def fastly_add(**kwargs):
 
     return fastly_domain
         
-        
-
-
-
-
-
-
+def fastly_replace(**kwargs):
+    return

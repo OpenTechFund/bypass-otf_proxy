@@ -79,3 +79,6 @@ def azure_add(**kwargs):
 
     print("Done!")
     return endpoint_full_name
+
+def azure_replace(**kwargs):
+    return
