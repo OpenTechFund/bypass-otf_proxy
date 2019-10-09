@@ -4,3 +4,4 @@ requests
 requests[socks]
 requests-html
 click
+flask

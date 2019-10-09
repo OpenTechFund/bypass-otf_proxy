@@ -36,9 +36,9 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
             new_add(domain=domain, mirror_type=mirror_type, nogithub=nogithub, existing=existing)
         else:
             if proxy:
-                mirror_detail(domain, proxy)
+                mirror_detail(domain, proxy, False)
             else:
-                mirror_detail(domain, False)
+                mirror_detail(domain, False, False)
     else:
         if testing:
             if proxy:

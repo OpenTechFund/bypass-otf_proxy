@@ -28,16 +28,16 @@ def test_domain(domain, proxy):
             response = requests.get(https_domain)
         response_return = response.status_code
         response_url = response.url
-    except requests.exceptions.SSLError:
-        if proxy:
-            response = requests.get(http_domain, proxies=request_proxy)
-        else:
-            response = requests.get(http_domain)
-        response_return = response.status_code
-        response_url = response.url
-    except:
-        print("Error!")
-        return 500, ""
+    except Exception as e:
+        try:
+            if proxy:
+                response = requests.get(http_domain, proxies=request_proxy)
+            else:
+                response = requests.get(http_domain)
+            response_return = response.status_code
+            response_url = response.url
+        except Exception as e:
+            return 500, ""
     
     return response_return, response_url
 
@@ -56,29 +56,52 @@ def test_onion(onion):
         
     return r.status_code, full_onion
 
-def mirror_detail(domain, proxy):
+def mirror_detail(domain, proxy, api):
     """
     List and test mirrors for a domain
     :arg domain
+    :arg proxy
+    :arg api
     :returns nothing
     """
-    print(f"Listing and Testing {domain}...")
+    output = {}
+    if not api:
+        print(f"Listing and Testing {domain}...")
+    else:
+        output['domain'] = domain
     exists, current_mirrors, current_onions = check(domain)
     if not exists:
-        print(f"{domain} doesn't exist in the mirror list.")
+        if not api:
+            print(f"{domain} doesn't exist in the mirror list.")
+        else:
+            output['exists'] = "False"
         return
-    print(f"Mirror list: {current_mirrors} Onions: {current_onions}")
+    if not api:    
+        print(f"Mirror list: {current_mirrors} Onions: {current_onions}")
+    else:
+        output['current_mirrors'] = current_mirrors
+        output['current_onions'] = current_onions
     mresp, murl = test_domain(domain, proxy)
-    print(f"Response code on domain: {mresp}, url: {murl}")
+    if not api:
+        print(f"Response code on domain: {mresp}, url: {murl}")
+    else:
+        output[murl] = mresp
     if current_mirrors:
         for mirror in current_mirrors:
             mresp, murl = test_domain(mirror, proxy)
-            print(f"Response code on mirror: {mresp}, url: {murl}")
+            if not api:
+                print(f"Response code on mirror: {mresp}, url: {murl}")
+            else:
+                output[murl] = mresp
     if current_onions:
         for onion in current_onions:
             mresp, murl = test_onion(onion)
-            print(f"Onion {onion}... Response code: {mresp} ... URL: {murl}") 
-    return
+            if not api:
+                print(f"Onion {onion}... Response code: {mresp} ... URL: {murl}")
+            else:
+                output[murl] = mresp
+
+    return output
 
 def domain_testing(testing, proxy):
     """

@@ -13,6 +13,7 @@ azure = "*"
 fastly = "*"
 PySocks = "*"
 click = "*"
+flask = "*"
 
 [dev-packages]
 
