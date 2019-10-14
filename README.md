@@ -3,7 +3,7 @@ Python App to set up and maintain mirrors.
 # Setup 
 
 ```
-cd proxy_automation
+cd bcapp
 export PIPENV_VENV_IN_PROJECT=1 (optional)
 pipenv install
 pipenv shell

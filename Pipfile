@@ -1,21 +1,18 @@
 [[source]]
+name = "pypi"
 url = "https://pypi.org/simple"
 verify_ssl = true
-name = "pypi"
-
-[packages]
-"boto3" = "*"
-PyGithub = "*"
-requests = {extras = ["socks"],version = "*"}
-requests-html = "*"
-lxml = "*"
-azure = "*"
-fastly = "*"
-PySocks = "*"
-click = "*"
-flask = "*"
 
 [dev-packages]
 
+[packages]
+boto3 = "*"
+requests = {extras = ["socks"],version = "*"}
+requests-html = "*"
+click = "*"
+PyGithub = "*"
+Flask = "*"
+azure = "*"
+
 [requires]
-python_version = "3.6"
+python_version = "3.7"

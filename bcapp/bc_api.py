@@ -5,7 +5,9 @@ Allows for testing and requests for BP mirrors from an API
 
 """
 from flask import Flask
-from ..mirror_tests import mirror_detail
+import sys
+sys.path.insert(0, '.')
+from mirror_tests import mirror_detail
 
 app = Flask(__name__)
 
