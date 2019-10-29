@@ -25,3 +25,10 @@ def test_domain(domain):
     """
     detail = mirror_detail(domain, False, True)
     return detail
+
+@app.route('/update/<domain>:<status>:<location>')
+def update_domain(domain, status, location):
+    """
+    update database with status and location
+    """
+    return
