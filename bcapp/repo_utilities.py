@@ -40,6 +40,31 @@ def remove_domain(domain):
             else:
                 return False
 
+def remove_mirror(**kwargs):
+    """
+    Removes a mirror or onion from a domain listing
+    :arg kwargs:<domain>
+    :arg kwargs:<remove>
+    :arg kwargs:<nogithub>
+    """
+    mirrors = domain_list()
+    for domain in mirrors['sites']:
+        if kwargs['domain'] == domain['main_domain']:
+            if '.onion' in kwargs['remove']:
+                domain['available_onions'] = [x for x in domain['available_onions'] if x != kwargs['remove']]
+            else:
+                domain['available_mirrors'] = [x for x in domain['available_mirrors'] if x != kwargs['remove']]
+            print(f"New listing: {domain}")
+            commit_msg = f"Removing {kwargs['remove']} from listing - generated automatically by script"
+
+    if not kwargs['nogithub']:
+        final_mirrors = json.dumps(mirrors, indent=4)
+        save_mirrors(final_mirrors, commit_msg)
+    else:
+        print(f"Removed {kwargs['remove']} but didn't save!")
+
+    return
+
 def save_mirrors(mirrors, commit_msg):
     configs = get_configs()
     g = Github(configs['API_key'])
@@ -94,6 +119,7 @@ def add(**kwargs):
             ('www.' + kwargs['domain'] == site['main_domain'])):
                 change = input(f"Change {site['main_domain']} (Y/n)?")
                 if change.lower() == 'n':
+                    site_add = site
                     continue
                 if '.onion' not in kwargs['mirror'][0]: # mirror not onion
                     if 'available_mirrors' in site and not replace:

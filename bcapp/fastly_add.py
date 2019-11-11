@@ -5,8 +5,8 @@ Fastly Service Automation
 import os
 import sys
 import configparser
-#sys.path.insert(0, 'fastly-py')
-#import fastly
+sys.path.insert(0, 'fastly-py')
+import fastly
 
 def fastly_add(**kwargs):
     print("Getting configs...")
@@ -118,5 +118,50 @@ def fastly_add(**kwargs):
 
     return fastly_domain
         
-def fastly_replace(**kwargs):
+def fastly_list():
+    print("Getting configs...")
+    # Set environment variables fastly needs from config file
+    config = configparser.ConfigParser()
+    CONFIG_FILE = 'fastly.cfg'
+    try:
+        config.read(CONFIG_FILE)
+    except (IOError, OSError):
+        print('Config File not found or not readable!')
+        quit()
+
+    fastly_user = config.get('FASTLY', 'FASTLY_USER')
+    os.environ['FASTLY_USER'] = fastly_user
+    fastly_api_key = config.get('FASTLY', 'FASTLY_API_KEY')
+    fastly_host = config.get('FASTLY', 'FASTLY_HOST')
+    os.environ['FASTLY_HOST'] = fastly_host
+    fastly_secure = config.get('FASTLY', 'FASTLY_SECURE')
+    os.environ['FASTLY_SECURE'] = fastly_secure
+    fastly_password = config.get('FASTLY', 'FASTLY_PASSWORD')
+    os.environ['FASTLY_PASSWORD'] = fastly_password
+
+    # login
+    api = fastly.API()
+    api.authenticate_by_key(fastly_api_key)
+
+    # list services
+    services_list = api.services()
+    print ("List of current services:")
+    count = 0
+    for service in services_list:
+        svc = vars(service)['_original_attrs']
+        print (f"{count}: {svc['name']} [{svc['id']}] Version {svc['version']}")
+         # list backends
+        backends = api.backends(svc['id'], svc['version'])
+        print(f"Number of Backends: {len(backends)}")
+        for backend in backends:
+            backend_vars = vars(backend)
+            print(f"Backend: {backend_vars['_original_attrs']['hostname']}")
+        count += 1
+
+def fastly_replace(domain, replace):
+    """
+    Replace fastly mirror
+    """
+    fastlylist = fastly_list()
+
     return

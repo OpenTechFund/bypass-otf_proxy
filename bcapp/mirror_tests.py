@@ -151,23 +151,26 @@ def domain_testing(testing, proxy):
                     has_error = True
                 else:
                     one_good_mirror = True
-        elif testing == 'onions' and 'avaliable_onions' in domain:
+        elif testing == 'onions':
             has_error = False
-            for onion in domain['available_onions']:
-                has_onion = True
-                mresp, murl = test_onion(onion)
-                print(f"Onion {onion}... Response code: {mresp} ... URL: {murl}")
-                if (int(mresp/100) != 2):
-                    error = {
-                        "main_domain": domain['main_domain'],
-                        "error_onion": onion,
-                        "response_code": mresp,
-                        "url": murl
-                    }
-                    error_mirrors.append(error)
-                    has_error = True
-                else:
-                    one_good_mirror = True
+            if 'available_onions' in domain:
+                for onion in domain['available_onions']:
+                    has_onion = True
+                    mresp, murl = test_onion(onion)
+                    print(f"Onion {onion}... Response code: {mresp} ... URL: {murl}")
+                    if (int(mresp/100) != 2):
+                        error = {
+                            "main_domain": domain['main_domain'],
+                            "error_onion": onion,
+                            "response_code": mresp,
+                            "url": murl
+                        }
+                        error_mirrors.append(error)
+                        has_error = True
+                    else:
+                        one_good_mirror = True
+            else:
+                print("No onions.")
         else: #testing onions, but domain has no onions
             print(f"{domain['main_domain']} has no available onions.")
             has_error = False

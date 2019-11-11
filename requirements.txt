@@ -8,3 +8,4 @@ azure
 Flask
 psycopg2
 Flask-SQLAlchemy
+sh

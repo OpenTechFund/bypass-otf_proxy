@@ -6,7 +6,7 @@ version 0.3
 import sys
 import configparser
 from aws_utils import cloudfront_add, ecs_add, cloudfront_replace, ecs_replace
-from repo_utilities import add, check, domain_list, remove_domain
+from repo_utilities import add, check, domain_list, remove_domain, remove_mirror
 from mirror_tests import domain_testing, mirror_detail
 from fastly_add import fastly_add, fastly_replace
 from azure_cdn import azure_add, azure_replace
@@ -14,19 +14,20 @@ import click
 
 @click.command()
 @click.option('--testing', type=click.Choice(['onions', 'noonions', 'domains']),
-    help="Domain testing of available mirrors - choose onions, nonions, or domains")
+    help="Domain testing of available mirrors - choose onions, noonions, or domains")
 @click.option('--domain', help="Domain to add/change to mirror list", type=str)
 @click.option('--proxy', type=str, help="Proxy server to use for testing/domain detail.")
 @click.option('--existing', type=str, help="Mirror exists already, just add to github.")
 @click.option('--replace', type=str, help="Mirror/onion to replace.")
 @click.option('--delete', is_flag=True, default=False, help="Delete a domain from list")
+@click.option('--remove', type=str, help="Mirror or onion to remove")
 @click.option('--domain_list', is_flag=True, default=False, help="List all domains and mirrors/onions")
 @click.option('--mirror_list', is_flag=True, help="List mirrors for domain")
 @click.option('--mirror_type', type=click.Choice(['cloudfront', 'azure', 'ecs', 'fastly', 'onion']), help="Type of mirror")
 @click.option('--nogithub', is_flag=True, default=False, help="Do not add to github")
 
 def automation(testing, domain, proxy, existing, delete, domain_list, mirror_list,
-    mirror_type, replace, nogithub):
+    mirror_type, replace, nogithub, remove):
     if domain:
         if delete:
             delete_domain(domain, nogithub)
@@ -34,6 +35,8 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
             replace_mirror(domain=domain, existing=existing, replace=replace, nogithub=nogithub, mirror_type=mirror_type)
         elif mirror_type or existing:
             new_add(domain=domain, mirror_type=mirror_type, nogithub=nogithub, existing=existing)
+        elif remove:
+            remove_mirror(domain=domain, remove=remove, nogithub=nogithub)
         else:
             if proxy:
                 mirror_detail(domain, proxy, False)
@@ -126,10 +129,14 @@ def replace_mirror(**kwargs):
                 print("Incorrect mirror definition! Must be one of: fastly/ecs/azure/cloudfront/onion")
                 return
 
-            domain_listing = add(domain=kwargs['domain'],
-                                 mirror=[mirror],
-                                 pre=exists,
-                                 replace=kwargs['replace'])
+            if kwargs['nogithub']:
+                print(f"New mirror: {mirror}. Not added to Github!")
+                return
+            else:
+                domain_listing = add(domain=kwargs['domain'],
+                                    mirror=[mirror],
+                                    pre=exists,
+                                    replace=kwargs['replace'])
     return
 
 def onion_add(**kwargs):
@@ -182,9 +189,13 @@ def new_add(**kwargs):
             return
         mirror = kwargs['existing']
 
-    domain_listing = add(domain=kwargs['domain'], mirror=[mirror], pre=exists)
-    print(f"New Domain listing: {domain_listing}")
-    return
+    if kwargs['nogithub']:
+        print(f"You added this mirror: {mirror}. But no changes were made to github")
+        return
+    else:
+        domain_listing = add(domain=kwargs['domain'], mirror=[mirror], pre=exists)
+        print(f"New Domain listing: {domain_listing}")
+        return
 
 if __name__ == '__main__':
     automation()

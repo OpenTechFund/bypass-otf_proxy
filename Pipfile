@@ -15,6 +15,7 @@ Flask = "*"
 azure = "*"
 psycopg2 = "*"
 flask-sqlalchemy = "*"
+sh = "*"
 
 [requires]
 python_version = "3.7"
