@@ -8,6 +8,7 @@ import os
 import configparser
 import click
 import sh
+import re
 from proxy_utilities import get_configs
 
 @click.command()
@@ -29,8 +30,14 @@ def analyze(codes, agents, genstats, path, recursive, unzip):
     else:
         files = get_list(path, recursive)
 
+    all_log_data = []
     for entry in files:
-        log_data = []
+        if 'nginx-access' not in entry:
+            continue
+        analyzed_log_data = {
+            'status': {},
+            'user_agent': {}
+        }
         entry_path = entry.split('/')
         file_parts = entry_path[-1].split('.')
         ext = file_parts[-1]
@@ -43,11 +50,37 @@ def analyze(codes, agents, genstats, path, recursive, unzip):
             with open(entry) as f:
                 raw_data = f.read()
         raw_data_list = raw_data.split('\n')
-        print(f"File: {entry} Length: {len(raw_data_list)}")
+        n = len(raw_data_list)
+        print(f"File: {entry} Length: {n}")
+        log_date_match = re.compile('[0-9]{2}[\/]{1}[A-Za-z]{3}[\/]{1}[0-9]{4}[:]{1}[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2}')
+        log_status_match = re.compile('[\ ]{1}[0-9]{3}[\ ]{1}')
+        for line in raw_data_list:
+            log_data = {}
+            try:
+                log_data['datetime'] = log_date_match.search(line).group(0)
+                log_data['status'] = log_status_match.search(line).group(0)
+            except:
+                continue
+            try:
+                log_data['user_agent'] = line.split(' "')[-1]
+            except:
+                continue
+            if log_data['status'] in analyzed_log_data['status']:
+                analyzed_log_data['status'][log_data['status']] += 1
+            else:
+                analyzed_log_data['status'][log_data['status']] = 1
+            if log_data['user_agent'] in analyzed_log_data['user_agent']:
+                analyzed_log_data['user_agent'][log_data['user_agent']] += 1
+            else:
+                analyzed_log_data['user_agent'][log_data['user_agent']] = 1
+        
+        for code in analyzed_log_data['status']:
+            percent = int(analyzed_log_data['status'][code]/n * 100)
+            print(f"Status Code {code} percentage: {percent}")
 
-    all_log_data = []
-
-
+        for agent in analyzed_log_data['user_agent']:
+            percent = int(analyzed_log_data['user_agent'][agent]/n * 100)
+            print(f"User agent {agent} percentage: {percent}")
     return
 
 def get_list(path, recursive):
