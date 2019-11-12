@@ -74,12 +74,16 @@ def analyze(codes, agents, genstats, path, recursive, unzip):
             else:
                 analyzed_log_data['user_agent'][log_data['user_agent']] = 1
         
-        for code in analyzed_log_data['status']:
-            percent = int(analyzed_log_data['status'][code]/n * 100)
+        ordered_status_data = sorted(analyzed_log_data['status'].items(), 
+                                     key=lambda kv: kv[1], reverse=True)
+        for (code, num) in ordered_status_data:
+            percent = num/n * 100
             print(f"Status Code {code} percentage: {percent}")
 
-        for agent in analyzed_log_data['user_agent']:
-            percent = int(analyzed_log_data['user_agent'][agent]/n * 100)
+        ordered_agent_data = sorted(analyzed_log_data['user_agent'].items(),
+                                    key=lambda kv: kv[1], reverse=True)
+        for (agent, num) in ordered_agent_data:
+            percent = num/n * 100
             print(f"User agent {agent} percentage: {percent}")
     return
 
