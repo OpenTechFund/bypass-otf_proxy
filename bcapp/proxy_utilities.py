@@ -33,7 +33,8 @@ def get_configs():
         'ecs_log_group': config.get('AWS', 'ecs_log_group'),
         'subnet': config.get('AWS', 'subnet'),
         'vpc': config.get('AWS', 'vpc'),
-        'security_group': config.get('AWS', 'security_group')
+        'security_group': config.get('AWS', 'security_group'),
+        'paths': config.get('LOGS', 'path_file')
     }
 
     return configs
