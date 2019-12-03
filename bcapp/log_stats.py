@@ -102,6 +102,7 @@ def analyze(codes, agents, genstats, path, recursive, unzip):
             ordered_agent_data = sorted(analyzed_log_data['user_agent'].items(),
                                         key=lambda kv: kv[1], reverse=True)
             for (agent, num) in ordered_agent_data:
+                
                 percent = num/n * 100
                 print(f"User agent {agent} percentage: {percent}")
     return

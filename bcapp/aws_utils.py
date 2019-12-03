@@ -331,20 +331,27 @@ def ecs_replace(domain, replace):
     print("Waiting for mirror to populate...")
     time.sleep(300)
 
-    # Get IP
+    ip = get_ip(cluster_arn, task_arns, task_definition_ARN)
+
+    return ip
+
+def get_ip(cluster_arn, task_arns, task_definition_ARN):
+    """ 
+    Get IP address of new ECS task
+    """
+    configs = get_configs()
+    session = boto3.Session(profile_name=configs['profile'])
+    client = session.client('ecs', region_name=configs['region'])
 
     ec2_client = session.client('ec2', region_name=configs['region'])
     task_arns = client.list_tasks(cluster=cluster_arn)['taskArns']
     task_details = client.describe_tasks(cluster=cluster_arn, tasks=task_arns)
     for task in task_details['tasks']:
-        print(f"Task: {task['taskDefinitionArn']}")
         if task['taskDefinitionArn'] == task_definition_ARN:
             net_details = task['attachments'][0]['details']                                                                                                                                                    
             for detail in net_details:
                 if detail['name'] == 'networkInterfaceId':
                     nets = ec2_client.describe_network_interfaces(NetworkInterfaceIds=[detail['value']])
-                    print(nets['NetworkInterfaces'][0]['Association'])
-                    mirror = nets['NetworkInterfaces'][0]['Association']['PublicIp']
-                    print(f"Mirror: {mirror}")
+                    ip = nets['NetworkInterfaces'][0]['Association']['PublicIp']
 
-    return mirror
+    return ip

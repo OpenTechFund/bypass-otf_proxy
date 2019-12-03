@@ -96,6 +96,11 @@ def add(**kwargs):
     else:
         replace = False
 
+    if 'quiet' in kwargs and kwargs['quiet']:
+        quiet = True
+    else:
+        quiet = False
+
     if not kwargs['pre']: # site is just a simple add
         if '.onion' not in kwargs['mirror'][0]: # mirror not onion
             site = {
@@ -117,10 +122,11 @@ def add(**kwargs):
             if ((site['main_domain'] == kwargs['domain']) or
             ('www.' + site['main_domain'] == kwargs['domain']) or
             ('www.' + kwargs['domain'] == site['main_domain'])):
-                change = input(f"Change {site['main_domain']} (Y/n)?")
-                if change.lower() == 'n':
-                    site_add = site
-                    continue
+                if not quiet:
+                    change = input(f"Change {site['main_domain']} (Y/n)?")
+                    if change.lower() == 'n':
+                        site_add = site
+                        continue
                 if '.onion' not in kwargs['mirror'][0]: # mirror not onion
                     if 'available_mirrors' in site and not replace:
                         site['available_mirrors'].extend(kwargs['mirror'])
@@ -128,7 +134,8 @@ def add(**kwargs):
                         site['available_mirrors'] = [x if (x != kwargs['replace']) else kwargs['mirror'][0] for x in site['available_mirrors']]
                     else:
                         site['available_mirrors'] = kwargs['mirror']
-                    print(f"Revised Mirror: {site}")
+                    if not quiet:
+                        print(f"Revised Mirror: {site}")
                 else: # onion not mirror
                     if 'available_onions' in site and not replace:
                         site['available_onions'].extend(kwargs['mirror'])
@@ -136,7 +143,8 @@ def add(**kwargs):
                         site['available_onions'] = [x if (x != kwargs['replace']) else kwargs['mirror'][0] for x in site['available_onions']]
                     else:
                         site['available_onions'] = kwargs['mirror']
-                    print(f"Revised Site: {site}")
+                    if not quiet:
+                        print(f"Revised Site: {site}")
                 site_add = site
 
     final_mirrors = json.dumps(new_mirrors, indent=4)
