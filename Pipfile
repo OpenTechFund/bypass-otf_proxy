@@ -10,12 +10,13 @@ boto3 = "*"
 requests = {extras = ["socks"],version = "*"}
 requests-html = "*"
 click = "*"
-PyGithub = "*"
-Flask = "*"
 azure = "*"
 psycopg2 = "*"
-flask-sqlalchemy = "*"
 sh = "*"
+PyGithub = "*"
+Flask = "*"
+Flask-SQLAlchemy = "*"
+Flask-Migrate = "*"
 
 [requires]
 python_version = "3.7"

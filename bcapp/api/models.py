@@ -1,22 +1,16 @@
 """
 Models for BC API
 """
-
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://localhost/bc_api'
-db = SQLAlchemy(app)
+from app import db
 
 # Create our database model
 class Domain(db.Model):
     __tablename__ = "domains"
     id = db.Column(db.Integer, primary_key=True)
-    domain_name = db.Column(db.String, unique=True)
+    domain = db.Column(db.String, unique=True)
     
-    def __init__(self, domain_name):
-        self.domain = domain_name
+    def __repr__(self):
+        return '<id {}>'.format(self.id)
 
 class Mirror(db.Model):
     __tablename__ = "mirrors"
@@ -24,8 +18,8 @@ class Mirror(db.Model):
     mirror_url = db.Column(db.String, unique=True)
     domain_id = db.Column(db.Integer)
 
-    def __init__(self, mirror_url):
-        self.mirror_url = mirror_url
+    def __repr__(self):
+        return '<id {}>'.format(self.id)
 
 class Report(db.Model):
     __tablename__ = "reports"
@@ -34,11 +28,18 @@ class Report(db.Model):
     domain_id = db.Column(db.Integer)
     mirror_id = db.Column(db.Integer)
     location = db.Column(db.String)
-    status_code = db.Column(db.Integer)
-    browser = db.Column(db.String)
-    browser_version = db.Column(db.String)
+    domain_status = db.Column(db.Integer)
+    mirror_status = db.Column(db.Integer)
+    user_agent = db.Column(db.String)
     ext_version = db.Column(db.String)
 
-    def __init__(self, date_reported):
-        self.date_reported = date_reported
+    def __repr__(self):
+        return '<id {}>'.format(self.id)
 
+class Token(db.Model):
+    __tablename__ = "auth_tokens"
+    id = db.Column(db.Integer, primary_key=True)
+    auth_token = db.Column(db.String)
+
+    def __repr__(self):
+        return '<id {}>'.format(self.id)

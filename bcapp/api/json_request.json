@@ -1,0 +1,10 @@
+{
+    "auth_token": "authentication token",
+    "domain" : "domain report is about",
+    "domain_status" : "status code for domain (is it blocked?)",
+    "mirror_url" : "url of mirror site",
+    "mirror_status" : "status code for mirror",
+    "user_agent" : "User Agent string from browser",
+    "ext_version" : "Version of extension",
+    "location" : "If we can find location"
+}

@@ -4,3 +4,5 @@ Pipfile.lock
 fastly-py/
 bc_otf_proxy.egg-info
 .vscode
+.env
+migrations
