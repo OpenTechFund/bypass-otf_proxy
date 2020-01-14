@@ -19,12 +19,19 @@ migrate = Migrate(app, db)
 
 from models import Domain, Mirror, Report, Token
 
-@app.route('/', methods=['POST'])
+@app.route('/', methods=['GET', 'POST'])
+def home():
+    """
+    Home page of API
+    """
+    return "Nothing here yet!"
+
+@app.route('/help/', methods=['GET', 'POST'])
 def help():
     """
     Return help info in JSON format
     """
-    return {"help" : "is on the way"}
+    return {"commands" : ['report', 'help']}
 
 @app.route('/report/', methods=['POST'])
 def report_domain():

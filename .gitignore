@@ -5,4 +5,5 @@ fastly-py/
 bc_otf_proxy.egg-info
 .vscode
 .env
+.env.dev
 migrations
