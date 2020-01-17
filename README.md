@@ -100,3 +100,23 @@ There are some defaults for all four systems, and if you want to change those, y
 * [Cloudfront](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cloudfront.html#CloudFront.Client.create_distribution)
 * [Fastly](https://docs.fastly.com/api/config) and [Fastly-Python](https://github.com/maxpearl/fastly-py)
 * [Azure](https://docs.microsoft.com/en-us/python/api/overview/azure/cdn?view=azure-python)
+
+## Bypass Censorship API
+
+There is an api (bcapp/api) which can take reports from the Bypass Censorship Browser extension (and eventually interface with proxies and mirrors.)
+
+To start up the API:
+
+`cd bcapp\api`
+`export FLASK_APP=app.py`
+
+The first time you run the app, set up the database:
+
+`flask db init`
+`flask db migrate`
+`flask db upgrade`
+
+Then run the app:
+
+`flask run`
+
