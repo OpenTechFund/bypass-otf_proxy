@@ -115,16 +115,18 @@ Use the .env_example to create an .env file.
 
 To start up the app, make sure you've started the virtual environment.
 
-`cd bcapp\api`
-`source .env`
+```
+cd bcapp\api
+source .env
+```
 
 The first time you run the app, set up the database:
 
-`flask db init`
-
-`flask db migrate`
-
-`flask db upgrade`
+```
+flask db init
+flask db migrate
+flask db upgrade
+```
 
 You'll likely want to do this to the database before you run the app:
 
@@ -135,8 +137,8 @@ Then you'll add that auth_token to the json request to the API.
 Then run the app:
 
 `flask run`
-or
-`flask run &` if you want it to run in the background.
+
+(or `flask run &` if you want it to run in the background.)
 
 It will be running on port 5000. This is for development purposes only.
 
