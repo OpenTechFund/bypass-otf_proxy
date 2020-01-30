@@ -24,16 +24,16 @@ def home():
     """
     Home page of API
     """
-    return "Nothing here yet!"
+    return {"app" : "Nothing here!"}
 
-@app.route('/help/', methods=['GET', 'POST'])
+@app.route('/api/v1/help/', methods=['GET', 'POST'])
 def help():
     """
     Return help info in JSON format
     """
     return {"commands" : ['report', 'help']}
 
-@app.route('/report/', methods=['POST'])
+@app.route('/api/v1/report/', methods=['POST'])
 def report_domain():
     """
     Add report of domain to database
@@ -42,27 +42,39 @@ def report_domain():
 
     # is authentication token correct?
 
-    auth_token = Token.query.filter_by(auth_token=req_data['auth_token']).first()
+    try:
+        auth_token = Token.query.filter_by(auth_token=req_data['auth_token']).first()
+    except:
+        return {"report" : "Database Error!"}
     if not auth_token:
         return {"report": "Unauthorized!"}
 
     now = datetime.datetime.now()
 
     # Have we seen this domain before?
-    domain = Domain.query.filter_by(domain=req_data['domain']).first()
+    try:
+        domain = Domain.query.filter_by(domain=req_data['domain']).first()
+    except:
+        return {"report" : "Database Error!"}
 
     if domain: # we've seen it before
         domain_id = domain.id
         # Have we seen the mirror before?
-        mirror = Mirror.query.filter_by(mirror_url=req_data['mirror_url']).first()
+        try:
+            mirror = Mirror.query.filter_by(mirror_url=req_data['mirror_url']).first()
+        except:
+            return {"report" : "Database Error!"}
         if mirror:
             mirror_id = mirror.id
         else:
             mirror = False
     else: # Let's add it
-        domain = Domain(domain=req_data['domain'])
-        db.session.add(domain)
-        db.session.commit()
+        try:
+            domain = Domain(domain=req_data['domain'])
+            db.session.add(domain)
+            db.session.commit()
+        except:
+            return {"report" : "Database Error!"}
         domain_id = domain.id
         mirror = False # No domain, no mirror
  
@@ -71,24 +83,26 @@ def report_domain():
         mirror = Mirror(
             mirror_url=req_data['mirror_url'],
             domain_id=domain_id)
-        db.session.add(mirror)
-        db.session.commit()
+        try:
+            db.session.add(mirror)
+            db.session.commit()
+        except:
+            return {"report" : "Database Error!"}
         mirror_id = mirror.id
 
     # Make the report
-    report = Report(
-        date_reported=now,
-        domain_id=domain_id,
-        mirror_id=mirror_id,
-        location=req_data['location'],
-        domain_status=req_data['domain_status'],
-        mirror_status=req_data['mirror_status'],
-        user_agent=req_data['user_agent'],
-        ext_version=req_data['ext_version']
-    )
+    req_data['date_reported'] = now
+    req_data['domain_id'] = domain_id
+    req_data['mirror_id'] = mirror_id
+    req_data.pop('domain')
+    req_data.pop('mirror_url')
+    try:
+        report = Report(**req_data)
+        db.session.add(report)
+        db.session.commit()
+    except:
+        return {"report" : "Database Error!"}
 
-    db.session.add(report)
-    db.session.commit()
 
     return {"report": "Successfully reported."}
 

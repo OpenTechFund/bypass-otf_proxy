@@ -1,5 +1,9 @@
 Python App to set up and maintain mirrors.
 
+# System
+
+All of this has been tested on Ubuntu 18.04 LTS. It should work on any Ubuntu/Debian based system. It has not been tested on Mac OS or Windows (except WSL, where it works fine), but it theoretically should work.
+
 # Setup 
 
 ```
@@ -105,18 +109,39 @@ There are some defaults for all four systems, and if you want to change those, y
 
 There is an api (bcapp/api) which can take reports from the Bypass Censorship Browser extension (and eventually interface with proxies and mirrors.)
 
-To start up the API:
+You'll need to set up a postgresql database, which the flask app has permission to access.
+
+Use the .env_example to create an .env file.
+
+To start up the app, make sure you've started the virtual environment.
 
 `cd bcapp\api`
-`export FLASK_APP=app.py`
+`source .env`
 
 The first time you run the app, set up the database:
 
 `flask db init`
+
 `flask db migrate`
+
 `flask db upgrade`
+
+You'll likely want to do this to the database before you run the app:
+
+`INSERT INTO auth_tokens (id, auth_token) VALUES ('1','some auth token here')`
+
+Then you'll add that auth_token to the json request to the API.
 
 Then run the app:
 
 `flask run`
+or
+`flask run &` if you want it to run in the background.
 
+It will be running on port 5000. This is for development purposes only.
+
+The file bcapp/api/json_request.json is the format for the json request to the API. 
+
+The URL for reporting is:
+
+http://host:5000/api/v1/report
