@@ -1,12 +1,13 @@
 """
 Automation of Creation of CDN and...
 
-version 0.3
+version 0.4
 """
 import sys
 import configparser
 from aws_utils import cloudfront_add, ecs_add, cloudfront_replace, ecs_replace
 from repo_utilities import add, check, domain_list, remove_domain, remove_mirror
+from report_utilities import domain_reporting
 from mirror_tests import domain_testing, mirror_detail
 from fastly_add import fastly_add, fastly_replace
 from azure_cdn import azure_add, azure_replace
@@ -15,7 +16,7 @@ import click
 @click.command()
 @click.option('--testing', type=click.Choice(['onions', 'noonions', 'domains']),
     help="Domain testing of available mirrors - choose onions, noonions, or domains")
-@click.option('--domain', help="Domain to add/change to mirror list", type=str)
+@click.option('--domain', help="Domain to act on", type=str)
 @click.option('--proxy', type=str, help="Proxy server to use for testing/domain detail.")
 @click.option('--existing', type=str, help="Mirror exists already, just add to github.")
 @click.option('--replace', type=str, help="Mirror/onion to replace.")
@@ -25,9 +26,11 @@ import click
 @click.option('--mirror_list', is_flag=True, help="List mirrors for domain")
 @click.option('--mirror_type', type=click.Choice(['cloudfront', 'azure', 'ecs', 'fastly', 'onion']), help="Type of mirror")
 @click.option('--nogithub', is_flag=True, default=False, help="Do not add to github")
+@click.option('--report', is_flag=True, default=False, help="Get report from api database")
+@click.option('--interactive', is_flag=True, default=True, help="Interactive reporting mode")
 
 def automation(testing, domain, proxy, existing, delete, domain_list, mirror_list,
-    mirror_type, replace, nogithub, remove):
+    mirror_type, replace, nogithub, remove, report, interactive):
     if domain:
         if delete:
             delete_domain(domain, nogithub)
@@ -37,6 +40,8 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
             new_add(domain=domain, mirror_type=mirror_type, nogithub=nogithub, existing=existing)
         elif remove:
             remove_mirror(domain=domain, remove=remove, nogithub=nogithub)
+        elif report:
+            domain_reporting(domain=domain, interactive=interactive)
         else:
             if proxy:
                 mirror_detail(domain, proxy, False)

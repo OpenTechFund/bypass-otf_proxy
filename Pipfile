@@ -17,6 +17,11 @@ PyGithub = "*"
 Flask = "*"
 Flask-SQLAlchemy = "*"
 Flask-Migrate = "*"
+pandas = "*"
+notebook = "*"
+jupyterlab = "*"
+fuzzywuzzy = "*"
+python-levenshtein = "*"
 
 [requires]
 python_version = "3.7"

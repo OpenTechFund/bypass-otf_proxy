@@ -7,3 +7,6 @@ bc_otf_proxy.egg-info
 .env
 .env.dev
 migrations
+
+# jupyter notebook files
+*.ipynb

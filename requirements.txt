@@ -10,4 +10,7 @@ psycopg2
 Flask-SQLAlchemy
 sh
 Flask-Migrate
+pandas
+
+
 

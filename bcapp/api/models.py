@@ -28,7 +28,6 @@ class Report(db.Model):
     date_reported = db.Column(db.DateTime)
     domain_id = db.Column(db.Integer)
     mirror_id = db.Column(db.Integer)
-    location = db.Column(db.String)
     domain_status = db.Column(db.Integer)
     domain_content = db.Column(db.String)
     mirror_status = db.Column(db.Integer)
