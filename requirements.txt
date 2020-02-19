@@ -11,6 +11,6 @@ Flask-SQLAlchemy
 sh
 Flask-Migrate
 pandas
-
+simple-AWS
 
 

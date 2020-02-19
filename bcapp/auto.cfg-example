@@ -18,3 +18,10 @@ subscription_id =
 tenant_id = 
 service_principal_app = 
 service_principal_key = 
+
+[LOGS]
+path_file = 
+log_storage_bucket =
+
+[SYSTEM]
+log_level = DEBUG

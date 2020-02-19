@@ -34,7 +34,9 @@ def get_configs():
         'subnet': config.get('AWS', 'subnet'),
         'vpc': config.get('AWS', 'vpc'),
         'security_group': config.get('AWS', 'security_group'),
-        'paths': config.get('LOGS', 'path_file')
+        'paths': config.get('LOGS', 'path_file'),
+        'log_storage_bucket': config.get('LOGS', 'log_storage_bucket'),
+        'log_level': config.get('SYSTEM', 'log_level')
     }
 
     return configs

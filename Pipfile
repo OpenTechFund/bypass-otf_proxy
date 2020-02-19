@@ -22,6 +22,7 @@ notebook = "*"
 jupyterlab = "*"
 fuzzywuzzy = "*"
 python-levenshtein = "*"
+simple-aws = "*"
 
 [requires]
 python_version = "3.7"
