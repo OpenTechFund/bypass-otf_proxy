@@ -5,7 +5,7 @@ Allows for testing and requests for BP mirrors from an API
 
 """
 import os
-from flask import Flask, request
+from flask import Flask, request, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 import datetime
@@ -19,13 +19,31 @@ migrate = Migrate(app, db)
 
 from models import Domain, Mirror, Report, Token
 
-@app.route('/', methods=['GET', 'POST'])
+## APP
+
+@app.route('/')
 def home():
     """
-    Home page of API
+    Home page of APP
     """
-    return {"app" : "Nothing here!"}
+    return render_template('index.html')
 
+@app.route('/profile')
+def profile():
+    """
+    Profile
+    """
+    return render_template('profile.html')
+
+@app.route('/login')
+def login():
+    """
+    Login
+    """
+    return render_template('login.html')
+
+
+## API (to be a separate blueprint?)
 @app.route('/api/v1/help/', methods=['GET', 'POST'])
 def help():
     """
@@ -105,6 +123,3 @@ def report_domain():
 
 
     return {"report": "Successfully reported."}
-
-if __name__ == '__main__':
-    app.run()

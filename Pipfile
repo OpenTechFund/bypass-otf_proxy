@@ -23,6 +23,7 @@ jupyterlab = "*"
 fuzzywuzzy = "*"
 python-levenshtein = "*"
 simple-aws = "*"
+flask-login = "*"
 
 [requires]
 python_version = "3.7"

@@ -8,6 +8,7 @@ azure
 Flask
 psycopg2
 Flask-SQLAlchemy
+Flask-Login
 sh
 Flask-Migrate
 pandas
