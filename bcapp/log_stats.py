@@ -6,50 +6,43 @@ version 0.2
 import sys
 import os
 import datetime
-import configparser
 import click
 import sh
-import re
 import logging
 from proxy_utilities import get_configs
 from simple_AWS.s3_functions import *
+from log_reporting_utilities import analyze_file, output
 
 @click.command()
 @click.option('--percent', type=int, help="Floor percentage to display for agents and codes (default is 5%)", default=5)
 @click.option('--num', type=int, help="Top number of pages to display (default is 10", default=10)
-@click.option('--path', type=str, help="Path to find file/s - will use paths file by default")
 @click.option('--recursive', is_flag=True, help="Descent through directories")
 @click.option('--unzip', is_flag=True, help="Unzip and analyze zipped log files", default=False)
 @click.option('--daemon', is_flag=True, default=False, help="Run in daemon mode. All output goes to a file.")
 @click.option('--skipsave', is_flag=True, default=False, help="Skip saving log file to S3")
 
-def analyze(path, recursive, unzip, percent, num, daemon, skipsave):
+def analyze(recursive, unzip, percent, num, daemon, skipsave):
     configs = get_configs()
-    paths = []
     now = datetime.datetime.now()
     now_string = now.strftime('%d-%b-%Y:%H:%M:%S')
     # get the file list to analyze
-    if not path:
-        # is there a path file?
-        if configs['paths']:
-            # open paths file
-            with open(configs['paths']) as pathfile:
-                raw_path_list = pathfile.read()
-            path_list = raw_path_list.split('\n')
-        paths = path_list
-    else:
-        paths.append(path)
+    if configs['paths']:
+        # open paths file
+        with open(configs['paths']) as pathfile:
+            raw_path_list = pathfile.read()
+        paths = raw_path_list.split('\n')
 
     for fpath in paths:
         if not fpath:
             continue
-        if not os.path.exists(fpath):
+        domain, path = fpath.split(':')
+        if not os.path.exists(path):
             logger.critical("Path doesn't exist!")
             return
-        if not os.path.isdir(fpath):
+        if not os.path.isdir(path):
             files = [path]
         else:
-            files = get_list(fpath, recursive)
+            files = get_list(path, recursive)
 
         all_log_data = []
         for file_name in files:
@@ -99,101 +92,10 @@ def analyze(path, recursive, unzip, percent, num, daemon, skipsave):
             s3simple.put_to_s3(key=key, body=body)
 
             logger.debug("Saving output file....")
-            key = 'log_analysis_output' + just_file_name + '-' + now_string
+            key = 'log_analysis_output-' + domain + '-' + now_string
             s3simple.put_to_s3(key=key, body=output_text)
     
     return
- 
-def analyze_file(raw_data):
-    """
-    Analyzes the raw data from the file - for status, agents and pages
-    :arg: raw_data
-    :returns: dict of dicts
-    """
-    raw_data_list = raw_data.split('\n')
-    if len(raw_data_list) < 5: # Not worth analyzing
-        return False
-    analyzed_log_data = {
-            'status': {},
-            'user_agent': {},
-            'pages_visited' : {}
-        }
-    analyzed_log_data['hits'] = len(raw_data_list)
-    log_date_match = re.compile('[0-9]{2}[\/]{1}[A-Za-z]{3}[\/]{1}[0-9]{4}[:]{1}[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2}')
-    log_status_match = re.compile('[\ ]{1}[0-9]{3}[\ ]{1}')
-    datetimes = []
-    for line in raw_data_list:
-        log_data = {}
-        try:
-            log_data['datetime'] = log_date_match.search(line).group(0)
-            log_data['status'] = log_status_match.search(line).group(0)
-        except:
-            continue
-        datetimes.append(datetime.datetime.strptime(log_data['datetime'], '%d/%b/%Y:%H:%M:%S'))
-        try:
-            log_data['user_agent'] = line.split(' "')[-1]
-        except:
-            continue
-        try:
-            log_data['page_visited'] = line.split(' "')[-3].split(' ')[1]
-        except:
-            continue
-        if log_data['status'] in analyzed_log_data['status']:
-            analyzed_log_data['status'][log_data['status']] += 1
-        else:
-            analyzed_log_data['status'][log_data['status']] = 1
-        if log_data['user_agent'] in analyzed_log_data['user_agent']:
-            analyzed_log_data['user_agent'][log_data['user_agent']] += 1
-        else:
-            analyzed_log_data['user_agent'][log_data['user_agent']] = 1
-
-        if log_data['page_visited'] in analyzed_log_data['pages_visited']:
-            analyzed_log_data['pages_visited'][log_data['page_visited']] += 1
-        else:
-            analyzed_log_data['pages_visited'][log_data['page_visited']] = 1
-
-    datetimes.sort()
-    analyzed_log_data['earliest_date'] = datetimes[0].strftime('%d/%b/%Y:%H:%M:%S')
-    analyzed_log_data['latest_date'] = datetimes[-1].strftime('%d/%b/%Y:%H:%M:%S')
-
-    return(analyzed_log_data)
-
-def output(**kwargs):
-    """
-    Creates output
-    """
-    analyzed_log_data = kwargs['data']
-    output = f"Analysis of: {kwargs['file_name']}, from {analyzed_log_data['earliest_date']} to {analyzed_log_data['latest_date']}:\n"
-    output += f"Hits: {analyzed_log_data['hits']}\n"
-
-    ordered_status_data = sorted(analyzed_log_data['status'].items(), 
-                                    key=lambda kv: kv[1], reverse=True)
-    output += "Status Codes:\n"
-    for (code, number) in ordered_status_data:
-        perc = number/analyzed_log_data['hits'] * 100
-        if perc >= kwargs['percent']:
-            output += f"{code}: {perc:.1f}%\n"
-
-    ordered_agent_data = sorted(analyzed_log_data['user_agent'].items(),
-                                key=lambda kv: kv[1], reverse=True)
-    output += f"Number of user agents: {len(ordered_agent_data)}\n"
-    for (agent, number) in ordered_agent_data:
-        perc = number/analyzed_log_data['hits'] * 100
-        if perc >= kwargs['percent']:
-            output += f"User agent {agent}: {perc:.1f}%\n"
-
-    i = 0
-    ordered_pages_visited = sorted(analyzed_log_data['pages_visited'].items(), key=lambda kv: kv[1], reverse=True)
-    output += f"Number of pages visited: {len(ordered_pages_visited)}\n"
-    output += f"Top {kwargs['num']} pages:\n"
-    for (page, number) in ordered_pages_visited:
-        perc = number/analyzed_log_data['hits'] * 100
-        output += f"Page {page}: {perc:.1f}%\n"
-        i += 1
-        if i > kwargs['num']:
-            break
-
-    return output
 
 def get_list(path, recursive):
     file_list = os.listdir(path)
