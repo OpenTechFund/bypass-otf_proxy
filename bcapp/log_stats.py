@@ -15,8 +15,8 @@ from proxy_utilities import get_configs
 from simple_AWS.s3_functions import *
 
 @click.command()
-@click.option('--percent', type=int, help="Floor percentage to display for agents and codes", default=0)
-@click.option('--num', type=int, help="Top number of pages to display", default=10)
+@click.option('--percent', type=int, help="Floor percentage to display for agents and codes (default is 5%)", default=5)
+@click.option('--num', type=int, help="Top number of pages to display (default is 10", default=10)
 @click.option('--path', type=str, help="Path to find file/s - will use paths file by default")
 @click.option('--recursive', is_flag=True, help="Descent through directories")
 @click.option('--unzip', is_flag=True, help="Unzip and analyze zipped log files", default=False)
@@ -83,6 +83,8 @@ def analyze(path, recursive, unzip, percent, num, daemon, skipsave):
 
             logger.debug("Analyzing...")
             analyzed_data = analyze_file(raw_data)
+            if not analyzed_data:
+                continue
             output_text = output(
                         file_name=file_name,
                         data=analyzed_data,
@@ -109,6 +111,8 @@ def analyze_file(raw_data):
     :returns: dict of dicts
     """
     raw_data_list = raw_data.split('\n')
+    if len(raw_data_list) < 5: # Not worth analyzing
+        return False
     analyzed_log_data = {
             'status': {},
             'user_agent': {},
