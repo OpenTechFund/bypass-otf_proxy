@@ -5,6 +5,7 @@ Used by command line and flask app
 import re
 import datetime
 from simple_AWS.s3_functions import *
+from proxy_utilities import get_configs
 
 def analyze_file(raw_data):
     """
@@ -97,11 +98,49 @@ def output(**kwargs):
 
     return output
 
-def read_latest(**kwargs):
+def domain_reports(domain, report_type):
     """
-    Read latest report file from S3 for the domain
+    Setup for log reporting on a domain
     """
-    # Get most recent output file
+    configs = get_configs()
+    # get filtered list
+    file_list = get_file_list(
+        region=configs['region'],
+        profile=configs['profile'],
+        bucket=configs['log_storage_bucket'],
+        domain=domain
+    )
+    # Sort by date
+    sorted_list = sorted(file_list, key=lambda i: i['date'], reverse=True)
+
+    if report_type == 'latest':
+        output_contents = get_output_contents(
+            bucket=configs['log_storage_bucket'],
+            profile=configs['profile'],
+            region=configs['region'],
+            output_file=sorted_list[0]['file_name'],
+            local_tmp=configs['local_tmp'])
+        return output_contents
+
+def get_output_contents(**kwargs):
+    """
+    Gets the contents of specific output file
+    """
+    s3simple = S3Simple(region_name=kwargs['region'],
+                        bucket_name=kwargs['bucket'],
+                        profile=kwargs['profile'])
+    local_file_name = kwargs['local_tmp'] + '/' + kwargs['output_file']
+    s3simple.download_file(file_name=kwargs['output_file'], output_file=local_file_name)
+
+    with open(local_file_name) as f:
+        output = f.read()
+
+    return output
+
+def get_file_list(**kwargs):
+    """
+    Get the right list of files, keyed by date
+    """
     s3simple = S3Simple(region_name=kwargs['region'],
                         bucket_name=kwargs['bucket'],
                         profile=kwargs['profile'])
@@ -109,6 +148,11 @@ def read_latest(**kwargs):
     filtered_list = []
     for single_file in file_list:
         if ('output' in single_file) and (kwargs['domain'] in single_file):
-            filtered_list.append(single_file)
+            date_search = '[0-9]{2}[-][a-zA-Z]{3}-20[0-9]{2}:[0-9]{2}:[0-9]{2}:[0-9]{2}'
+            match = re.search(date_search, single_file)
+            date = datetime.datetime.strptime(match.group(0),'%d-%b-%Y:%H:%M:%S')
+            filtered_list.append({'date': date, 'file_name': single_file})
+
+    return filtered_list
     
     

@@ -8,6 +8,7 @@ import configparser
 from aws_utils import cloudfront_add, ecs_add, cloudfront_replace, ecs_replace
 from repo_utilities import add, check, domain_list, remove_domain, remove_mirror
 from report_utilities import domain_reporting
+from log_reporting_utilities import domain_reports
 from mirror_tests import domain_testing, mirror_detail
 from fastly_add import fastly_add, fastly_replace
 from azure_cdn import azure_add, azure_replace
@@ -27,10 +28,10 @@ import click
 @click.option('--mirror_type', type=click.Choice(['cloudfront', 'azure', 'ecs', 'fastly', 'onion']), help="Type of mirror")
 @click.option('--nogithub', is_flag=True, default=False, help="Do not add to github")
 @click.option('--report', is_flag=True, default=False, help="Get report from api database")
-@click.option('--interactive', is_flag=True, default=True, help="Interactive reporting mode")
+@click.option('--mode', type=click.Choice(['daemon', 'web', 'console']), default='console', help="Mode: daemon, web, console")
 
 def automation(testing, domain, proxy, existing, delete, domain_list, mirror_list,
-    mirror_type, replace, nogithub, remove, report, interactive):
+    mirror_type, replace, nogithub, remove, report, mode):
     if domain:
         if delete:
             delete_domain(domain, nogithub)
@@ -41,12 +42,15 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
         elif remove:
             remove_mirror(domain=domain, remove=remove, nogithub=nogithub)
         elif report:
-            domain_reporting(domain=domain, interactive=interactive)
+            domain_reporting(domain=domain, mode=mode)
         else:
             if proxy:
                 mirror_detail(domain, proxy, False)
             else:
                 mirror_detail(domain, False, False)
+            report = domain_reports(domain, 'latest')
+            if mode =='console':
+                print(f"Latest Log Report: \n {report}")
     else:
         if testing:
             if proxy:

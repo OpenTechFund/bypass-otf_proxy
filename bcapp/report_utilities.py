@@ -55,7 +55,7 @@ def domain_reporting(**kwargs):
     Report for domain
     :arg kwargs
     :kwarg domain
-    :kwarg interactive
+    :kwarg mode
     :returns ?
     """
     (domains_list, mirrors_list) = lists()

@@ -36,7 +36,8 @@ def get_configs():
         'security_group': config.get('AWS', 'security_group'),
         'paths': config.get('LOGS', 'path_file'),
         'log_storage_bucket': config.get('LOGS', 'log_storage_bucket'),
-        'log_level': config.get('SYSTEM', 'log_level')
+        'log_level': config.get('SYSTEM', 'log_level'),
+        'local_tmp': config.get('SYSTEM', 'local_tmp')
     }
 
     return configs
