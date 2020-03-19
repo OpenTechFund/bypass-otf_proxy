@@ -7,8 +7,8 @@ import sys
 import configparser
 from aws_utils import cloudfront_add, ecs_add, cloudfront_replace, ecs_replace
 from repo_utilities import add, check, domain_list, remove_domain, remove_mirror
-from report_utilities import domain_reporting
-from log_reporting_utilities import domain_reports
+from report_utilities import domain_reporting, send_report
+from log_reporting_utilities import domain_log_reports
 from mirror_tests import domain_testing, mirror_detail
 from fastly_add import fastly_add, fastly_replace
 from azure_cdn import azure_add, azure_replace
@@ -44,12 +44,11 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
         elif report:
             domain_reporting(domain=domain, mode=mode)
         else:
-            if proxy:
-                mirror_detail(domain, proxy, False)
-            else:
-                mirror_detail(domain, False, False)
-            report = domain_reports(domain, 'latest')
+            domain_data = mirror_detail(domain=domain, proxy=proxy, mode=mode)
+            report = domain_log_reports(domain, 'latest')
+            reporting = send_report(domain_data, mode)
             if mode =='console':
+                print(f"Reported? {reporting}")
                 print(f"Latest Log Report: \n {report}")
     else:
         if testing:

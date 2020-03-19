@@ -1,9 +1,11 @@
 import datetime
 import os
 import re
+import socket
 import datetime
 import sqlalchemy as db
 import pandas as pd
+from proxy_utilities import get_configs
 
 def lists():
 
@@ -75,3 +77,68 @@ def domain_reporting(**kwargs):
     reports(domain_id)
 
     return
+
+def send_report(domain_data, mode):
+    """
+    Make a report to the database with
+    console-generated tests
+    :arg domain_data
+    :returns nothing
+    """
+    now = datetime.datetime.now()
+    host_name = socket.gethostname()
+    host_ip = socket.gethostbyname(host_name) 
+
+    configs = get_configs()
+
+    engine = db.create_engine(configs['database_url'])
+    connection = engine.connect()
+    metadata = db.MetaData()
+
+    domains = db.Table('domains', metadata, autoload=True, autoload_with=engine)
+    mirrors = db.Table('mirrors', metadata, autoload=True, autoload_with=engine)
+    reports = db.Table('reports', metadata, autoload=True, autoload_with=engine)
+
+    query = db.select([domains])
+    result = connection.execute(query).fetchall()
+    
+    domain_id = False
+    for entry in result:
+        d_id, domain = entry
+        if domain in domain_data['domain']:
+            domain_id = d_id
+    
+    if not domain_id: # we've not seen it before, add it
+        insert = domains.insert().values(domain=domain_data['domain'])
+        result = connection.execute(insert)
+        domain_id = result.inserted_primary_key
+    
+    # Add mirrors
+    for current_mirror in domain_data['current_mirrors']:
+        query = db.select([mirrors])
+        result = connection.execute(query).fetchall()
+        mirror_id = False
+        for entry in result:
+            m_id, m_url, d_id = entry
+            if current_mirror == m_url:
+                mirror_id = m_id
+
+        if not mirror_id: # add it
+            insert = mirrors.insert().values(mirror_url=current_mirror, domain_id=domain_id)
+            result = connection.execute(insert)
+            mirror_id = result.inserted_primary_key
+        
+        # Make report
+        report_data = {
+            'date_reported': now,
+            'domain_id': domain_id,
+            'mirror_id': mirror_id,
+            'user_agent': f'BC APP {mode}',
+            'domain_status': domain_data[domain_data['domain']],
+            'mirror_status': domain_data[current_mirror],
+            'ip': host_ip
+        }
+        insert = reports.insert().values(**report_data)
+        result = connection.execute(insert)
+
+    return True

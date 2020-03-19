@@ -3,6 +3,7 @@ import re
 import base64
 from github import Github
 import requests
+import urllib3
 from requests_html import HTMLSession
 from proxy_utilities import get_configs
 from repo_utilities import check
@@ -15,6 +16,7 @@ def test_domain(domain, proxy):
     """
     https_domain = 'https://' + domain
     http_domain = 'http://' + domain
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     if proxy:
         print(f"Using proxy: {proxy}...")
         if 'https' in proxy:
@@ -56,50 +58,48 @@ def test_onion(onion):
         
     return r.status_code, full_onion
 
-def mirror_detail(domain, proxy, api):
+def mirror_detail(**kwargs):
     """
     List and test mirrors for a domain
-    :arg domain
-    :arg proxy
-    :arg api
-    :returns nothing
+    :arg kwargs:
+    :kwarg domain
+    :kwarg proxy
+    :kwarg mode
+    :returns: json with data
     """
     output = {}
-    if not api:
+    domain = kwargs['domain']
+    if kwargs['mode'] == 'console':
         print(f"Listing and Testing {domain}...")
-    else:
-        output['domain'] = domain
+    output['domain'] = domain
     exists, current_mirrors, current_onions = check(domain)
     if not exists:
-        if not api:
+        if kwargs['mode'] == 'console':
             print(f"{domain} doesn't exist in the mirror list.")
-        else:
-            output['exists'] = "False"
+        output['exists'] = "False"
         return
-    if not api:    
+    if kwargs['mode'] == 'console':  
         print(f"Mirror list: {current_mirrors} Onions: {current_onions}")
-    else:
-        output['current_mirrors'] = current_mirrors
-        output['current_onions'] = current_onions
-    mresp, murl = test_domain(domain, proxy)
-    if not api:
+
+    output['current_mirrors'] = current_mirrors
+    output['current_onions'] = current_onions
+
+    mresp, murl = test_domain(domain, kwargs['proxy'])
+    if kwargs['mode'] == 'console':
         print(f"Response code on domain: {mresp}, url: {murl}")
-    else:
-        output[murl] = mresp
+    output[domain] = mresp
     if current_mirrors:
         for mirror in current_mirrors:
-            mresp, murl = test_domain(mirror, proxy)
-            if not api:
+            mresp, murl = test_domain(mirror, kwargs['proxy'])
+            if kwargs['mode'] == 'console':
                 print(f"Response code on mirror: {mresp}, url: {murl}")
-            else:
-                output[murl] = mresp
+            output[mirror] = mresp
     if current_onions:
         for onion in current_onions:
             mresp, murl = test_onion(onion)
-            if not api:
+            if kwargs['mode'] == 'console':
                 print(f"Onion {onion}... Response code: {mresp} ... URL: {murl}")
-            else:
-                output[murl] = mresp
+            output[onion] = mresp
 
     return output
 

@@ -37,7 +37,8 @@ def get_configs():
         'paths': config.get('LOGS', 'path_file'),
         'log_storage_bucket': config.get('LOGS', 'log_storage_bucket'),
         'log_level': config.get('SYSTEM', 'log_level'),
-        'local_tmp': config.get('SYSTEM', 'local_tmp')
+        'local_tmp': config.get('SYSTEM', 'local_tmp'),
+        'database_url': config.get('DATABASE', 'url')
     }
 
     return configs

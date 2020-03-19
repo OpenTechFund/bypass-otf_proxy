@@ -98,7 +98,7 @@ def output(**kwargs):
 
     return output
 
-def domain_reports(domain, report_type):
+def domain_log_reports(domain, report_type):
     """
     Setup for log reporting on a domain
     """

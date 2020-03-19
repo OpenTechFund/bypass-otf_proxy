@@ -25,3 +25,7 @@ log_storage_bucket =
 
 [SYSTEM]
 log_level = DEBUG
+local_tmp = 
+
+[DATABASE]
+url = 
