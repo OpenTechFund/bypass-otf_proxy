@@ -15,6 +15,8 @@ def analyze_file(raw_data, paths_ignore):
     """
     if paths_ignore:
         paths_ignore_list = paths_ignore.split(',')
+    else:
+        paths_ignore_list = False
     raw_data_list = raw_data.split('\n')
     if len(raw_data_list) < 5: # Not worth analyzing
         return False
@@ -55,12 +57,13 @@ def analyze_file(raw_data, paths_ignore):
             ('.ttf' in log_data['page_visited']) or
             ('favicon.ico' in log_data['page_visited'])):
             continue
-        should_skip = False
-        for ignore in paths_ignore_list:
-            if ignore in log_data['page_visited']:
-                should_skip = True
-        if should_skip:
-            continue
+        if paths_ignore_list:
+            should_skip = False
+            for ignore in paths_ignore_list:
+                if ignore in log_data['page_visited']:
+                    should_skip = True
+            if should_skip:
+                continue
         if log_data['status'] in analyzed_log_data['status']:
             analyzed_log_data['status'][log_data['status']] += 1
         else:
