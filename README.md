@@ -94,6 +94,8 @@ To add a new mirror, for Cloudfront, Fastly, Azure or ECS use:
 
 (The cloudfront, fastly, azure and ecs processes are automated. The onion process is not.)
 
+The ECS process uses a docker container (pearlbear/python-mirror) with specifications [here](https://hub.docker.com/r/pearlbear/python-mirror). That is specified in auto.cfg. If you want to use a different container, just change the image there. 
+
 If you want a cloudfront distro, it will create that for you, and tell you the domain. For Fastly and Azure, you'll have to specify the Fastly and Azure subdomain (Cloudfront specifies a subdomain for you, Fastly and Azure require you to define it.)
 
 All configurations are in auto.cfg (see auto.cfg-example)
