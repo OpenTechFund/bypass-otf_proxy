@@ -7,12 +7,13 @@ import datetime
 from simple_AWS.s3_functions import *
 from proxy_utilities import get_configs
 
-def analyze_file(raw_data):
+def analyze_file(raw_data, paths_ignore):
     """
     Analyzes the raw data from the file - for status, agents and pages
     :arg: raw_data
     :returns: dict of dicts
     """
+    paths_ignore_list = paths_ignore.split(',')
     raw_data_list = raw_data.split('\n')
     if len(raw_data_list) < 5: # Not worth analyzing
         return False
@@ -40,6 +41,24 @@ def analyze_file(raw_data):
         try:
             log_data['page_visited'] = line.split(' "')[-3].split(' ')[1]
         except:
+            continue
+        if (('.css' in log_data['page_visited']) or 
+            ('.png' in log_data['page_visited']) or
+            ('.js' in log_data['page_visited']) or
+            ('.svg' in log_data['page_visited']) or
+            ('.jpg' in log_data['page_visited']) or
+            ('.jpeg' in log_data['page_visited']) or
+            ('.gif' in log_data['page_visited']) or
+            ('.woff2' in log_data['page_visited']) or
+            ('.woff' in log_data['page_visited']) or
+            ('.ttf' in log_data['page_visited']) or
+            ('favicon.ico' in log_data['page_visited'])):
+            continue
+        should_skip = False
+        for ignore in paths_ignore_list:
+            if ignore in log_data['page_visited']:
+                should_skip = True
+        if should_skip:
             continue
         if log_data['status'] in analyzed_log_data['status']:
             analyzed_log_data['status'][log_data['status']] += 1
@@ -91,7 +110,7 @@ def output(**kwargs):
     output += f"Top {kwargs['num']} pages:\n"
     for (page, number) in ordered_pages_visited:
         perc = number/analyzed_log_data['hits'] * 100
-        output += f"Page {page}: {perc:.1f}%\n"
+        output += f"Page {page}: {number} {perc:.1f}%\n"
         i += 1
         if i > kwargs['num']:
             break

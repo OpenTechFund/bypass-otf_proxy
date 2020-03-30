@@ -20,8 +20,9 @@ from log_reporting_utilities import analyze_file, output
 @click.option('--unzip', is_flag=True, help="Unzip and analyze zipped log files", default=False)
 @click.option('--daemon', is_flag=True, default=False, help="Run in daemon mode. All output goes to a file.")
 @click.option('--skipsave', is_flag=True, default=False, help="Skip saving log file to S3")
+@click.option('--paths_ignore', type=str, help="Comma delimited list (no spaces) of paths to ignore for log analysis.")
 
-def analyze(recursive, unzip, percent, num, daemon, skipsave):
+def analyze(recursive, unzip, percent, num, daemon, skipsave, paths_ignore):
     configs = get_configs()
     now = datetime.datetime.now()
     now_string = now.strftime('%d-%b-%Y:%H:%M:%S')
@@ -75,7 +76,7 @@ def analyze(recursive, unzip, percent, num, daemon, skipsave):
                 s3simple.send_file_to_s3(local_file=file_name, s3_file=s3_file)
 
             logger.debug("Analyzing...")
-            analyzed_data = analyze_file(raw_data)
+            analyzed_data = analyze_file(raw_data, paths_ignore)
             if not analyzed_data:
                 continue
             output_text = output(
