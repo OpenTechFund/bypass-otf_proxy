@@ -5,13 +5,15 @@ import boto3
 import json
 import re
 import time
-from datetime import tzinfo
+import logging
+from datetime import tzinfo, datetime
 from dateutil.tz import tzutc
 from aws_utils import get_ip
 from proxy_utilities import get_configs
 from repo_utilities import domain_list, add
 
 def mirror_renew():
+    now = datetime.now()
     configs = get_configs()
 
     dom_list = domain_list()
@@ -45,7 +47,9 @@ def mirror_renew():
                         net_info = nets['NetworkInterfaces'][0]['Association']
                         ip_address = net_info['PublicIp']
                         for domain in ip_list:
+                            logger.debug(f"Domain {domain} IP {ip_list[domain]}...")
                             if ip_address in ip_list[domain]:
+                                logger.debug(f"Found IP address {ip_address} for task {task['taskDefinitionArn']}")
                                 if '/' in ip_list[domain]:
                                     old_ip, mirror_specifics = ip_list[domain].split('/', 1)
                                     mirror_specifics = '/' + mirror_specifics
@@ -57,11 +61,13 @@ def mirror_renew():
                                 task_arn = task['taskArn']
 
                                 # Stop task
+                                logger.debug("Restarting task...")
                                 response = client.stop_task(
                                     cluster=cluster_arn,
                                     task=task_arn
                                 )
                                 # Wait
+                                logger.debug("Waiting for service restart...")
                                 waiter = client.get_waiter('services_stable')
                                 waiter.wait(cluster=cluster_arn, services=[service])  
                                 # and wait some more 5 minutes for mirror to populate
@@ -69,7 +75,7 @@ def mirror_renew():
 
                                 ip = get_ip(cluster_arn, task_arns, task_definition_ARN)
                                 new_mirror = ip + mirror_specifics
-                                print(f"Replacing {domain} mirror with New IP: {ip} - final new mirror: {new_mirror}")
+                                logger.info(f"{now}: Replacing {domain} mirror with New IP: {ip} - final new mirror: {new_mirror}")
 
                                 domain_listing = add(domain=domain,
                                         mirror=[new_mirror],
@@ -78,4 +84,21 @@ def mirror_renew():
                                         quiet=True)
 
 if __name__ == '__main__':
+    configs = get_configs()
+    log = configs['log_level']
+    logger = logging.getLogger('logger')  # instantiate clogger
+    logger.setLevel(logging.DEBUG)  # pass DEBUG and higher values to handler
+
+    ch = logging.StreamHandler()  # use StreamHandler, which prints to stdout
+    ch.setLevel(configs['log_level'])  # ch handler uses the configura
+
+    # create formatter
+    # display the function name and logging level in columnar format if
+    # logging mode is 'DEBUG'
+    formatter = logging.Formatter('[%(funcName)24s] [%(levelname)8s] %(message)s')
+
+    # add formatter to ch
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+
     mirror_renew()

@@ -112,7 +112,7 @@ def get_list(path, recursive):
 if __name__ == '__main__':
     configs = get_configs()
     log = configs['log_level']
-    logger = logging.getLogger('clogger')  # instantiate clogger
+    logger = logging.getLogger('logger')  # instantiate clogger
     logger.setLevel(logging.DEBUG)  # pass DEBUG and higher values to handler
 
     ch = logging.StreamHandler()  # use StreamHandler, which prints to stdout
