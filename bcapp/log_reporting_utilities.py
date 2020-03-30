@@ -13,7 +13,8 @@ def analyze_file(raw_data, paths_ignore):
     :arg: raw_data
     :returns: dict of dicts
     """
-    paths_ignore_list = paths_ignore.split(',')
+    if paths_ignore:
+        paths_ignore_list = paths_ignore.split(',')
     raw_data_list = raw_data.split('\n')
     if len(raw_data_list) < 5: # Not worth analyzing
         return False
