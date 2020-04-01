@@ -16,10 +16,10 @@ All of this has been tested on Ubuntu 18.04 LTS. It should work on any Ubuntu/De
 
 # Prerequisites
 
-You need: 
+You need (some of these are optional): 
 
 - a server to host this
-- an AWS account that has permission to create Cloudfront Distributions and ECS containers/services
+- an AWS account that has permission to create/read/write Cloudfront Distributions, ECS containers/services, and S3 buckets
 - a Fastly account that has permission to create new configurations
 - an Azure account with permissions to create new CDN distributions
 - a Github repo for mirrors in JSON format that is read by the [Bypass Censorship Extension](https://github.com/OpenTechFund/bypass-censorship-extension) browser extension. An example [is here](https://github.com/OpenTechFund/bypass-mirrors)
@@ -36,6 +36,8 @@ pipenv shell
 ```
 
 # Mirror Application
+
+The use case for this application is that there are websites which has been censored by some state actor that you want people to have access to. This will allow you to set up and maintain proxy "mirrors' using CDNs (Content Display Networks) and actual mirrors using ECS and docker containers.
 
 ## Usage
 ```
@@ -121,7 +123,7 @@ To delete an entire domain and it's mirrors/onions, use:
 
 ## Mode
 
-Daemon mode is for things like cron jobs - 
+Daemon mode is for things like cron jobs - it suppresses output.
 
 ## Notes
 
@@ -194,51 +196,4 @@ The paths_ignore option is for the analysis of pages visited. The code eliminate
 
 # Flask Application (work in progress)
 
-## Installation/setup
-
-You'll need to set up a postgresql database, which the flask app has permission to access.
-
-Use the .env_example to create an .env file.
-
-To start up the app, make sure you've started the virtual environment.
-
-```
-cd bcapp\api
-source .env
-```
-
-The first time you run the app, set up the database:
-
-```
-flask db init
-flask db migrate
-flask db upgrade
-```
-
-Then run the app:
-
-`flask run`
-
-(or `flask run &` if you want it to run in the background.)
-
-It will be running on port 5000. This is for development purposes only.
-
-## Bypass Censorship API
-
-The API uses auth tokens just to protect from spurious/malicious reporting. You'll likely want to do this to the database before you run the app:
-
-`INSERT INTO auth_tokens (id, auth_token) VALUES ('1','some auth token here')`
-
-Then you'll add that auth_token to the json request to the API.
-
-This api (bcapp/api) can take reports from the Bypass Censorship Browser extension (and eventually interface with proxies and mirrors.) This is currently a work in progress.
-
-The file bcapp/api/json_request.json is the format for the json request to the API. 
-
-The URL for reporting is: http://host:5000/api/v1/report (development purposes)
-
-## Mirrors/Onions status reporting
-
-
-## EOTK log file reporting
- 
+See documentation [here](bcapp/flaskapp/README.md)
