@@ -66,7 +66,7 @@ def analyze(recursive, unzip, percent, num, daemon, skipsave, paths_ignore, just
             # send to S3
             if not skipsave:
                 logger.debug("sending to s3...")
-                s3_file =  'raw_log_file-' + just_file_name + '-' + now_string
+                s3_file =  'raw_log_file-' + domain + '-' + just_file_name + '-' + now_string
                 s3simple.send_file_to_s3(local_file=file_name, s3_file=s3_file)
 
             if not justsave:
