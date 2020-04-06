@@ -169,6 +169,8 @@ Options:
   --skipsave           Skip saving log file to S3
   --paths_ignore TEXT  Comma delimited list (no spaces) of paths to ignore for
                        log analysis.
+  --justsave           Just save log files to S3, don't run any analysis.
+  --read_s3            Read logfiles from S3, not from local paths.
   --help               Show this message and exit.
 ```
 

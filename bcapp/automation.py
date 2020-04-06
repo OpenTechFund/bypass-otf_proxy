@@ -5,6 +5,7 @@ version 0.4
 """
 import sys
 import configparser
+import logging
 from aws_utils import cloudfront_add, ecs_add, cloudfront_replace, ecs_replace
 from repo_utilities import add, check, domain_list, remove_domain, remove_mirror
 from report_utilities import domain_reporting, send_report
@@ -206,4 +207,21 @@ def new_add(**kwargs):
         return
 
 if __name__ == '__main__':
+    configs = get_configs()
+    log = configs['log_level']
+    logger = logging.getLogger('logger')  # instantiate clogger
+    logger.setLevel(logging.DEBUG)  # pass DEBUG and higher values to handler
+
+    ch = logging.StreamHandler()  # use StreamHandler, which prints to stdout
+    ch.setLevel(configs['log_level'])  # ch handler uses the configura
+
+    # create formatter
+    # display the function name and logging level in columnar format if
+    # logging mode is 'DEBUG'
+    formatter = logging.Formatter('[%(funcName)24s] [%(levelname)8s] %(message)s')
+
+    # add formatter to ch
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+    
     automation()

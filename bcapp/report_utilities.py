@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 import re
 import socket
@@ -6,6 +7,8 @@ import datetime
 import sqlalchemy as db
 import pandas as pd
 from proxy_utilities import get_configs
+
+logger = logging.getLogger('logger')
 
 def lists():
 
@@ -85,6 +88,8 @@ def send_report(domain_data, mode):
     :arg domain_data
     :returns nothing
     """
+
+    logger.debug(f"Domain Data: {domain_data}")
     now = datetime.datetime.now()
     host_name = socket.gethostname()
     host_ip = socket.gethostbyname(host_name) 
@@ -140,5 +145,39 @@ def send_report(domain_data, mode):
         }
         insert = reports.insert().values(**report_data)
         result = connection.execute(insert)
+
+    if 'current_onions' not in domain_data:
+        return True
+
+    onions = db.Table('onions', metadata, autoload=True, autoload_with=engine)
+    onion_reports = db.Table('onion_reports', metadata, autoload=True, autoload_with=engine)
+
+    query = db.select([onions])
+    o_result = connection.execute(query).fetchall()
+
+    # Do we have onions for this domain?
+    onion_id = False
+    for entry in o_result:
+        o_id, d_id, onion = entry
+        if d_id == domain_id: #we've got it
+            onion_id = o_id
+    
+    for current_onion in domain_data['current_onions']:
+        if not onion_id: # don't have it, need to add it
+            insert = onions.insert().values(domain_id=domain_id, onion=)
+            result = connection.execute(insert)
+            onion_id = result.inserted_primary_key
+
+        # Make report
+        onion_report_data = {
+            'date_reported': now,
+            'domain_id': domain_id,
+            'onion_id': onion_id,
+            'user_agent': f'BC APP {mode}',
+            'onion_status': domain_data[domain_data['domain']],
+        }
+        insert = onion_reports.insert().values(**onion_report_data)
+        result = connection.execute(insert)
+        logger.debug(f"Report insert Result: {result}")
 
     return True

@@ -21,8 +21,10 @@ from log_reporting_utilities import analyze_file, output
 @click.option('--daemon', is_flag=True, default=False, help="Run in daemon mode. All output goes to a file.")
 @click.option('--skipsave', is_flag=True, default=False, help="Skip saving log file to S3")
 @click.option('--paths_ignore', type=str, help="Comma delimited list (no spaces) of paths to ignore for log analysis.")
+@click.option('--justsave', is_flag=True, default=False, help="Just save log files to S3, don't run any analysis.")
+@click.option('--read_s3', is_flag=True, default=False, help="Read logfiles from S3, not from local paths.")
 
-def analyze(recursive, unzip, percent, num, daemon, skipsave, paths_ignore):
+def analyze(recursive, unzip, percent, num, daemon, skipsave, paths_ignore, justsave, read_s3):
     configs = get_configs()
     now = datetime.datetime.now()
     now_string = now.strftime('%d-%b-%Y:%H:%M:%S')
@@ -57,14 +59,6 @@ def analyze(recursive, unzip, percent, num, daemon, skipsave, paths_ignore):
             if ((ext != 'log') and
                 (ext != 'bz2')): # not a log file, nor a zipped log file
                 continue
-            if ext == 'bz2':
-                if unzip:
-                    raw_data = sh.bunzip2("-k", "-c", file_name)
-                else:
-                    continue
-            else:
-                with open(file_name) as f:
-                    raw_data = f.read()
             
             s3simple = S3Simple(region_name=configs['region'],
                                 profile=configs['profile'],
@@ -72,29 +66,39 @@ def analyze(recursive, unzip, percent, num, daemon, skipsave, paths_ignore):
             # send to S3
             if not skipsave:
                 logger.debug("sending to s3...")
-                s3_file =  'raw_log_file-' + just_file_name + now_string
+                s3_file =  'raw_log_file-' + just_file_name + '-' + now_string
                 s3simple.send_file_to_s3(local_file=file_name, s3_file=s3_file)
 
-            logger.debug("Analyzing...")
-            analyzed_data = analyze_file(raw_data, paths_ignore)
-            if not analyzed_data:
-                continue
-            output_text = output(
-                        file_name=file_name,
-                        data=analyzed_data,
-                        percent=percent,
-                        num=num)
-            if not daemon:
-                print(output_text)
+            if not justsave:
+                logger.debug("Analyzing...")
+                if ext == 'bz2':
+                    if unzip:
+                        raw_data = sh.bunzip2("-k", "-c", file_name)
+                    else:
+                        continue
+                else:
+                    with open(file_name) as f:
+                        raw_data = f.read()
 
-            logger.debug("Saving log analysis file...")
-            key = 'log_analysis' + just_file_name + '-' + now_string
-            body = str(analyzed_data)
-            s3simple.put_to_s3(key=key, body=body)
+                analyzed_data = analyze_file(raw_data, paths_ignore)
+                if not analyzed_data:
+                    continue
+                output_text = output(
+                            file_name=file_name,
+                            data=analyzed_data,
+                            percent=percent,
+                            num=num)
+                if not daemon:
+                    print(output_text)
 
-            logger.debug("Saving output file....")
-            key = 'log_analysis_output-' + domain + '-' + now_string
-            s3simple.put_to_s3(key=key, body=output_text)
+                logger.debug("Saving log analysis file...")
+                key = 'log_analysis' + just_file_name + '-' + now_string
+                body = str(analyzed_data)
+                s3simple.put_to_s3(key=key, body=body)
+
+                logger.debug("Saving output file....")
+                key = 'log_analysis_output-' + domain + '-' + now_string
+                s3simple.put_to_s3(key=key, body=output_text)
     
     return
 

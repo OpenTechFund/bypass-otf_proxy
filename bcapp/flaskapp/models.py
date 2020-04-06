@@ -12,6 +12,26 @@ class Domain(db.Model):
     def __repr__(self):
         return '<id {}>'.format(self.id)
 
+class Onion(db.Model):
+    __tablename__ = "onions"
+    id = db.Column(db.Integer, primary_key=True)
+    domain_id = db_Column(db.Integer)
+    onion = db.Column(db.String, unique=True)
+
+    def __repr__(self):
+        return '<id {}>'.format(self.id)
+
+class OnionReport(db.Model):
+    __tablename__ = "onion_reports"
+    id = db.Column(db.Integer, primary_key=True)
+    onion_id = db.Column(db.Integer)
+    date_reported = db.Column(db.DateTime)
+    onion_status = db.Column(db.Integer)
+    user_agent = db.Column(db.String)
+
+    def __repr__(self):
+        return '<id {}>'.format(self.id)
+
 class Mirror(db.Model):
     __tablename__ = "mirrors"
     id = db.Column(db.Integer, primary_key=True)

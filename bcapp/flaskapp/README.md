@@ -7,7 +7,7 @@ Use the .env_example to create an .env file.
 To start up the app, make sure you've started the virtual environment.
 
 ```
-cd bcapp\api
+cd bcapp\flaskapp
 source .env
 ```
 
