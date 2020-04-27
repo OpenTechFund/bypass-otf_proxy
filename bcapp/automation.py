@@ -6,13 +6,14 @@ version 0.4
 import sys
 import configparser
 import logging
-from aws_utils import cloudfront_add, ecs_add, cloudfront_replace, ecs_replace
+from aws_utils import cloudfront_add, cloudfront_replace
 from repo_utilities import add, check, domain_list, remove_domain, remove_mirror
 from report_utilities import domain_reporting, send_report
 from log_reporting_utilities import domain_log_reports
 from mirror_tests import domain_testing, mirror_detail
 from fastly_add import fastly_add, fastly_replace
 from azure_cdn import azure_add, azure_replace
+from proxy_utilities import get_configs
 import click
 
 @click.command()
@@ -26,7 +27,7 @@ import click
 @click.option('--remove', type=str, help="Mirror or onion to remove")
 @click.option('--domain_list', is_flag=True, default=False, help="List all domains and mirrors/onions")
 @click.option('--mirror_list', is_flag=True, help="List mirrors for domain")
-@click.option('--mirror_type', type=click.Choice(['cloudfront', 'azure', 'ecs', 'fastly', 'onion']), help="Type of mirror")
+@click.option('--mirror_type', type=click.Choice(['cloudfront', 'azure', 'fastly', 'onion']), help="Type of mirror")
 @click.option('--nogithub', is_flag=True, default=False, help="Do not add to github")
 @click.option('--report', is_flag=True, default=False, help="Get report from api database")
 @click.option('--mode', type=click.Choice(['daemon', 'web', 'console']), default='console', help="Mode: daemon, web, console")
@@ -46,11 +47,13 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
             domain_reporting(domain=domain, mode=mode)
         else:
             domain_data = mirror_detail(domain=domain, proxy=proxy, mode=mode)
+            """
             report = domain_log_reports(domain, 'latest')
             reporting = send_report(domain_data, mode)
             if mode =='console':
                 print(f"Reported? {reporting}")
                 print(f"Latest Log Report: \n {report}")
+            """
     else:
         if testing:
             if proxy:
@@ -122,20 +125,18 @@ def replace_mirror(**kwargs):
                                 )
         else: # need to create a new murror from the old
             if 'mirror_type' not in kwargs:
-                print("Need to define --mirror_type=fastly/ecs/azure/cloudfront/onion")
+                print("Need to define --mirror_type=fastly/azure/cloudfront/onion")
                 return
             if kwargs['mirror_type'] == 'fastly':
                 mirror = fastly_replace(kwargs['domain'], kwargs['replace'])
             elif kwargs['mirror_type'] == 'cloudfront':
                 mirror = cloudfront_replace(kwargs['domain'], kwargs['replace'])
-            elif kwargs['mirror_type'] == 'ecs':
-                mirror = ecs_replace(kwargs['domain'], kwargs['replace'])
             elif kwargs['mirror_type'] == 'azure':
                 mirror = azure_replace(kwargs['domain'], kwargs['replace'])
             elif kwargs['mirror_type'] == 'onion':
                 mirror = onion_add(kwargs['domain'], kwargs['replace'])
             else:
-                print("Incorrect mirror definition! Must be one of: fastly/ecs/azure/cloudfront/onion")
+                print("Incorrect mirror definition! Must be one of: fastly/azure/cloudfront/onion")
                 return
 
             if kwargs['nogithub']:
@@ -176,14 +177,12 @@ def new_add(**kwargs):
             mirror = cloudfront_add(domain=kwargs['domain'])
         elif kwargs['mirror_type'] == 'azure':
             mirror = azure_add(domain=kwargs['domain'])
-        elif kwargs['mirror_type'] == 'ecs':
-            mirror = ecs_add(domain=kwargs['domain'])
         elif kwargs['mirror_type'] == 'fastly':
             mirror = fastly_add(domain=kwargs['domain'])
         elif kwargs['mirror_type'] == 'onion':
             mirror = onion_add(domain=kwargs['domain'])
         else:
-            print("Need to define type of mirror. Use --mirror_type=cloudfront/azure/ecs/fastly/onion")
+            print("Need to define type of mirror. Use --mirror_type=cloudfront/azure/fastly/onion")
             return
         if not mirror:
             print(f"Sorry, mirror not created for {kwargs['domain']}!")

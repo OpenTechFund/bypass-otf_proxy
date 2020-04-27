@@ -164,7 +164,7 @@ def send_report(domain_data, mode):
     
     for current_onion in domain_data['current_onions']:
         if not onion_id: # don't have it, need to add it
-            insert = onions.insert().values(domain_id=domain_id, onion=)
+            insert = onions.insert().values(domain_id=domain_id, onion=current_onion)
             result = connection.execute(insert)
             onion_id = result.inserted_primary_key
 

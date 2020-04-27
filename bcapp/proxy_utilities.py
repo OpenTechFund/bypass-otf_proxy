@@ -2,6 +2,10 @@
 Utilities
 """
 import configparser
+import os
+import logging
+
+logger = logging.getLogger('logger')
 
 def get_configs():
     """
@@ -11,11 +15,11 @@ def get_configs():
     """
     # Read configs
     config = configparser.ConfigParser()
-    
+
     try:
         config.read('auto.cfg')
     except configparser.Error:
-        print('Config File not found or not readable!')
+        logger.info('Config File not found or not readable!')
         quit()
 
     configs = {
@@ -30,7 +34,6 @@ def get_configs():
         'azure_app': config.get('AZURE', 'service_principal_app'),
         'azure_key': config.get('AZURE', 'service_principal_key'),
         'mirror_docker_image': config.get('AWS', 'mirror_docker_image'),
-        'ecs_log_group': config.get('AWS', 'ecs_log_group'),
         'subnet': config.get('AWS', 'subnet'),
         'vpc': config.get('AWS', 'vpc'),
         'security_group': config.get('AWS', 'security_group'),

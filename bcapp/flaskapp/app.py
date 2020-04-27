@@ -9,6 +9,8 @@ from flask import Flask, request, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 import datetime
+import sys
+sys.path.insert(0,'.')
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
@@ -17,7 +19,8 @@ app.config.from_object(os.environ['APP_SETTINGS'])
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-from models import Domain, Mirror, Report, Token
+import models
+#from models import Domain, Mirror, Report, Token
 
 ## APP
 

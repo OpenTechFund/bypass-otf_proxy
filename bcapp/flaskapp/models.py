@@ -15,7 +15,7 @@ class Domain(db.Model):
 class Onion(db.Model):
     __tablename__ = "onions"
     id = db.Column(db.Integer, primary_key=True)
-    domain_id = db_Column(db.Integer)
+    domain_id = db.Column(db.Integer)
     onion = db.Column(db.String, unique=True)
 
     def __repr__(self):

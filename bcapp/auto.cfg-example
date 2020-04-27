@@ -2,7 +2,6 @@
 roleArn = 
 profile = 
 region = 
-ecs_log_group = 
 mirror_docker_image = 
 subnet = 
 security_group = 
