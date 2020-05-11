@@ -180,6 +180,8 @@ Log files and analysis goes to S3 in the bucket specified in "log_storage_bucket
 
 The paths_ignore option is for the analysis of pages visited. The code eliminates most assets from reporting (currently, .css, .js, .jpg, .jpeg, .gif, .woff, .woff2, .svg, .ttf, and favicon.ico.) The paths_ignore allows you to ignore complete paths, like /ad, for example. Do not include spaces in this list.
 
+Use the 'read_s3' options to read files from the S3 bucket, and not look at local files. 
+
 # Flask Application (work in progress)
 
 See documentation [here](bcapp/flaskapp/README.md)

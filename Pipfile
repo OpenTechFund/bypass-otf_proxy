@@ -10,7 +10,6 @@ boto3 = "*"
 requests = {extras = ["socks"],version = "*"}
 requests-html = "*"
 click = "*"
-azure = "*"
 psycopg2 = "*"
 sh = "*"
 PyGithub = "*"
@@ -24,6 +23,7 @@ fuzzywuzzy = "*"
 python-levenshtein = "*"
 simple-aws = "*"
 flask-login = "*"
+python-dotenv = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "3.8"

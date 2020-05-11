@@ -29,6 +29,9 @@ logger = logging.getLogger('logger')
 @click.option('--range', type=int, help="Days of log file age to analyze. Default is 10", default=10)
 
 def analyze(recursive, unzip, percent, num, daemon, skipsave, paths_ignore, justsave, read_s3, range):
+
+    import faulthandler; faulthandler.enable()
+    
     configs = get_configs()
     now = datetime.datetime.now()
     now_string = now.strftime('%d-%b-%Y:%H:%M:%S')
