@@ -87,7 +87,7 @@ def analyze(recursive, unzip, percent, num, daemon, skipsave, paths_ignore, just
 
         all_log_data = []
         for file_name in files:
-            if 'nginx-access' not in file_name:
+            if 'access' not in file_name:
                 continue
             file_path = file_name.split('/')
             file_parts = file_path[-1].split('.')
@@ -95,7 +95,7 @@ def analyze(recursive, unzip, percent, num, daemon, skipsave, paths_ignore, just
             logger.debug(f"File Name {just_file_name}")
             ext = file_parts[-1]
             if ((ext != 'log') and
-                (ext != 'bz2')): # not a log file, nor a zipped log file
+                (ext != 'bz2' and ext !='gz')): # not a log file, nor a zipped log file
                 continue
             
             # send to S3
@@ -105,10 +105,13 @@ def analyze(recursive, unzip, percent, num, daemon, skipsave, paths_ignore, just
                 s3simple.send_file_to_s3(local_file=file_name, s3_file=s3_file)
 
             if not justsave:
-                logger.debug("Analyzing...")
-                if ext == 'bz2':
+                logger.debug(f"Analyzing... ")
+                if ext == 'bz2' or ext == 'gz':
                     if unzip:
-                        raw_data = sh.bunzip2("-k", "-c", file_name)
+                        if ext == 'bz2':
+                            raw_data = sh.bunzip2("-k", "-c", file_name)
+                        else:
+                            raw_data = sh.gunzip("-k", "-c", file_name)
                     else:
                         continue
                 else:

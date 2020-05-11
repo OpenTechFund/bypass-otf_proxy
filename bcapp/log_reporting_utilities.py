@@ -4,8 +4,11 @@ Used by command line and flask app
 """
 import re
 import datetime
+import logging
 from simple_AWS.s3_functions import *
 from proxy_utilities import get_configs
+
+logger = logging.getLogger('logger')
 
 def analyze_file(raw_data, paths_ignore):
     """
@@ -21,6 +24,7 @@ def analyze_file(raw_data, paths_ignore):
     if len(raw_data_list) < 5: # Not worth analyzing
         return False
     analyzed_log_data = {
+            'visitor_ips': {},
             'status': {},
             'user_agent': {},
             'pages_visited' : {}
@@ -28,9 +32,14 @@ def analyze_file(raw_data, paths_ignore):
     analyzed_log_data['hits'] = len(raw_data_list)
     log_date_match = re.compile('[0-9]{2}[\/]{1}[A-Za-z]{3}[\/]{1}[0-9]{4}[:]{1}[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2}')
     log_status_match = re.compile('[\ ]{1}[0-9]{3}[\ ]{1}')
+    log_ip_match = re.compile('[0-9]{1,3}[\.]{1}[0-9]{1,3}[\.]{1}[0-9]{1,3}[\.]{1}[0-9]{1,3}')
     datetimes = []
     for line in raw_data_list:
         log_data = {}
+        try:
+            log_data['ip'] = log_ip_match.search(line).group(0)
+        except:
+            continue
         try:
             log_data['datetime'] = log_date_match.search(line).group(0)
             log_data['status'] = log_status_match.search(line).group(0)
@@ -64,6 +73,14 @@ def analyze_file(raw_data, paths_ignore):
                     should_skip = True
             if should_skip:
                 continue
+        
+        logger.debug(f"Log Data: {log_data}")
+        
+        if 'ip' in log_data:
+            if log_data['ip'] in analyzed_log_data['visitor_ips']:
+                analyzed_log_data['visitor_ips'][log_data['ip']] += 1
+            else:
+                analyzed_log_data['visitor_ips'][log_data['ip']] = 1
         if log_data['status'] in analyzed_log_data['status']:
             analyzed_log_data['status'][log_data['status']] += 1
         else:
@@ -91,6 +108,14 @@ def output(**kwargs):
     analyzed_log_data = kwargs['data']
     output = f"Analysis of: {kwargs['file_name']}, from {analyzed_log_data['earliest_date']} to {analyzed_log_data['latest_date']}:\n"
     output += f"Hits: {analyzed_log_data['hits']}\n"
+
+    if 'visitor_ips' in analyzed_log_data:
+        logger.debug(f"Visitor IPs in data: {analyzed_log_data['visitor_ips']}")
+        output += f"IP addresses: \n"
+        for data in analyzed_log_data['visitor_ips']:
+            perc = analyzed_log_data['visitor_ips'][data]/analyzed_log_data['hits'] * 100
+            if perc >= kwargs['percent']:
+                output += f"{data}: {perc:.1f}%\n"
 
     ordered_status_data = sorted(analyzed_log_data['status'].items(), 
                                     key=lambda kv: kv[1], reverse=True)
