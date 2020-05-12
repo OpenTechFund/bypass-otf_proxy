@@ -24,6 +24,8 @@ python-levenshtein = "*"
 simple-aws = "*"
 flask-login = "*"
 python-dotenv = "*"
+azure = "*"
+azure-mgmt-cdn = "*"
 
 [requires]
 python_version = "3.8"

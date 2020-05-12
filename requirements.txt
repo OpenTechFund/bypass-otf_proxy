@@ -4,7 +4,8 @@ requests
 requests[socks]
 requests-html
 click
-* azure
+azure.common.credentials
+azure.mgmt.cdn
 Flask
 psycopg2
 Flask-SQLAlchemy

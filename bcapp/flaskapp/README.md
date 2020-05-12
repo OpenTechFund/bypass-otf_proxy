@@ -2,14 +2,9 @@
 
 You'll need to set up a postgresql database, which the flask app has permission to access.
 
-Use the .env_example to create an .env file.
+Use the .env_example to create an .env file. Python-dotenv is a module that will read the .env files automatically.
 
-To start up the app, make sure you've started the virtual environment.
-
-```
-cd bcapp\flaskapp
-source .env
-```
+To start up the app, make sure you've started the virtual environment, then `cd bcapp\flaskapp`.
 
 The first time you run the app, set up the database:
 

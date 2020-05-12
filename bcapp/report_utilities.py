@@ -113,10 +113,13 @@ def send_report(domain_data, mode):
         if domain in domain_data['domain']:
             domain_id = d_id
     
+    logger.debug(f"Domain ID: {domain_id}")
+    
     if not domain_id: # we've not seen it before, add it
         insert = domains.insert().values(domain=domain_data['domain'])
         result = connection.execute(insert)
-        domain_id = result.inserted_primary_key
+        domain_id = result.inserted_primary_key[0]
+        logger.debug(f"Domain ID: {domain_id}")
     
     # Add mirrors
     for current_mirror in domain_data['current_mirrors']:
@@ -127,11 +130,14 @@ def send_report(domain_data, mode):
             m_id, m_url, d_id = entry
             if current_mirror == m_url:
                 mirror_id = m_id
+        logger.debug(f"Mirror ID: {mirror_id}")
 
         if not mirror_id: # add it
             insert = mirrors.insert().values(mirror_url=current_mirror, domain_id=domain_id)
             result = connection.execute(insert)
-            mirror_id = result.inserted_primary_key
+            mirror_id = result.inserted_primary_key[0]
+
+            logger.debug(f"Mirror ID: {mirror_id}")
         
         # Make report
         report_data = {
@@ -166,7 +172,7 @@ def send_report(domain_data, mode):
         if not onion_id: # don't have it, need to add it
             insert = onions.insert().values(domain_id=domain_id, onion=current_onion)
             result = connection.execute(insert)
-            onion_id = result.inserted_primary_key
+            onion_id = result.inserted_primary_key[0]
 
         # Make report
         onion_report_data = {
@@ -176,6 +182,7 @@ def send_report(domain_data, mode):
             'user_agent': f'BC APP {mode}',
             'onion_status': domain_data[domain_data['domain']],
         }
+        logger.debug(f"Onion Report: {onion_report_data}")
         insert = onion_reports.insert().values(**onion_report_data)
         result = connection.execute(insert)
         logger.debug(f"Report insert Result: {result}")

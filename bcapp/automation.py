@@ -10,15 +10,14 @@ from aws_utils import cloudfront_add, cloudfront_replace
 from repo_utilities import add, check, domain_list, remove_domain, remove_mirror
 from report_utilities import domain_reporting, send_report
 from log_reporting_utilities import domain_log_reports
-from mirror_tests import domain_testing, mirror_detail
+from mirror_tests import mirror_detail
 from fastly_add import fastly_add, fastly_replace
 from azure_cdn import azure_add, azure_replace
 from proxy_utilities import get_configs
 import click
 
 @click.command()
-@click.option('--testing', type=click.Choice(['onions', 'noonions', 'domains']),
-    help="Domain testing of available mirrors - choose onions, noonions, or domains")
+@click.option('--testing', is_flag=True, default=False, help="Domain testing of all available mirrors and onions")
 @click.option('--domain', help="Domain to act on", type=str)
 @click.option('--proxy', type=str, help="Proxy server to use for testing/domain detail.")
 @click.option('--existing', type=str, help="Mirror exists already, just add to github.")
@@ -47,19 +46,16 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
             domain_reporting(domain=domain, mode=mode)
         else:
             domain_data = mirror_detail(domain=domain, proxy=proxy, mode=mode)
-            """
             report = domain_log_reports(domain, 'latest')
             reporting = send_report(domain_data, mode)
             if mode =='console':
                 print(f"Reported? {reporting}")
                 print(f"Latest Log Report: \n {report}")
-            """
+
     else:
         if testing:
-            if proxy:
-                domain_testing(testing, proxy)
-            else:
-                domain_testing(testing, False)
+            domain_testing(testing, proxy, mode)
+    
         if domain_list:
             dlist = domain_list()
             print(f""" List of all domains, mirrors and onions
@@ -67,8 +63,20 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
             {dlist}
             ___________________________________________________
             """)
-    
     return
+
+def domain_testing(testing, proxy, mode):
+    """
+    Tests domains, mirrors and onions in repo
+    """
+    mirror_list = domain_list()
+    for domain in mirror_list['sites']:
+        domain_data = mirror_detail(domain=domain['main_domain'], proxy=proxy, mode=mode)
+        reporting = send_report(domain_data, mode)
+        if mode =='console':
+            print(f"Reported? {reporting}")
+    return
+
 
 def delete_domain(domain, nogithub):
     """

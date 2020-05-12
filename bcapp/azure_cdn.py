@@ -1,9 +1,13 @@
 """
 Azure add CDN using SDK
 """
+import logging
 from proxy_utilities import get_configs
-from azure.common.credentials import ServicePrincipalCredentials
-from azure.mgmt.cdn import CdnManagementClient
+
+logger = logging.getLogger('logger')
+
+# from azure.common.credentials import ServicePrincipalCredentials
+# from azure.mgmt.cdn import CdnManagementClient
 
 def azure_add(**kwargs):
     configs = get_configs()

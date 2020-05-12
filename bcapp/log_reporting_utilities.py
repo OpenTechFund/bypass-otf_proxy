@@ -158,6 +158,10 @@ def domain_log_reports(domain, report_type):
         bucket=configs['log_storage_bucket'],
         domain=domain
     )
+
+    if not file_list:
+        return False
+
     # Sort by date
     sorted_list = sorted(file_list, key=lambda i: i['date'], reverse=True)
 

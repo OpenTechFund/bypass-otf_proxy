@@ -29,9 +29,23 @@ If you want to add onions, the best method is using Alec Muffett's [EOTK (Enterp
 
 ```
 git clone https://github.com/OpenTechFund/bypass-otf_proxy
-cd bcapp
+cd bypass-otf_proxy
 pipenv install
 pipenv shell
+cd bcapp
+```
+
+# Setting up the Database
+
+In order to report on domains using this command line app, you'll need to make sure the database is set up. You can use Sqllite, Postgresql or MySql. Add the database URL in the .env file (see .env file creation docs in [Flask app documentation](bcapp/flaskapp/README.md))
+
+Once the database is set up, and accessible, and you are in the virtual environment:
+
+```
+cd bcapp/flask
+flask db init
+flask db migrate
+flask db upgrade
 ```
 
 # Mirror Application
@@ -43,9 +57,7 @@ The use case for this application is that there are websites which has been cens
 Usage: python automation.py [OPTIONS]
 
 Options:
-  --testing [onions|noonions|domains]
-                                  Domain testing of available mirrors - choose
-                                  onions, noonions, or domains
+  --testing                       Domain testing of all available mirrors & onions
   --domain TEXT                   Domain to act on
   --proxy TEXT                    Proxy server to use for testing/domain
                                   detail.
@@ -73,13 +85,9 @@ To get a list of one domain and it's mirrors (and test each) use:
 
 ## Testing:
 
-`python automation.py --testing=domains|onions|noonions`
+`python automation.py --testing`
 
-The 'domains' option just tests the actual domains from whereever you are sitting. So if you are behind a potential block, you'll be able to see whether or not you can reach those domains.
-
-The 'noonions' option will cycle through each domain in the mirror json file, and test for response codes for the standard http/https mirrors. It will determine the number of domains with errors, and return which ones have errors. It will also return any domains without a usable mirror.
-
-The 'onions' option will do the same with onions. Tor has to be installed properly to test these.
+This goes through the list of all domains, testing each domain, mirror and onion, and adding to the database.
 
 ## Domain addition: 
 
