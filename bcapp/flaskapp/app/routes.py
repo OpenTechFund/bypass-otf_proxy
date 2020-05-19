@@ -1,8 +1,9 @@
+import datetime
 from flask import render_template, redirect, url_for, request, flash
 from flask_login import login_required, current_user, login_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import app
-from app.models import User
+from app.models import User, Token, Domain, Mirror, Report
 from . import db
 
 @app.route('/')
@@ -93,7 +94,7 @@ def report_domain():
     try:
         auth_token = Token.query.filter_by(auth_token=req_data['auth_token']).first()
     except:
-        return {"report" : "Database Error!"}
+        return {"report" : "Database Error with token!"}
     if not auth_token:
         return {"report": "Unauthorized!"}
 
@@ -103,7 +104,7 @@ def report_domain():
     try:
         domain = Domain.query.filter_by(domain=req_data['domain']).first()
     except:
-        return {"report" : "Database Error!"}
+        return {"report" : "Database Error with domain query!"}
 
     if domain: # we've seen it before
         domain_id = domain.id
@@ -111,7 +112,7 @@ def report_domain():
         try:
             mirror = Mirror.query.filter_by(mirror_url=req_data['mirror_url']).first()
         except:
-            return {"report" : "Database Error!"}
+            return {"report" : "Database Error with mirror query!"}
         if mirror:
             mirror_id = mirror.id
         else:
@@ -122,7 +123,7 @@ def report_domain():
             db.session.add(domain)
             db.session.commit()
         except:
-            return {"report" : "Database Error!"}
+            return {"report" : "Database Error with mirror addition!"}
         domain_id = domain.id
         mirror = False # No domain, no mirror
  
@@ -135,7 +136,7 @@ def report_domain():
             db.session.add(mirror)
             db.session.commit()
         except:
-            return {"report" : "Database Error!"}
+            return {"report" : "Database Error with mirror addition!"}
         mirror_id = mirror.id
 
     # Make the report
@@ -149,7 +150,7 @@ def report_domain():
         db.session.add(report)
         db.session.commit()
     except:
-        return {"report" : "Database Error!"}
+        return {"report" : "Database Error with report!"}
 
 
     return {"report": "Successfully reported."}
