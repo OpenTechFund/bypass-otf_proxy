@@ -79,6 +79,19 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), index=True, unique=True)
     password = db.Column(db.String(128))
     name = db.Column(db.String(120))
+    domain = db.Column(db.String(120))
+    admin = db.Column(db.Boolean)
+    active = db.Column(db.Boolean)
 
     def __repr__(self):
-        return '<User {}>'.format(self.name)
+        return '<id {}>'.format(self.id)
+
+class LogReport(db.Model):
+    __tablename__ = "log_reports"
+    id = db.Column(db.Integer, primary_key=True)
+    domain_id = db.Column(db.Integer)
+    date_of_report = db.Column(db.DateTime)
+    report = db.Column(db.String)
+
+    def __repr__(self):
+        return '<id {}>'.format(self.id)

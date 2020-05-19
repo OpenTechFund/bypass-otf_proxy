@@ -3,9 +3,12 @@ Utilities for log reporting
 Used by command line and flask app
 """
 import re
+import os
 import datetime
 import logging
+from dotenv import load_dotenv
 from simple_AWS.s3_functions import *
+import sqlalchemy as db
 from proxy_utilities import get_configs
 
 logger = logging.getLogger('logger')
@@ -207,4 +210,47 @@ def get_file_list(**kwargs):
 
     return filtered_list
     
+def report_save(**kwargs):
+    """
+    Saving report to database
+    """
+    load_dotenv(dotenv_path='flaskapp/.env')
+
+    engine = db.create_engine(os.environ['DATABASE_URL'])
+    connection = engine.connect()
+    metadata = db.MetaData()
+
+    domains = db.Table('domains', metadata, autoload=True, autoload_with=engine)
+    log_reports = db.Table('log_reports', metadata, autoload=True, autoload_with=engine)
+
+    ## Get domain id
+    query = db.select([domains])
+    result = connection.execute(query).fetchall()
     
+    domain_id = False
+    for entry in result:
+        d_id, domain = entry
+        if domain in kwargs['domain']:
+            domain_id = d_id
+    
+    logger.debug(f"Domain ID: {domain_id}")
+    
+    if not domain_id: # we've not seen it before, add it
+        insert = domains.insert().values(domain=kwargs['domain'])
+        result = connection.execute(insert)
+        domain_id = result.inserted_primary_key[0]
+        logger.debug(f"Domain ID: {domain_id}")
+
+    # Save report
+    report_data = {
+            'date_of_report': kwargs['datetime'],
+            'domain_id': domain_id,
+            'report': kwargs['report_text']
+        }
+    insert = log_reports.insert().values(**report_data)
+    result = connection.execute(insert)
+    report_id = result.inserted_primary_key[0]
+
+    logger.debug(f"Report ID: {report_id}")
+
+    return

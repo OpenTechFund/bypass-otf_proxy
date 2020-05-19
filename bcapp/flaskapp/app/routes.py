@@ -25,6 +25,18 @@ def profile():
 def signup():
     return render_template('signup.html')
 
+@app.route('/admin')
+@login_required
+def admin():
+    """
+    Administration
+    """
+    if current_user.admin:
+        return render_template('admin.html', name=current_user.name)
+    else:
+        flash('Have to be an admin!')
+        return redirect(url_for('profile'))
+
 @app.route('/signup', methods=['POST'])
 def signup_post():
     email = request.form.get('email')

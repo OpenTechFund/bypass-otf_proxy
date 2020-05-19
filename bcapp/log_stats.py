@@ -12,7 +12,7 @@ import sh
 import logging
 from proxy_utilities import get_configs
 from simple_AWS.s3_functions import *
-from log_reporting_utilities import analyze_file, output
+from log_reporting_utilities import analyze_file, output, report_save
 
 logger = logging.getLogger('logger')
 
@@ -141,6 +141,9 @@ def analyze(recursive, unzip, percent, num, daemon, skipsave, paths_ignore, just
                 key = 'LogAnalysisOutput_' + domain + '_' + now_string + '.txt'
                 s3simple.put_to_s3(key=key, body=output_text)
     
+                logger.debug("Sending Report to Database...")
+                report_save(domain=domain, datetime=now, report_text=output_text)
+
     return
 
 def get_list(path, recursive, range):
