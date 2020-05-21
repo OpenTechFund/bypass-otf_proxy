@@ -109,8 +109,11 @@ def output(**kwargs):
     Creates output
     """
     analyzed_log_data = kwargs['data']
-    output = f"Analysis of: {kwargs['file_name']}, from {analyzed_log_data['earliest_date']} to {analyzed_log_data['latest_date']}:\n"
-    output += f"Hits: {analyzed_log_data['hits']}\n"
+    hits = analyzed_log_data['hits']
+    first_date = analyzed_log_data['earliest_date']
+    last_date = analyzed_log_data['latest_date']
+    output = f"Analysis of: {kwargs['file_name']}, from {first_date} to {last_date}:\n"
+    output += f"Hits: {hits}\n"
 
     if 'visitor_ips' in analyzed_log_data:
         logger.debug(f"Visitor IPs in data: {analyzed_log_data['visitor_ips']}")
@@ -147,7 +150,7 @@ def output(**kwargs):
         if i > kwargs['num']:
             break
 
-    return output
+    return (output, first_date, last_date, hits)
 
 def domain_log_reports(domain, report_type):
     """
@@ -245,7 +248,10 @@ def report_save(**kwargs):
     report_data = {
             'date_of_report': kwargs['datetime'],
             'domain_id': domain_id,
-            'report': kwargs['report_text']
+            'report': kwargs['report_text'],
+            'hits':kwargs['hits'],
+            'first_date_of_logs':kwargs['first_date_of_logs'],
+            'last_date_of_logs':kwargs['last_date_of_logs']
         }
     insert = log_reports.insert().values(**report_data)
     result = connection.execute(insert)

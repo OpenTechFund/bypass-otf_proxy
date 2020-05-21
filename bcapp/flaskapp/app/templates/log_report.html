@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="title">
+  Bypass Censorship Application
+</h1>
+<h1>Log Report</h1>
+<h2 class="subtitle">Domain: {{ log_report.domain }}</h2>
+
+<p>Dates from: {{ log_report.first_date }} to: {{ log_report.last_date }}</p>
+<p>{% for line in report_text %}
+  {{ line }}<br/>
+  {% endfor %}
+</p>
+{% endblock %}

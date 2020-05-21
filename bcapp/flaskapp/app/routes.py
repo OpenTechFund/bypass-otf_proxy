@@ -3,8 +3,9 @@ from flask import render_template, redirect, url_for, request, flash
 from flask_login import login_required, current_user, login_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import app
-from app.models import User, Token, Domain, Mirror, Report
+from app.models import User, Token, Domain, Mirror, Report, LogReport
 from . import db
+from . import admin_utilities
 
 @app.route('/')
 def home():
@@ -19,23 +20,12 @@ def profile():
     """
     Profile
     """
+    # TODO: add list of available reports for the domain this user is a part of
     return render_template('profile.html', name=current_user.name)
 
 @app.route('/signup')
 def signup():
     return render_template('signup.html')
-
-@app.route('/admin')
-@login_required
-def admin():
-    """
-    Administration
-    """
-    if current_user.admin:
-        return render_template('admin.html', name=current_user.name)
-    else:
-        flash('Have to be an admin!')
-        return redirect(url_for('profile'))
 
 @app.route('/signup', methods=['POST'])
 def signup_post():
@@ -86,83 +76,39 @@ def logout():
     logout_user()
     return redirect(url_for('home'))
 
-## API (to be a separate blueprint?)
-@app.route('/api/v1/help/', methods=['GET', 'POST'])
-def help():
+### Admin
+
+@app.route('/admin')
+@login_required
+def admin():
     """
-    Return help info in JSON format
+    Administration
     """
-    return {"commands" : ['report', 'help']}
+    if current_user.admin:
+        log_reports = admin_utilities.log_report_list()
+        return render_template('admin.html', name=current_user.name, log_reports=log_reports)
+    else:
+        flash('Have to be an admin!')
+        return redirect(url_for('profile'))
 
-@app.route('/api/v1/report/', methods=['POST'])
-def report_domain():
+
+## Log Reports
+@app.route('/log_reports/display', methods=['GET'])
+@login_required
+def display_log_report():
     """
-    Add report of domain to database
+    List one report
     """
-    req_data = request.get_json()
-
-    # is authentication token correct?
-
-    try:
-        auth_token = Token.query.filter_by(auth_token=req_data['auth_token']).first()
-    except:
-        return {"report" : "Database Error with token!"}
-    if not auth_token:
-        return {"report": "Unauthorized!"}
-
-    now = datetime.datetime.now()
-
-    # Have we seen this domain before?
-    try:
-        domain = Domain.query.filter_by(domain=req_data['domain']).first()
-    except:
-        return {"report" : "Database Error with domain query!"}
-
-    if domain: # we've seen it before
-        domain_id = domain.id
-        # Have we seen the mirror before?
-        try:
-            mirror = Mirror.query.filter_by(mirror_url=req_data['mirror_url']).first()
-        except:
-            return {"report" : "Database Error with mirror query!"}
-        if mirror:
-            mirror_id = mirror.id
-        else:
-            mirror = False
-    else: # Let's add it
-        try:
-            domain = Domain(domain=req_data['domain'])
-            db.session.add(domain)
-            db.session.commit()
-        except:
-            return {"report" : "Database Error with mirror addition!"}
-        domain_id = domain.id
-        mirror = False # No domain, no mirror
- 
-    # Add mirror
-    if not mirror:
-        mirror = Mirror(
-            mirror_url=req_data['mirror_url'],
-            domain_id=domain_id)
-        try:
-            db.session.add(mirror)
-            db.session.commit()
-        except:
-            return {"report" : "Database Error with mirror addition!"}
-        mirror_id = mirror.id
-
-    # Make the report
-    req_data['date_reported'] = now
-    req_data['domain_id'] = domain_id
-    req_data['mirror_id'] = mirror_id
-    req_data.pop('domain')
-    req_data.pop('mirror_url')
-    try:
-        report = Report(**req_data)
-        db.session.add(report)
-        db.session.commit()
-    except:
-        return {"report" : "Database Error with report!"}
-
-
-    return {"report": "Successfully reported."}
+    # grab report
+    log_report_id = request.args.get('id')
+    log_report = LogReport.query.filter_by(id=log_report_id).first()
+    domain_name = Domain.query.filter_by(id=log_report.domain_id).first().domain
+    if not log_report:
+        flash('No such report!')
+        return redirect(url_for('admin'))
+    if current_user.admin or int(current_user.domain_id) == int(log_report.domain_id):
+        report_text = log_report.report.split('\n')
+        return render_template('log_report.html', log_report=log_report, domain=domain_name, report_text=report_text)
+    else:
+        flash("Don't have access to that domain!!")
+        return redirect(url_for('profile'))

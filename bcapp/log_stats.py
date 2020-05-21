@@ -124,7 +124,7 @@ def analyze(recursive, unzip, percent, num, daemon, skipsave, paths_ignore, just
                 analyzed_data = analyze_file(raw_data, paths_ignore)
                 if not analyzed_data:
                     continue
-                output_text = output(
+                (output_text, first_date, last_date, hits) = output(
                             file_name=file_name,
                             data=analyzed_data,
                             percent=percent,
@@ -142,7 +142,14 @@ def analyze(recursive, unzip, percent, num, daemon, skipsave, paths_ignore, just
                 s3simple.put_to_s3(key=key, body=output_text)
     
                 logger.debug("Sending Report to Database...")
-                report_save(domain=domain, datetime=now, report_text=output_text)
+                report_save(
+                    domain=domain,
+                    datetime=now,
+                    report_text=output_text,
+                    hits=hits,
+                    first_date_of_log=first_date,
+                    last_date_of_log=last_date,
+                    )
 
     return
 
