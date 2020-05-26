@@ -9,6 +9,8 @@ class Domain(db.Model):
     __tablename__ = "domains"
     id = db.Column(db.Integer, primary_key=True)
     domain = db.Column(db.String, unique=True)
+    paths_ignore = db.Column(db.String)
+    ext_ignore = db.Column(db.String)
     
     def __repr__(self):
         return '<id {}>'.format(self.id)
@@ -95,6 +97,7 @@ class LogReport(db.Model):
     last_date_of_log = db.Column(db.DateTime)
     hits = db.Column(db.Numeric)
     report = db.Column(db.String)
+    log_type = db.Column(db.String)
 
     def __repr__(self):
         return '<id {}>'.format(self.id)

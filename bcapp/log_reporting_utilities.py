@@ -13,16 +13,21 @@ from proxy_utilities import get_configs
 
 logger = logging.getLogger('logger')
 
-def analyze_file(raw_data, paths_ignore):
+def analyze_file(raw_data, domain):
     """
     Analyzes the raw data from the file - for status, agents and pages
     :arg: raw_data
     :returns: dict of dicts
     """
-    if paths_ignore:
-        paths_ignore_list = paths_ignore.split(',')
+    domain_data = get_domain_data(domain)
+
+    if domain_data['paths_ignore']:
+        paths_ignore_list = domain_data['paths_ignore'].split(',')
     else:
         paths_ignore_list = False
+    if domain_data['ext_ignore']:
+        exts_ignore_list = domain_data['ext_ignore'].split(',')
+        
     raw_data_list = raw_data.split('\n')
     if len(raw_data_list) < 5: # Not worth analyzing
         return False
@@ -38,11 +43,13 @@ def analyze_file(raw_data, paths_ignore):
     log_ip_match = re.compile('[0-9]{1,3}[\.]{1}[0-9]{1,3}[\.]{1}[0-9]{1,3}[\.]{1}[0-9]{1,3}')
     datetimes = []
     for line in raw_data_list:
+        has_ips = True
         log_data = {}
+        line_split = line.split(' ')
         try:
-            log_data['ip'] = log_ip_match.search(line).group(0)
+            log_data['ip'] = log_ip_match.search(line_split[0]).group(0)
         except:
-            continue
+            has_ips = False
         try:
             log_data['datetime'] = log_date_match.search(line).group(0)
             log_data['status'] = log_status_match.search(line).group(0)
@@ -57,18 +64,13 @@ def analyze_file(raw_data, paths_ignore):
             log_data['page_visited'] = line.split(' "')[-3].split(' ')[1]
         except:
             continue
-        if (('.css' in log_data['page_visited']) or 
-            ('.png' in log_data['page_visited']) or
-            ('.js' in log_data['page_visited']) or
-            ('.svg' in log_data['page_visited']) or
-            ('.jpg' in log_data['page_visited']) or
-            ('.jpeg' in log_data['page_visited']) or
-            ('.gif' in log_data['page_visited']) or
-            ('.woff2' in log_data['page_visited']) or
-            ('.woff' in log_data['page_visited']) or
-            ('.ttf' in log_data['page_visited']) or
-            ('favicon.ico' in log_data['page_visited'])):
-            continue
+        if exts_ignore_list:
+            ext_ignore = False
+            for ext in exts_ignore_list:
+                if ext in log_data['page_visited']:
+                    ext_ignore = True
+            if ext_ignore:
+                continue
         if paths_ignore_list:
             should_skip = False
             for ignore in paths_ignore_list:
@@ -76,8 +78,6 @@ def analyze_file(raw_data, paths_ignore):
                     should_skip = True
             if should_skip:
                 continue
-        
-        logger.debug(f"Log Data: {log_data}")
         
         if 'ip' in log_data:
             if log_data['ip'] in analyzed_log_data['visitor_ips']:
@@ -213,9 +213,9 @@ def get_file_list(**kwargs):
 
     return filtered_list
     
-def report_save(**kwargs):
+def get_domain_data(domain):
     """
-    Saving report to database
+    Get domain data
     """
     load_dotenv(dotenv_path='flaskapp/.env')
 
@@ -224,25 +224,40 @@ def report_save(**kwargs):
     metadata = db.MetaData()
 
     domains = db.Table('domains', metadata, autoload=True, autoload_with=engine)
-    log_reports = db.Table('log_reports', metadata, autoload=True, autoload_with=engine)
 
     ## Get domain id
     query = db.select([domains])
     result = connection.execute(query).fetchall()
     
-    domain_id = False
+    domain_data = {
+        'id': False
+    }
     for entry in result:
-        d_id, domain = entry
-        if domain in kwargs['domain']:
-            domain_id = d_id
+        d_id, domain_fetched, ext_ignore, paths_ignore = entry
+        if domain_fetched in domain:
+            domain_data['id'] = d_id
+            domain_data['ext_ignore'] = ext_ignore
+            domain_data['paths_ignore'] = paths_ignore
     
-    logger.debug(f"Domain ID: {domain_id}")
-    
-    if not domain_id: # we've not seen it before, add it
-        insert = domains.insert().values(domain=kwargs['domain'])
+    if not domain_data['id']: # we've not seen it before, add it
+        insert = domains.insert().values(domain=domain)
         result = connection.execute(insert)
-        domain_id = result.inserted_primary_key[0]
-        logger.debug(f"Domain ID: {domain_id}")
+        domain_data['id'] = result.inserted_primary_key[0]
+
+    return domain_data
+
+def report_save(**kwargs):
+    """
+    Saving report to database
+    """
+    domain_data = get_domain_data(kwargs['domain'])
+    domain_id = domain_data['id']
+    load_dotenv(dotenv_path='flaskapp/.env')
+
+    engine = db.create_engine(os.environ['DATABASE_URL'])
+    connection = engine.connect()
+    metadata = db.MetaData()
+    log_reports = db.Table('log_reports', metadata, autoload=True, autoload_with=engine)
 
     # Save report
     report_data = {
@@ -250,8 +265,9 @@ def report_save(**kwargs):
             'domain_id': domain_id,
             'report': kwargs['report_text'],
             'hits':kwargs['hits'],
-            'first_date_of_logs':kwargs['first_date_of_logs'],
-            'last_date_of_logs':kwargs['last_date_of_logs']
+            'first_date_of_log':kwargs['first_date_of_log'],
+            'last_date_of_log':kwargs['last_date_of_log'],
+            'log_type':kwargs['log_type']
         }
     insert = log_reports.insert().values(**report_data)
     result = connection.execute(insert)

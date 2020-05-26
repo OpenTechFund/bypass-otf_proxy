@@ -159,8 +159,6 @@ Options:
   --unzip              Unzip and analyze zipped log files (bz2 files only)
   --daemon             Run in daemon mode. Suppresses all output.
   --skipsave           Skip saving log file to S3
-  --paths_ignore TEXT  Comma delimited list (no spaces) of paths to ignore for
-                       log analysis.
   --justsave           Just save log files to S3, don't run any analysis.
   --read_s3            Read logfiles from S3, not from local paths.
   --help               Show this message and exit.
@@ -186,7 +184,7 @@ ETOK stores the files in projects.d under each project. You'll almost certainly 
 
 Log files and analysis goes to S3 in the bucket specified in "log_storage_bucket" in the configuration file. The --skipsave option will skip saving the log files to S3 (the analysis files will still be saved.) You can run this in daemon mode, which suppresses all output. This is great for periodic cron jobs.
 
-The paths_ignore option is for the analysis of pages visited. The code eliminates most assets from reporting (currently, .css, .js, .jpg, .jpeg, .gif, .woff, .woff2, .svg, .ttf, and favicon.ico.) The paths_ignore allows you to ignore complete paths, like /ad, for example. Do not include spaces in this list.
+Certain paths will be ignored based on what's stored in the database for the domain. The code eliminates the assets from reporting and paths stored for the domain in the database.
 
 Use the 'read_s3' options to read files from the S3 bucket, and not look at local files. 
 

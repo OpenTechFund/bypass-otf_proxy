@@ -23,15 +23,14 @@ logger = logging.getLogger('logger')
 @click.option('--unzip', is_flag=True, help="Unzip and analyze zipped log files", default=False)
 @click.option('--daemon', is_flag=True, default=False, help="Run in daemon mode. All output goes to a file.")
 @click.option('--skipsave', is_flag=True, default=False, help="Skip saving log file to S3")
-@click.option('--paths_ignore', type=str, help="Comma delimited list (no spaces) of paths to ignore for log analysis.")
 @click.option('--justsave', is_flag=True, default=False, help="Just save log files to S3, don't run any analysis.")
 @click.option('--read_s3', is_flag=True, default=False, help="Read logfiles from S3, not from local paths.")
 @click.option('--range', type=int, help="Days of log file age to analyze. Default is 10", default=10)
 
-def analyze(recursive, unzip, percent, num, daemon, skipsave, paths_ignore, justsave, read_s3, range):
+def analyze(recursive, unzip, percent, num, daemon, skipsave, justsave, read_s3, range):
 
     import faulthandler; faulthandler.enable()
-    
+
     configs = get_configs()
     now = datetime.datetime.now()
     now_string = now.strftime('%d-%b-%Y:%H:%M:%S')
@@ -121,9 +120,15 @@ def analyze(recursive, unzip, percent, num, daemon, skipsave, paths_ignore, just
                     with open(file_name) as f:
                         raw_data = f.read()
 
-                analyzed_data = analyze_file(raw_data, paths_ignore)
+                analyzed_data = analyze_file(raw_data, domain)
+                logger.debug(f"Visitor IPs:{analyzed_data['visitor_ips']}!")
+                if analyzed_data['visitor_ips']:
+                    log_type = 'nginx'
+                else:
+                    log_type = 'eotk'    
                 if not analyzed_data:
                     continue
+                logger.debug(f"Log type: {log_type}")
                 (output_text, first_date, last_date, hits) = output(
                             file_name=file_name,
                             data=analyzed_data,
@@ -138,7 +143,7 @@ def analyze(recursive, unzip, percent, num, daemon, skipsave, paths_ignore, just
                 s3simple.put_to_s3(key=key, body=body)
 
                 logger.debug("Saving output file....")
-                key = 'LogAnalysisOutput_' + domain + '_' + now_string + '.txt'
+                key = 'LogAnalysisOutput_' + domain + '_' + log_type + '_' + now_string + '.txt'
                 s3simple.put_to_s3(key=key, body=output_text)
     
                 logger.debug("Sending Report to Database...")
@@ -149,6 +154,7 @@ def analyze(recursive, unzip, percent, num, daemon, skipsave, paths_ignore, just
                     hits=hits,
                     first_date_of_log=first_date,
                     last_date_of_log=last_date,
+                    log_type=log_type
                     )
 
     return
