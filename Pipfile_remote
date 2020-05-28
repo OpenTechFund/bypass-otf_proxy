@@ -1,0 +1,14 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+boto3 = "*"
+requests = {extras = ["socks"],version = "*"}
+requests-html = "*"
+click = "*"
+sh = "*"
+simple-aws = "*"
