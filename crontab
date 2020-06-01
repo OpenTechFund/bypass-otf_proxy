@@ -1,0 +1,2 @@
+## Sample crontab entry to save local logs to S3 for analysis by host
+15 05 * * * cd bypass-otf_proxy/bcapp; /path/to/virtualenv/bin/python log_stats.py --justsave --recursive

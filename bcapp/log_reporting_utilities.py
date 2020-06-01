@@ -154,7 +154,7 @@ def output(**kwargs):
 
 def domain_log_reports(domain, report_type):
     """
-    Setup for log reporting on a domain
+    Reports of log reports
     """
     configs = get_configs()
     # get filtered list
@@ -162,7 +162,8 @@ def domain_log_reports(domain, report_type):
         region=configs['region'],
         profile=configs['profile'],
         bucket=configs['log_storage_bucket'],
-        domain=domain
+        domain=domain,
+        filter='Output'
     )
 
     if not file_list:
@@ -179,6 +180,27 @@ def domain_log_reports(domain, report_type):
             output_file=sorted_list[0]['file_name'],
             local_tmp=configs['local_tmp'])
         return output_contents
+
+def domain_log_list(domain, num):
+    """
+    List of domain logs
+    """
+    configs = get_configs()
+    # get filtered list
+    file_list = get_file_list(
+        region=configs['region'],
+        profile=configs['profile'],
+        bucket=configs['log_storage_bucket'],
+        domain=domain,
+        filter='Raw'
+    )
+
+    if not file_list:
+        return False
+
+    sorted_list = sorted(file_list, key=lambda i: i['date'], reverse=True)
+
+    return sorted_list[0:num]
 
 def get_output_contents(**kwargs):
     """
@@ -205,7 +227,7 @@ def get_file_list(**kwargs):
     file_list = s3simple.s3_bucket_contents()
     filtered_list = []
     for single_file in file_list:
-        if ('output' in single_file) and (kwargs['domain'] in single_file):
+        if (kwargs['filter'] in single_file) and (kwargs['domain'] in single_file):
             date_search = '[0-9]{2}[-][a-zA-Z]{3}-20[0-9]{2}:[0-9]{2}:[0-9]{2}:[0-9]{2}'
             match = re.search(date_search, single_file)
             date = datetime.datetime.strptime(match.group(0),'%d-%b-%Y:%H:%M:%S')

@@ -9,7 +9,7 @@ import logging
 from aws_utils import cloudfront_add, cloudfront_replace
 from repo_utilities import add, check, domain_list, remove_domain, remove_mirror
 from report_utilities import domain_reporting, send_report
-from log_reporting_utilities import domain_log_reports
+from log_reporting_utilities import domain_log_reports, domain_log_list
 from mirror_tests import mirror_detail
 from fastly_add import fastly_add, fastly_replace
 from azure_cdn import azure_add, azure_replace
@@ -19,6 +19,7 @@ import click
 @click.command()
 @click.option('--testing', is_flag=True, default=False, help="Domain testing of all available mirrors and onions")
 @click.option('--domain', help="Domain to act on", type=str)
+@click.option('--num', help="Number of Raw Log files to list", type=int, default=5)
 @click.option('--proxy', type=str, help="Proxy server to use for testing/domain detail.")
 @click.option('--existing', type=str, help="Mirror exists already, just add to github.")
 @click.option('--replace', type=str, help="Mirror/onion to replace.")
@@ -32,7 +33,7 @@ import click
 @click.option('--mode', type=click.Choice(['daemon', 'web', 'console']), default='console', help="Mode: daemon, web, console")
 
 def automation(testing, domain, proxy, existing, delete, domain_list, mirror_list,
-    mirror_type, replace, nogithub, remove, report, mode):
+    mirror_type, replace, nogithub, remove, report, mode, num):
     if domain:
         if delete:
             delete_domain(domain, nogithub)
@@ -46,11 +47,20 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
             domain_reporting(domain=domain, mode=mode)
         else:
             domain_data = mirror_detail(domain=domain, proxy=proxy, mode=mode)
+            reports_list = domain_log_list(domain, num)
+            if mode == 'console':
+                print(f"Latest {num} log files:")
+                for rpt in reports_list:
+                    date = rpt['date'].strftime('%m/%d/%Y:%H:%M:%S.%f')
+                    print(f"{date} : {rpt['file_name']}")
             report = domain_log_reports(domain, 'latest')
             reporting = send_report(domain_data, mode)
             if mode =='console':
                 print(f"Reported? {reporting}")
-                print(f"Latest Log Report: \n {report}")
+                if not report:
+                    print("No log reports stored!")
+                else:
+                    print(f"Latest Log Report: \n {report}")
 
     else:
         if testing:
