@@ -50,7 +50,7 @@ def signup_post():
 
 @app.route('/login')
 def login():
-    return render_template('login.html')\
+    return render_template('login.html')
 
 @app.route('/login', methods=['POST'])
 def login_post():
@@ -85,12 +85,40 @@ def admin():
     Administration
     """
     if current_user.admin:
-        log_reports = admin_utilities.log_report_list()
-        return render_template('admin.html', name=current_user.name, log_reports=log_reports)
+        report_types = [
+            {
+                'name': 'Log Reports List',
+                'report': 'log_reports_list'
+             },
+             {
+                'name': 'Recent Domain Reports',
+                'report': 'recent_domain_reports'
+             }
+        ]
+        return render_template('admin.html', name=current_user.name, report_types=report_types)
     else:
         flash('Have to be an admin!')
         return redirect(url_for('profile'))
 
+@app.route('/admin/log_reports')
+@login_required
+def log_reports_list():
+    if current_user.admin:
+        log_reports = admin_utilities.log_report_list()
+        return render_template('log_reports_list.html', name=current_user.name, log_reports=log_reports)
+    else:
+        flash('Have to be an admin!')
+        return redirect(url_for('profile'))
+
+@app.route('/admin/domain_reports')
+@login_required
+def recent_domain_reports():
+    if current_user.admin:
+        recent_domain_reports = ['report 1', 'report 2']
+        return render_template('recent_domain_reports.html', name=current_user.name, recent_domain_reports=recent_domain_reports)
+    else:
+        flash('Have to be an admin!')
+        return redirect(url_for('profile'))
 
 ## Log Reports
 @app.route('/log_reports/display', methods=['GET'])

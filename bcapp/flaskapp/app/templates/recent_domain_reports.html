@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="title">
+  Bypass Censorship Application - Domain Reports
+</h1>
+<h1>Hello!</h1>
+<h2 class="subtitle">
+  Access reporting Domain Reports
+</h2>
+<h3> List of Domain Reports</h3>
+   <!--
+{% for item in domain_reports_list %}
+ <p> Domain: {{ item.domain }} Hits: {{ item.hits }} <a href="{{ url_for ('display_log_report', id=item.id) }}"> See Report</a></p>
+{% endfor %}
+-->
+
+{% endblock %}

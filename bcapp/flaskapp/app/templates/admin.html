@@ -8,9 +8,9 @@
 <h2 class="subtitle">
   Access reporting Admin Page
 </h2>
-<h3> List of Log Reports</h3>
-{% for item in log_reports %}
-    <p> Domain: {{ item.domain }} Hits: {{ item.hits }} <a href="{{ url_for ('display_log_report', id=item.id) }}"> See Report</a></p>
+<h3>Reports Available</h3>
+{% for item in report_types %}
+    <p>item.name:   <a href="{{ url_for (item.report) }}"> See Report</a></p>
 {% endfor %}
 
 {% endblock %}
