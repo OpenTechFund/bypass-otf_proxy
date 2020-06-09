@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="title">
+  Bypass Censorship Application - Last Week's Bad Mirrors
+</h1>
+<h2 class="subtitle">
+  Last Week's Bad Mirrors
+</h2>
+{% for item in bad_mirrors %}
+    <p> Domain: <em>{{ item.domain }}</em> Mirror URL: <a href="http://{{ item.mirror }}">{{ item.mirror }}</a> Status: {{ item.status }} Date Reported: {{ item.date_reported }}</p>
+{% endfor %}
+{% endblock %}

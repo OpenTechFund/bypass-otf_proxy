@@ -4,13 +4,15 @@
 <h1 class="title">
   Bypass Censorship Application - Admin Page
 </h1>
-<h1>Hello!</h1>
-<h2 class="subtitle">
-  Access reporting Admin Page
-</h2>
-<h3>Reports Available</h3>
-{% for item in report_types %}
-    <p>item.name:   <a href="{{ url_for (item.report) }}"> See Report</a></p>
-{% endfor %}
+  <h2 class="subtitle">Reports Available</h2>
+    <ul>
+    {% for item in report_types %}
+      <li>{{ item.name }}:<a href="{{ url_for (item.report) }}" class="button is-info"> See Report</a></li>
+    {% endfor %}
+    </ul>
 
+  <h2> </h2>
+  
+
+</div>
 {% endblock %}

@@ -12,3 +12,6 @@ __pycache__
 # jupyter notebook files
 *.ipynb
 .ipynb-checkpoints
+
+# socket files
+*.sock

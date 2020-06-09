@@ -10,6 +10,6 @@
 </h2>
 <h3> List of Log Reports</h3>
 {% for item in log_reports %}
-    <p> Domain: {{ item.domain }} Hits: {{ item.hits }} <a href="{{ url_for ('display_log_report', id=item.id) }}"> See Report</a></p>
+    <p> Domain: <em>{{ item.domain }}</em> Hits: {{ item.hits }} <a href="{{ url_for ('display_log_report', id=item.id) }}" class="button is-link"> See Report</a></p>
 {% endfor %}
 {% endblock %}

@@ -93,6 +93,18 @@ def admin():
              {
                 'name': 'Recent Domain Reports',
                 'report': 'recent_domain_reports'
+             },
+             {
+                 'name': "Last Week's Bad Domains",
+                 'report': 'bad_domains'
+             },
+             {
+                 'name': "Last Week's Bad Mirrors",
+                 'report': 'bad_mirrors'
+             },
+             {
+                 'name': "Last Week's Bad Onions",
+                 'report': 'bad_onions'
              }
         ]
         return render_template('admin.html', name=current_user.name, report_types=report_types)
@@ -116,6 +128,36 @@ def recent_domain_reports():
     if current_user.admin:
         recent_domain_reports = ['report 1', 'report 2']
         return render_template('recent_domain_reports.html', name=current_user.name, recent_domain_reports=recent_domain_reports)
+    else:
+        flash('Have to be an admin!')
+        return redirect(url_for('profile'))
+
+@app.route('/admin/bad_domains')
+@login_required
+def bad_domains():
+    if current_user.admin:
+        bad_domains = admin_utilities.bad_domains()
+        return render_template('bad_domains.html', name=current_user.name, bad_domains=bad_domains)
+    else:
+        flash('Have to be an admin!')
+        return redirect(url_for('profile'))
+
+@app.route('/admin/bad_mirrors')
+@login_required
+def bad_mirrors():
+    if current_user.admin:
+        bad_mirrors = admin_utilities.bad_mirrors()
+        return render_template('bad_mirrors.html', name=current_user.name, bad_mirrors=bad_mirrors)
+    else:
+        flash('Have to be an admin!')
+        return redirect(url_for('profile'))
+
+@app.route('/admin/bad_onions')
+@login_required
+def bad_onions():
+    if current_user.admin:
+        bad_onions = admin_utilities.bad_onions()
+        return render_template('bad_onions.html', name=current_user.name, bad_onions=bad_onions)
     else:
         flash('Have to be an admin!')
         return redirect(url_for('profile'))

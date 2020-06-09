@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="title">
+  Bypass Censorship Application - Last Week's Bad Domains
+</h1>
+<h2 class="subtitle">
+  Last Week's Bad Domains
+</h2>
+{% for item in bad_domains %}
+    <p> Domain: <em><a href="http://{{ item.domain }}">{{ item.domain }}</em></a> Status: {{ item.status }} Reported: {{ item.date_reported }}</p>
+{% endfor %}
+{% endblock %}

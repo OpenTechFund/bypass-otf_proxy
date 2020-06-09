@@ -10,12 +10,10 @@
 </head>
 
 <body>
-    <section class="hero is-primary is-fullheight">
-
+    <section class="hero is-white is-fullheight">
         <div class="hero-head">
             <nav class="navbar">
                 <div class="container">
-
                     <div id="navbarMenuHeroA" class="navbar-menu">
                         <div class="navbar-end">
                             <a href="{{ url_for('home') }}" class="navbar-item">
@@ -48,7 +46,7 @@
         </div>
 
         <div class="hero-body">
-            <div class="container has-text-centered">
+            <div class="container">
                {% block content %}
                {% endblock %}
             </div>
