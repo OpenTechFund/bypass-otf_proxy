@@ -20,7 +20,7 @@ logger = logging.getLogger('logger')
 @click.option('--percent', type=int, help="Floor percentage to display for agents and codes (default is 5%)", default=5)
 @click.option('--num', type=int, help="Top number of pages to display (default is 10", default=10)
 @click.option('--recursive', is_flag=True, help="Descent through directories")
-@click.option('--unzip', is_flag=True, help="Unzip and analyze zipped log files", default=False)
+@click.option('--unzip', is_flag=True, help="Save/analyze zipped log files", default=False)
 @click.option('--daemon', is_flag=True, default=False, help="Run in daemon mode. All output goes to a file.")
 @click.option('--skipsave', is_flag=True, default=False, help="Skip saving log file to S3")
 @click.option('--justsave', is_flag=True, default=False, help="Just save log files to S3, don't run any analysis.")
@@ -102,6 +102,8 @@ def analyze(recursive, unzip, percent, num, daemon, skipsave, justsave, read_s3,
             
             # send to S3
             if not skipsave and not read_s3:
+                if ((ext == 'bz2' or ext == 'gz')) and not unzip:
+                    continue 
                 logger.debug("sending to s3...")
                 s3_file =  'RawLogFile_' + domain + '_' + now_string + '_' + just_file_name
                 s3simple.send_file_to_s3(local_file=file_name, s3_file=s3_file)
