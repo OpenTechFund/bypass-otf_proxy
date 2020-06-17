@@ -1,5 +1,4 @@
 *.cfg
-Pipfile.lock
 .venv
 fastly-py/
 bc_otf_proxy.egg-info
@@ -15,3 +14,9 @@ __pycache__
 
 # socket files
 *.sock
+
+#Pipfiles
+Pipfile_host
+Pipfile_remote
+Pipfile.lock
+Pipfile
