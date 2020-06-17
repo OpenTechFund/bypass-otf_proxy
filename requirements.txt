@@ -1,18 +1,10 @@
-pygithub
 boto3
 requests
 requests[socks]
 requests-html
 click
-azure.common.credentials
-azure.mgmt.cdn
 Flask
-psycopg2
 Flask-SQLAlchemy
-Flask-Login
 sh
-Flask-Migrate
-* pandas
 simple-AWS
 python-dotenv
-gunicorn
