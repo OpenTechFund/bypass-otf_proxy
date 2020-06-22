@@ -27,7 +27,7 @@ import click
 @click.option('--remove', type=str, help="Mirror or onion to remove")
 @click.option('--domain_list', is_flag=True, default=False, help="List all domains and mirrors/onions")
 @click.option('--mirror_list', is_flag=True, help="List mirrors for domain")
-@click.option('--mirror_type', type=click.Choice(['cloudfront', 'azure', 'fastly', 'onion']), help="Type of mirror")
+@click.option('--mirror_type', type=click.Choice(['cloudfront', 'azure', 'fastly', 'onion', 'ipfs']), help="Type of mirror")
 @click.option('--nogithub', is_flag=True, default=False, help="Do not add to github")
 @click.option('--report', is_flag=True, default=False, help="Get report from api database")
 @click.option('--mode', type=click.Choice(['daemon', 'web', 'console']), default='console', help="Mode: daemon, web, console")
@@ -96,8 +96,8 @@ def delete_domain(domain, nogithub):
     :returns nothing
     """
     print(f"Deleting {domain}...")
-    exists, current_mirrors, current_onions = check(domain)
-    print(f"Preexisting: {exists}, current Mirrors: {current_mirrors}, current onions: {current_onions}")
+    exists, current_mirrors, current_onions, current_ipfs_nodes = check(domain)
+    print(f"Preexisting: {exists}, current Mirrors: {current_mirrors}, current onions: {current_onions}, current IPFS nodes: {current_ipfs_nodes}")
     if not exists:
         print("Domain doesn't exist!")
         return
@@ -125,7 +125,7 @@ def replace_mirror(**kwargs):
     :returns nothing
     """
     print(f"Replacing mirror for: {kwargs['domain']}...")
-    exists, current_mirrors, current_onions = check(kwargs['domain'])
+    exists, current_mirrors, current_onions, current_ipfs_nodes = check(kwargs['domain'])
     if not exists:
         print("Domain doesn't exist!")
         return
@@ -141,9 +141,9 @@ def replace_mirror(**kwargs):
                                  pre=exists,
                                  replace=kwargs['replace']
                                 )
-        else: # need to create a new murror from the old
+        else: # need to create a new mirror from the old
             if 'mirror_type' not in kwargs:
-                print("Need to define --mirror_type=fastly/azure/cloudfront/onion")
+                print("Need to define --mirror_type=fastly/azure/cloudfront/onion/ipfs")
                 return
             if kwargs['mirror_type'] == 'fastly':
                 mirror = fastly_replace(kwargs['domain'], kwargs['replace'])
@@ -153,8 +153,10 @@ def replace_mirror(**kwargs):
                 mirror = azure_replace(kwargs['domain'], kwargs['replace'])
             elif kwargs['mirror_type'] == 'onion':
                 mirror = onion_add(kwargs['domain'], kwargs['replace'])
+            elif kwargs['mirror_type'] == 'ipfs':
+                mirror = ipfs_add(kwargs['domain'], kwargs['replace'])
             else:
-                print("Incorrect mirror definition! Must be one of: fastly/azure/cloudfront/onion")
+                print("Incorrect mirror definition! Must be one of: fastly/azure/cloudfront/onion/ipfs")
                 return
 
             if kwargs['nogithub']:
@@ -176,10 +178,18 @@ def onion_add(**kwargs):
     mirror = input(f"Name of onion for {kwargs['domain']}?")
     return mirror
 
+def ipfs_add(**kwargs):
+    """
+    Not yet automated
+    :kwarg <domain>
+    :returns ifps from user input
+    """
+    mirror = input(f"Hash of IPFS Node for {kwargs['domain']}?")
+    return mirror
 
 def new_add(**kwargs):
     """
-    Add new domain, mirror or onion
+    Add new domain, mirror, onion or ipfs
     :kwarg <domain>
     :kwarg <mirror_type>
     :kwarg [existing]
@@ -187,8 +197,8 @@ def new_add(**kwargs):
     :returns nothing
     """
     mirror = ""
-    exists, current_mirrors, current_onions = check(kwargs['domain'])
-    print(f"Preexisting: {exists}, current Mirrors: {current_mirrors}, current onions: {current_onions}")
+    exists, current_mirrors, current_onions, current_ipfs_nodes = check(kwargs['domain'])
+    print(f"Preexisting: {exists}, current Mirrors: {current_mirrors}, current onions: {current_onions}, current IPFS nodes: {current_ipfs_nodes}")
     if not kwargs['existing']: #New mirror
         print(f"Adding distribution to {kwargs['mirror_type']} ...")
         if kwargs['mirror_type'] == 'cloudfront':
@@ -199,8 +209,10 @@ def new_add(**kwargs):
             mirror = fastly_add(domain=kwargs['domain'])
         elif kwargs['mirror_type'] == 'onion':
             mirror = onion_add(domain=kwargs['domain'])
+        if kwargs['mirror_type'] == 'ipfs':
+            mirror = ipfs_add(domain=kwargs['domain'])
         else:
-            print("Need to define type of mirror. Use --mirror_type=cloudfront/azure/fastly/onion")
+            print("Need to define type of mirror. Use --mirror_type=cloudfront/azure/fastly/onion/ipfs")
             return
         if not mirror:
             print(f"Sorry, mirror not created for {kwargs['domain']}!")
@@ -209,7 +221,7 @@ def new_add(**kwargs):
             print(f"Mirror {mirror} added, but not added to Github as per your instructions!")
             return
         replace = False
-    else: #adding existing mirror/onion
+    else: #adding existing mirror/onion/ipfs
         if kwargs['nogithub']:
             print(f"You asked to add or replace an existing mirror but then didn't want it added to github! Bye!")
             return

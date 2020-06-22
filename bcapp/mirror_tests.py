@@ -76,17 +76,18 @@ def mirror_detail(**kwargs):
     if kwargs['mode'] == 'console':
         print(f"Listing and Testing {domain}...")
     output['domain'] = domain
-    exists, current_mirrors, current_onions = check(domain)
+    exists, current_mirrors, current_onions, current_ipfs_nodes = check(domain)
     if not exists:
         if kwargs['mode'] == 'console':
             print(f"{domain} doesn't exist in the mirror list.")
         output['exists'] = "False"
         return
     if kwargs['mode'] == 'console':  
-        print(f"Mirror list: {current_mirrors} Onions: {current_onions}")
+        print(f"Mirror list: {current_mirrors} Onions: {current_onions}, IPFS Nodes: {current_ipfs_nodes}")
 
     output['current_mirrors'] = current_mirrors
     output['current_onions'] = current_onions
+    output['current_ipfs_nodes'] = current_ipfs_nodes
 
     mresp, murl = test_domain(domain, kwargs['proxy'], kwargs['mode'])
     if kwargs['mode'] == 'console':
@@ -105,5 +106,9 @@ def mirror_detail(**kwargs):
                 print(f"Onion {onion}... Response code: {mresp} ... URL: {murl}")
             output[onion] = mresp
 
+    if current_ipfs_nodes:
+        ## Testing here
+        pass
+    
     return output
 

@@ -47,12 +47,14 @@ def analyze(recursive, unzip, percent, num, daemon, skipsave, justsave, read_s3,
             with open(configs['paths']) as pathfile:
                 raw_path_list = pathfile.read()
             paths = raw_path_list.split('\n')
-    else: # read from S3, and download to local tmp
+    else: # read from S3
         logger.debug("Getting files from S3 bucket...")
         file_list = s3simple.s3_bucket_contents()
         logger.debug(f"File list: {file_list}")
         paths = []
         for ifile in file_list:
+            if (('.gz' in ifile or '.bz2' in ifile) and not unzip):
+                continue
             logger.debug(f"Processing file: {ifile}")
             try:
                 (prefix, domain, date, filename) = ifile.split('_')
@@ -64,23 +66,28 @@ def analyze(recursive, unzip, percent, num, daemon, skipsave, justsave, read_s3,
             numdays = (now - file_date).days
             if numdays > range:
                 continue
-            # Download to tmp
-            local_path = configs['local_tmp'] + '/' + ifile
-            paths.append(f"{domain}|{local_path}")
-            logger.debug(f"Downloading ... domain: {domain} to {local_path}")
-            s3simple.download_file(file_name=ifile, output_file=local_path)
+            paths.append(f"{domain}|{ifile}")
 
     logger.debug(f"Paths: {paths}")
 
     for fpath in paths:
         if not fpath:
             continue
-        logger.debug(f"Path: {fpath}")
         domain, path = fpath.split('|')
-        if not os.path.exists(path):
-            logger.critical("Path doesn't exist!")
-            return
-        if not os.path.isdir(path):
+        if not read_s3:
+            if not os.path.exists(path):
+                logger.critical("Path doesn't exist!")
+                return
+        
+        logger.debug(f"Path: {path}")
+
+        if read_s3:
+            #download
+            local_path = configs['local_tmp'] + '/' + path
+            logger.debug(f"Downloading ... domain: {domain} to {local_path}")
+            s3simple.download_file(file_name=path, output_file=local_path)
+            files = [local_path]
+        elif not os.path.isdir(path):
             files = [path]
         else:
             files = get_list(path, recursive, range)
@@ -147,6 +154,10 @@ def analyze(recursive, unzip, percent, num, daemon, skipsave, justsave, read_s3,
                 logger.debug("Saving output file....")
                 key = 'LogAnalysisOutput_' + domain + '_' + log_type + '_' + now_string + '.txt'
                 s3simple.put_to_s3(key=key, body=output_text)
+
+                logger.debug(f"Deleting local temporary file {local_path}...")
+                if read_s3:
+                    os.remove(local_path)
     
                 logger.debug("Sending Report to Database...")
                 report_save(

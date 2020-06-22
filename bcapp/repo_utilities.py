@@ -102,17 +102,23 @@ def add(**kwargs):
         quiet = False
 
     if not kwargs['pre']: # site is just a simple add
-        if '.onion' not in kwargs['mirror'][0]: # mirror not onion
-            site = {
-                "main_domain": kwargs['domain'],
-                "available_mirrors": kwargs['mirror']
-            }
-            new_mirrors['sites'].append(site)
-            print(f"New Mirror: {site}")
-        else: # onion not mirror
+        if '.onion' in kwargs['mirror'][0]: # onion
             site = {
                 "main_domain": kwargs['domain'],
                 "available_onions": kwargs['mirror']
+            }
+            new_mirrors['sites'].append(site)
+            print(f"New Mirror: {site}")
+        elif '.' not in kwargs['mirror'][0]: # ipfs hash, not mirror
+            site = {
+                "main_domain": kwargs['domain'],
+                "available_ipfs_nodes": kwargs['mirror']
+            }
+            new_mirrors['sites'].append(site)
+        else: # mirror
+            site = {
+                "main_domain": kwargs['domain'],
+                "available_mirrors": kwargs['mirror']
             }
             new_mirrors['sites'].append(site)
             print(f"New Mirror: {site}")
@@ -127,16 +133,7 @@ def add(**kwargs):
                     if change.lower() == 'n':
                         site_add = site
                         continue
-                if '.onion' not in kwargs['mirror'][0]: # mirror not onion
-                    if 'available_mirrors' in site and not replace:
-                        site['available_mirrors'].extend(kwargs['mirror'])
-                    elif replace:
-                        site['available_mirrors'] = [x if (x != kwargs['replace']) else kwargs['mirror'][0] for x in site['available_mirrors']]
-                    else:
-                        site['available_mirrors'] = kwargs['mirror']
-                    if not quiet:
-                        print(f"Revised Mirror: {site}")
-                else: # onion not mirror
+                if '.onion' in kwargs['mirror'][0]: # mirror not onion
                     if 'available_onions' in site and not replace:
                         site['available_onions'].extend(kwargs['mirror'])
                     elif replace:
@@ -145,6 +142,24 @@ def add(**kwargs):
                         site['available_onions'] = kwargs['mirror']
                     if not quiet:
                         print(f"Revised Site: {site}")
+                elif '.' not in kwargs['mirror'][0]: #ipfs hash
+                    if 'available_ipfs_nodes' in site and not replace:
+                        site['available_ipfs_nodes'].extend(kwargs['mirror'])
+                    elif replace:
+                        site['available_ipfs_nodes'] = [x if (x != kwargs['replace']) else kwargs['mirror'][0] for x in site['available_ipfs_nodes']]
+                    else:
+                        site['available_ipfs_nodes'] = kwargs['mirror']
+                    if not quiet:
+                        print(f"Revised Site: {site}")
+                else: # mirror
+                    if 'available_mirrors' in site and not replace:
+                        site['available_mirrors'].extend(kwargs['mirror'])
+                    elif replace:
+                        site['available_mirrors'] = [x if (x != kwargs['replace']) else kwargs['mirror'][0] for x in site['available_mirrors']]
+                    else:
+                        site['available_mirrors'] = kwargs['mirror']
+                    if not quiet:
+                        print(f"Revised Mirror: {site}")
                 site_add = site
 
     final_mirrors = json.dumps(new_mirrors, indent=4)
@@ -158,7 +173,7 @@ def add(**kwargs):
     
 def check(domain):
     """
-    Function to check to see what mirrors and onions exist on a domain
+    Function to check to see what mirrors, nodes, and onions exist on a domain
     :param domain
     :return list with current available mirrors
     """
@@ -183,6 +198,10 @@ def check(domain):
                 available_onions = site['available_onions']
             else:
                 available_onions = []
-            return exists, available_mirrors, available_onions
+            if 'available_ipfs_nodes' in site:
+                available_ipfs_nodes = site['available_ipfs_nodes']
+            else:
+                available_ipfs_nodes = []
+            return exists, available_mirrors, available_onions, available_ipfs_nodes
             
-    return False, [], []
+    return False, [], [], []

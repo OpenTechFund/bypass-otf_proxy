@@ -15,5 +15,6 @@ pygithub
 python-dotenv
 azure-mgmt-cdn
 Flask-WTF
+gunicorn
 
 
