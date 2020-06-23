@@ -14,6 +14,7 @@ from mirror_tests import mirror_detail
 from fastly_add import fastly_add, fastly_replace
 from azure_cdn import azure_add, azure_replace
 from proxy_utilities import get_configs
+from ipfs_utils import ipfs_add
 import click
 
 @click.command()
@@ -176,15 +177,6 @@ def onion_add(**kwargs):
     :returns onion from user input
     """
     mirror = input(f"Name of onion for {kwargs['domain']}?")
-    return mirror
-
-def ipfs_add(**kwargs):
-    """
-    Not yet automated
-    :kwarg <domain>
-    :returns ifps from user input
-    """
-    mirror = input(f"Hash of IPFS Node for {kwargs['domain']}?")
     return mirror
 
 def new_add(**kwargs):

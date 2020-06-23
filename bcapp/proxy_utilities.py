@@ -16,11 +16,7 @@ def get_configs():
     # Read configs
     config = configparser.ConfigParser()
 
-    try:
-        config.read('auto.cfg')
-    except configparser.Error:
-        logger.info('Config File not found or not readable!')
-        quit()
+    config.read(os.path.join(os.path.dirname(__file__), 'auto.cfg'))
 
     configs = {
         'profile': config.get('AWS', 'profile'),
@@ -41,7 +37,8 @@ def get_configs():
         'log_storage_bucket': config.get('LOGS', 'log_storage_bucket'),
         'log_level': config.get('SYSTEM', 'log_level'),
         'local_tmp': config.get('SYSTEM', 'local_tmp'),
-        'database_url': config.get('DATABASE', 'url')
+        'database_url': config.get('DATABASE', 'url'),
+        'ipfs_peer': config.get('SYSTEM', 'ipfs_peer')
     }
 
     return configs

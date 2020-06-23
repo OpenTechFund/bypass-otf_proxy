@@ -35,6 +35,7 @@ cd bypass-otf_proxy
 pipenv install
 pipenv shell
 cd bcapp
+git clone git@github.com:fastly/fastly-py.git
 ```
 
 You can use any other python environment manager you choose, use the requirements file instead of the Pipfile.
@@ -147,6 +148,61 @@ Problems you might encounter:
 - IP address of proxy source (Cloudfront, Fastly, etc.) blocked by origin website by policy
 - Assets (css, video etc.) not completely proxied properly, leading to bad formatting or missing content
 - Other proxy difficulties that are hard to diagnose (for example, some  websites proxy fine with one service but not another.)
+
+## To Use IPFS (Plus YouTube Dowloader)
+
+### Install IPFS
+
+Follow [these instructions](https://docs.ipfs.io/how-to/command-line-quick-start/#install-ipfs) from IPFS.
+
+Initialize the repository: `ipfs init --profile server`. Copy the IPFS peer identity and place it in the auto.cfg file under [SYSTEM] (You can leave out the --profile server option if you are not running this in a datacenter.)
+
+Add ipfs as a service to your server. Create /etc/systemd/system/ipfs.service:
+
+```
+[Unit]
+Description=IPFS daemon
+After=network.target
+[Service]
+User=ubuntu
+ExecStart=/usr/local/bin/ipfs daemon
+[Install]
+WantedBy=multiuser.target
+```
+
+Start the service:
+
+`sudo service ipfs start`
+
+
+
+
+### Install YouTube Downloader
+
+```
+sudo curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl
+sudo chmod a+rx /usr/local/bin/youtube-dl
+```
+Make sure that `python` is correctly associated with `python3` in update-alternatives
+
+Add the following configuration file to the home directory of the user who is running this app (such as 'ubuntu'):
+
+```
+# Lines starting with # are comments
+
+# Always extract audio
+#-x
+
+# Do not copy the mtime
+#--no-mtime
+
+# Save all videos under /var/www/ipfs/
+-o /var/www/ipfs/%(id)s.%(ext)s
+```
+
+Configuration options can be found in the [youtube-dl repository](https://github.com/ytdl-org/youtube-dl).
+
+
 
 # Log Reporting Analysis Application
 

@@ -3,6 +3,7 @@ from flask import request
 from app import app
 from app.models import Token, Domain, Mirror, Report
 from . import db
+from repo_utilities import check
 
 ## API
 @app.route('/api/v1/help/', methods=['GET', 'POST'])
@@ -11,6 +12,28 @@ def help():
     Return help info in JSON format
     """
     return {"commands" : ['report', 'help']}
+
+@app.route('/api/v1/domain/', methods=['GET', 'POST'])
+def domains():
+    """
+    Returns in JSON format all alternatives for a domain/url
+    """
+    # is authentication token correct?
+    try:
+        auth_token = Token.query.filter_by(auth_token=request.args['auth_token']).first()
+    except:
+        return {"report" : "Database Error with token!"}
+    if not auth_token:
+        return {"report": "Unauthorized!"}
+
+    exists, available_mirrors, available_onions, available_ipfs_nodes = check(request.args['domain'])
+
+    return {
+        'domain':request.args['domain'],
+        'available_mirrors': available_mirrors,
+        'available_onions': available_onions,
+        'available_ipfs_nodes': available_ipfs_nodes
+        }
 
 @app.route('/api/v1/report/', methods=['POST'])
 def report_domain():
