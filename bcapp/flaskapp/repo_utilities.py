@@ -171,7 +171,7 @@ def add(**kwargs):
     
     return site_add
     
-def check(domain):
+def check(domain, version):
     """
     Function to check to see what mirrors, nodes, and onions exist on a domain
     :param domain
@@ -190,18 +190,34 @@ def check(domain):
             ('www.' + site['main_domain'] == domain) or
             ('www.' + domain == site['main_domain'])):
             exists = True
+            if 'available_alternatives' in site:
+                available_alternatives = site['available_alternatives']
+            else:
+                available_alternatives = []
+
             if 'available_mirrors' in site:
                 available_mirrors = site['available_mirrors']
             else:
                 available_mirrors = []
+
             if 'available_onions' in site:
                 available_onions = site['available_onions']
             else:
                 available_onions = []
+                
             if 'available_ipfs_nodes' in site:
                 available_ipfs_nodes = site['available_ipfs_nodes']
             else:
                 available_ipfs_nodes = []
-            return exists, available_mirrors, available_onions, available_ipfs_nodes
             
-    return False, [], [], []
+            if version == '1':
+                return exists, available_mirrors, available_onions, available_ipfs_nodes
+            else:
+                return {
+                    'exists': exists,
+                    'available_alternatives': available_alternatives
+                }
+            
+    if version == '1':
+        return False, [], [], []
+    else return {}
