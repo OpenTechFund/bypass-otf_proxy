@@ -6,7 +6,7 @@ import requests
 import urllib3
 from requests_html import HTMLSession
 from proxy_utilities import get_configs
-from repo_utilities import check
+from repo_utilities import check, convert_domain
 
 def test_domain(domain, proxy, mode):
     """
@@ -76,39 +76,70 @@ def mirror_detail(**kwargs):
     if kwargs['mode'] == 'console':
         print(f"Listing and Testing {domain}...")
     output['domain'] = domain
-    exists, current_mirrors, current_onions, current_ipfs_nodes = check(domain)
+    domain_data = check(domain)
+    exists = domain_data['exists']
+    current_mirrors = domain_data['available_mirrors']
+    current_onions = domain_data['available_onions'] 
+    current_ipfs_nodes = domain_data['available_ipfs_nodes']
+    current_alternatives = domain_data['available_alternatives']
+
     if not exists:
         if kwargs['mode'] == 'console':
             print(f"{domain} doesn't exist in the mirror list.")
-        output['exists'] = "False"
-        return
+        return False
     if kwargs['mode'] == 'console':  
-        print(f"Mirror list: {current_mirrors} Onions: {current_onions}, IPFS Nodes: {current_ipfs_nodes}")
-
-    output['current_mirrors'] = current_mirrors
-    output['current_onions'] = current_onions
-    output['current_ipfs_nodes'] = current_ipfs_nodes
+        print(f"Mirror list: {current_mirrors} Onions: {current_onions}, IPFS Nodes: {current_ipfs_nodes}, Alternatives: {current_alternatives}")
 
     mresp, murl = test_domain(domain, kwargs['proxy'], kwargs['mode'])
     if kwargs['mode'] == 'console':
         print(f"Response code on domain: {mresp}, url: {murl}")
     output[domain] = mresp
-    if current_mirrors:
-        for mirror in current_mirrors:
-            mresp, murl = test_domain(mirror, kwargs['proxy'], kwargs['mode'])
-            if kwargs['mode'] == 'console':
-                print(f"Response code on mirror: {mresp}, url: {murl}")
-            output[mirror] = mresp
-    if current_onions:
-        for onion in current_onions:
-            mresp, murl = test_onion(onion, kwargs['mode'])
-            if kwargs['mode'] == 'console':
-                print(f"Onion {onion}... Response code: {mresp} ... URL: {murl}")
-            output[onion] = mresp
 
-    if current_ipfs_nodes:
-        ## Testing here
-        pass
-    
+    if not current_alternatives:
+        output['current_mirrors'] = current_mirrors
+        output['current_onions'] = current_onions
+        output['current_ipfs_nodes'] = current_ipfs_nodes
+        
+        if current_mirrors:
+            for mirror in current_mirrors:
+                mresp, murl = test_domain(mirror, kwargs['proxy'], kwargs['mode'])
+                if kwargs['mode'] == 'console':
+                    print(f"Response code on mirror: {mresp}, url: {murl}")
+                output[mirror] = mresp
+        if current_onions:
+            for onion in current_onions:
+                mresp, murl = test_onion(onion, kwargs['mode'])
+                if kwargs['mode'] == 'console':
+                    print(f"Onion {onion}... Response code: {mresp} ... URL: {murl}")
+                output[onion] = mresp
+
+        if current_ipfs_nodes:
+            ## Testing here
+            pass
+        if kwargs['mode'] == 'console':
+            convert = input("This entry is in version 1 mode. Convert to Version 2 alternatives (Y/n)?")
+            if convert.lower() != 'n':
+                delete = input("Delete deprecated keys like 'available_mirrors' (y/N)?")
+                convert_domain(domain, delete)
+
+    else: # format is alternatives
+        output['current_alternatives'] = current_alternatives
+        for alternative in current_alternatives:
+            if alternative['proto'] == 'http' or alternative['proto'] == 'https':
+                mresp, murl = test_domain(alternative['url'], kwargs['proxy'], kwargs['mode'])
+                if kwargs['mode'] == 'console':
+                    print(f"Response code on mirror: {mresp}, url: {murl}")
+                output[alternative['url']] = mresp
+            elif alternative['proto'] == 'tor':
+                mresp, murl = test_onion(alternative['url'], kwargs['mode'])
+                if kwargs['mode'] == 'console':
+                    print(f"Onion {alternative['url']}... Response code: {mresp} ... URL: {murl}")
+                output[alternative['url']] = mresp
+            elif alternative['proto'] == 'ipfs':
+                pass
+            else:
+                pass
+
+        
     return output
 

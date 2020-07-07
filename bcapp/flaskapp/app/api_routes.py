@@ -9,26 +9,33 @@ from repo_utilities import check
 
 ## V2 Routes
 
-@app.route('/api/v2/help', methods=['GET','POST'])
+@app.route('/api/v2/help/', methods=['GET','POST'])
 def help_v2():
     """
     Return help info in JSON format
     """
     return {"commands" : ['report', 'help', 'alternatives']}
 
+@app.route('/api/v2/alternatives/', methods=['POST'])
 def domains_v2():
     """
     Returns in JSON format all alternatives for a domain/url
     """
     # Auth token in headers
     try:
-        auth_token = Token.query.filter_by(auth_token=request.headers['Authorization']).first()
+        auth_token = Token.query.filter_by(auth_token=request.headers.get('Authorization')).first()
     except:
-        return {"report" : "Database Error with token!"}
+        return {"alternatives" : "Database Error with token!"}
     if not auth_token:
-        return {"report": "Unauthorized!"}
+        return {"alternatives": "Unauthorized!"}
 
-    return check(request.args['domain'], '2')
+    req_data = request.get_json()
+    domain = req_data['domain']
+    if not domain:
+        return {"alternatives" : 'None'}
+    
+    domain_data = check(domain)
+    return domain_data
 
 
 ## V1 Routes --- To Be Deprecated ---
@@ -53,14 +60,7 @@ def domains():
     if not auth_token:
         return {"report": "Unauthorized!"}
 
-    exists, available_mirrors, available_onions, available_ipfs_nodes = check(request.args['domain'], '1')
-
-    return {
-        'domain':request.args['domain'],
-        'available_mirrors': available_mirrors,
-        'available_onions': available_onions,
-        'available_ipfs_nodes': available_ipfs_nodes
-        }
+    return check(request.args['domain'])
 
 @app.route('/api/v1/report/', methods=['POST'])
 def report_domain():

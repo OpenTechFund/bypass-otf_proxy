@@ -48,15 +48,16 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
             domain_reporting(domain=domain, mode=mode)
         else:
             domain_data = mirror_detail(domain=domain, proxy=proxy, mode=mode)
+            if not domain_data:
+                return
             reports_list = domain_log_list(domain, num)
-            if mode == 'console':
+            report = domain_log_reports(domain, 'latest')
+            reporting = send_report(domain_data, mode)
+            if mode =='console':
                 print(f"Latest {num} log files:")
                 for rpt in reports_list:
                     date = rpt['date'].strftime('%m/%d/%Y:%H:%M:%S.%f')
                     print(f"{date} : {rpt['file_name']}")
-            report = domain_log_reports(domain, 'latest')
-            reporting = send_report(domain_data, mode)
-            if mode =='console':
                 print(f"Reported? {reporting}")
                 if not report:
                     print("No log reports stored!")
@@ -97,7 +98,11 @@ def delete_domain(domain, nogithub):
     :returns nothing
     """
     print(f"Deleting {domain}...")
-    exists, current_mirrors, current_onions, current_ipfs_nodes = check(domain)
+    domain_data = check(domain)
+    exists = domain_data['exists'] 
+    current_mirrors = domain_data['available_mirrors']
+    current_onions = domain_data['available_onions'] 
+    current_ipfs_nodes = domain_data['available_ipfs_nodes']
     print(f"Preexisting: {exists}, current Mirrors: {current_mirrors}, current onions: {current_onions}, current IPFS nodes: {current_ipfs_nodes}")
     if not exists:
         print("Domain doesn't exist!")
@@ -126,7 +131,11 @@ def replace_mirror(**kwargs):
     :returns nothing
     """
     print(f"Replacing mirror for: {kwargs['domain']}...")
-    exists, current_mirrors, current_onions, current_ipfs_nodes = check(kwargs['domain'])
+    domain_data = check(kwargs['domain'])
+    exists = domain_data['exists'] 
+    current_mirrors = domain_data['available_mirrors']
+    current_onions = domain_data['available_onions'] 
+    current_ipfs_nodes = domain_data['available_ipfs_nodes']
     if not exists:
         print("Domain doesn't exist!")
         return
@@ -189,7 +198,11 @@ def new_add(**kwargs):
     :returns nothing
     """
     mirror = ""
-    exists, current_mirrors, current_onions, current_ipfs_nodes = check(kwargs['domain'])
+    domain_data = check(kwargs['domain'])
+    exists = domain_data['exists'] 
+    current_mirrors = domain_data['available_mirrors']
+    current_onions = domain_data['available_onions'] 
+    current_ipfs_nodes = domain_data['available_ipfs_nodes']
     print(f"Preexisting: {exists}, current Mirrors: {current_mirrors}, current onions: {current_onions}, current IPFS nodes: {current_ipfs_nodes}")
     if not kwargs['existing']: #New mirror
         print(f"Adding distribution to {kwargs['mirror_type']} ...")

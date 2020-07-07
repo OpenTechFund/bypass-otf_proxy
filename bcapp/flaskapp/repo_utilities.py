@@ -1,7 +1,12 @@
 import json
 import base64
+import datetime
+import re
+import logging
 from github import Github
 from proxy_utilities import get_configs
+
+logger = logging.getLogger('logger')
 
 def domain_list():
     """
@@ -171,7 +176,7 @@ def add(**kwargs):
     
     return site_add
     
-def check(domain, version):
+def check(domain):
     """
     Function to check to see what mirrors, nodes, and onions exist on a domain
     :param domain
@@ -204,20 +209,122 @@ def check(domain, version):
                 available_onions = site['available_onions']
             else:
                 available_onions = []
-                
+
             if 'available_ipfs_nodes' in site:
                 available_ipfs_nodes = site['available_ipfs_nodes']
             else:
                 available_ipfs_nodes = []
             
-            if version == '1':
-                return exists, available_mirrors, available_onions, available_ipfs_nodes
-            else:
-                return {
-                    'exists': exists,
-                    'available_alternatives': available_alternatives
-                }
+            return {
+                'main_domain': domain,
+                'exists': exists,
+                'available_mirrors': available_mirrors,
+                'available_onions': available_onions,
+                'available_ipfs_nodes': available_ipfs_nodes,
+                'available_alternatives': available_alternatives
+            }
             
-    if version == '1':
-        return False, [], [], []
-    else return {}
+    return {}
+
+def convert_domain(domain, delete):
+    """
+    Convert domain from v1 to v2
+    """
+    if kwargs['delete'].lower() != 'y':
+        delete = False
+    else:
+        delete = True
+
+    logger.debug("Converting...")
+    configs = get_configs()
+    ipfs_domain = configs['ipfs_domain']
+    now = datetime.datetime.now()
+    domain_data = check(domain)
+    logger.debug(f"Old domain data: {domain_data}")
+    ip_match = re.compile('[0-9]{1,3}[\.]{1}[0-9]{1,3}[\.]{1}[0-9]{1,3}[\.]{1}[0-9]{1,3}')
+    proto_match = re.compile(':\/\/')
+    if ('available_alternatives' not in domain_data) or (not domain_data['available_alternatives']):
+        logger.debug("No alternatives. Adding...")
+        available_alternatives = []
+        if 'available_mirrors' in domain_data:
+            for mirror in domain_data['available_mirrors']:
+                alternative = {
+                    'created_at': str(now),
+                    'updated_at': str(now)
+                }
+                if ip_match.search(mirror): # it's an IP address, thus a mirror
+                    alternative['type'] = 'mirror'
+                    alternative['proto'] = 'http'
+                    if not proto_match.search(mirror):
+                        alternative['url'] = 'http://' + mirror
+                    else:
+                        alternative['url'] = mirror
+                elif ('fastly' in mirror) or ('cloudfront' in mirror) or ('azureedge' in mirror):
+                    alternative['type'] = 'proxy'
+                    alternative['proto'] = 'https'
+                    if not proto_match.search(mirror):
+                        alternative['url'] = 'https://' + mirror
+                    else:
+                        alternative['url'] = mirror
+                else:
+                    alternative['type'] = 'unknown'
+                    alternative['proto'] = 'https'
+                    if not proto_match.search(mirror):
+                        alternative['url'] = 'https://' + mirror
+                    else:
+                        alternative['url'] = mirror
+                available_alternatives.append(alternative)
+                logger.debug(f"Alternative: {alternative}")
+        if 'available_onions' in domain_data:
+            for onion in domain_data['available_onions']:
+                alternative = {
+                    'created_at': str(now),
+                    'updated_at': str(now),
+                    'proto': 'tor',
+                    'type': 'eotk'
+                }
+                if not proto_match.search(onion):
+                    alternative['url'] = 'https://' + onion
+                else:
+                    alternative['url'] = onion
+                available_alternatives.append(alternative)
+                logger.debug(f"Alternative: {alternative}")
+        if 'available_ipfs_nodes' in domain_data:
+            for ipfs_node in domain_data['available_ipfs_nodes']:
+                alternative = {
+                    'created_at': str(now),
+                    'updated_at': str(now),
+                    'proto': 'https',
+                    'type': 'ipfs_node'
+                }
+                if not proto_match.search(onion):
+                    alternative['url'] = 'https://' + ipfs_domain + ipfs_node
+                else:
+                    alternative['url'] = ipfs_node
+                available_alternatives.append(alternative)
+                logger.debug(f"Alternative: {alternative}")
+
+        domain_data['available_alternatives'] = available_alternatives
+        if delete:
+            del domain_data['available_mirrors']
+            del domain_data['available_onions']
+            del domain_data['available_ipfs_nodes']
+
+        logger.debug(f"New Domain Data: {domain_data}")
+
+        mirrors = domain_list()
+        for mirror in mirrors['sites']:
+            if domain == mirror['main_domain']:
+                mirrors['sites'].remove(mirror)
+                mirrors['sites'].append(domain_data)
+        commit_msg = f"Updated to convert domain {domain} to v2 - generated from automation script"
+        final_mirrors = json.dumps(mirrors, indent=4)
+        saved = save_mirrors(final_mirrors, commit_msg)
+        if saved:
+            return True
+        else:
+            return False
+
+        
+
+    return
