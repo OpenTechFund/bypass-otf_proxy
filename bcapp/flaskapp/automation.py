@@ -7,7 +7,7 @@ import sys
 import configparser
 import logging
 from aws_utils import cloudfront_add, cloudfront_replace
-from repo_utilities import add, check, domain_list, remove_domain, remove_mirror
+from repo_utilities import add, check, domain_list, remove_domain, remove_mirror, convert_domain
 from report_utilities import domain_reporting, send_report
 from log_reporting_utilities import domain_log_reports, domain_log_list
 from mirror_tests import mirror_detail
@@ -28,7 +28,7 @@ import click
 @click.option('--remove', type=str, help="Mirror or onion to remove")
 @click.option('--domain_list', is_flag=True, default=False, help="List all domains and mirrors/onions")
 @click.option('--mirror_list', is_flag=True, help="List mirrors for domain")
-@click.option('--mirror_type', type=click.Choice(['cloudfront', 'azure', 'fastly', 'onion', 'ipfs']), help="Type of mirror")
+@click.option('--mirror_type', type=click.Choice(['cloudfront', 'azure', 'fastly', 'onion', 'mirror', 'ipfs']), help="Type of mirror")
 @click.option('--nogithub', is_flag=True, default=False, help="Do not add to github")
 @click.option('--report', is_flag=True, default=False, help="Get report from api database")
 @click.option('--mode', type=click.Choice(['daemon', 'web', 'console']), default='console', help="Mode: daemon, web, console")
@@ -39,11 +39,14 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
         if delete:
             delete_domain(domain, nogithub)
         elif replace:
+            convert_domain(domain, 'n')
             replace_mirror(domain=domain, existing=existing, replace=replace, nogithub=nogithub, mirror_type=mirror_type)
-        elif mirror_type or existing:
-            new_add(domain=domain, mirror_type=mirror_type, nogithub=nogithub, existing=existing)
         elif remove:
+            convert_domain(domain, 'n')
             remove_mirror(domain=domain, remove=remove, nogithub=nogithub)
+        elif mirror_type or existing:
+            convert_domain(domain, 'n')
+            new_add(domain=domain, mirror_type=mirror_type, nogithub=nogithub, existing=existing)
         elif report:
             domain_reporting(domain=domain, mode=mode)
         else:
@@ -133,60 +136,48 @@ def replace_mirror(**kwargs):
     print(f"Replacing mirror for: {kwargs['domain']}...")
     domain_data = check(kwargs['domain'])
     exists = domain_data['exists'] 
-    current_mirrors = domain_data['available_mirrors']
-    current_onions = domain_data['available_onions'] 
-    current_ipfs_nodes = domain_data['available_ipfs_nodes']
+    current_alternatives = domain_data['available_alternatives']
     if not exists:
         print("Domain doesn't exist!")
         return
+
+    if 'mirror_type' not in kwargs:
+        print("Need mirror type here!!")
+        return
+
+    if kwargs['mirror_type'] == 'onion':
+        proto = 'tor'
+        mtype = 'eotk'
+    elif kwargs['mirror_type'] == 'mirror':
+        proto = 'http'
+        mtype = 'mirror'
     else:
-        if 'mirror_type' not in kwargs:
-            kwargs['mirror_type'] = False
-        if 'existing' in kwargs and kwargs['existing']: # replacing with existing...
-            if kwargs['nogithub']:
-                print("You wanted to replace with existing but didn't want it added to github! Bye!")
-                return
-            domain_listing = add(domain=kwargs['domain'], 
-                                 mirror=[kwargs['existing']], 
+        proto = 'https'
+        mtype = 'proxy'
+
+    if 'existing' in kwargs and kwargs['existing']: # replacing with existing...
+        if kwargs['nogithub']:
+            print("You wanted to replace with existing but didn't want it added to github! Bye!")
+            return
+        domain_listing = add(domain=kwargs['domain'], 
+                             mirror=kwargs['existing'], 
+                             pre=exists,
+                             replace=kwargs['replace'],
+                             proto=proto,
+                             mtype=mtype
+                            )
+    else: # need to create a new mirror from the old automatically
+        if kwargs['mirror_type'] == 'cloudfront':
+            mirror = cloudfront_replace(kwargs['domain'], kwargs['replace'])
+            domain_listing = add(domain=kwargs['domain'],
+                                 mirror=mirror,
                                  pre=exists,
-                                 replace=kwargs['replace']
-                                )
-        else: # need to create a new mirror from the old
-            if 'mirror_type' not in kwargs:
-                print("Need to define --mirror_type=fastly/azure/cloudfront/onion/ipfs")
-                return
-            if kwargs['mirror_type'] == 'fastly':
-                mirror = fastly_replace(kwargs['domain'], kwargs['replace'])
-            elif kwargs['mirror_type'] == 'cloudfront':
-                mirror = cloudfront_replace(kwargs['domain'], kwargs['replace'])
-            elif kwargs['mirror_type'] == 'azure':
-                mirror = azure_replace(kwargs['domain'], kwargs['replace'])
-            elif kwargs['mirror_type'] == 'onion':
-                mirror = onion_add(kwargs['domain'], kwargs['replace'])
-            elif kwargs['mirror_type'] == 'ipfs':
-                mirror = ipfs_add(kwargs['domain'], kwargs['replace'])
-            else:
-                print("Incorrect mirror definition! Must be one of: fastly/azure/cloudfront/onion/ipfs")
-                return
-
-            if kwargs['nogithub']:
-                print(f"New mirror: {mirror}. Not added to Github!")
-                return
-            else:
-                domain_listing = add(domain=kwargs['domain'],
-                                    mirror=[mirror],
-                                    pre=exists,
-                                    replace=kwargs['replace'])
+                                 replace=kwargs['replace'],
+                                 proto=proto,
+                                 mtype=mtype)
+        else:
+            print("Sorry, only cloudfront is automated!!")
     return
-
-def onion_add(**kwargs):
-    """
-    Not automated
-    :kwarg <domain>
-    :returns onion from user input
-    """
-    mirror = input(f"Name of onion for {kwargs['domain']}?")
-    return mirror
 
 def new_add(**kwargs):
     """
@@ -199,44 +190,64 @@ def new_add(**kwargs):
     """
     mirror = ""
     domain_data = check(kwargs['domain'])
-    exists = domain_data['exists'] 
-    current_mirrors = domain_data['available_mirrors']
-    current_onions = domain_data['available_onions'] 
-    current_ipfs_nodes = domain_data['available_ipfs_nodes']
-    print(f"Preexisting: {exists}, current Mirrors: {current_mirrors}, current onions: {current_onions}, current IPFS nodes: {current_ipfs_nodes}")
-    if not kwargs['existing']: #New mirror
-        print(f"Adding distribution to {kwargs['mirror_type']} ...")
-        if kwargs['mirror_type'] == 'cloudfront':
-            mirror = cloudfront_add(domain=kwargs['domain'])
-        elif kwargs['mirror_type'] == 'azure':
-            mirror = azure_add(domain=kwargs['domain'])
-        elif kwargs['mirror_type'] == 'fastly':
-            mirror = fastly_add(domain=kwargs['domain'])
-        elif kwargs['mirror_type'] == 'onion':
-            mirror = onion_add(domain=kwargs['domain'])
-        if kwargs['mirror_type'] == 'ipfs':
+    if 'exists' not in domain_data:
+        exists = False
+    else:
+        exists = domain_data['exists']
+    if 'current_alternatives' in domain_data:
+        current_alternatives = domain_data['available_alternatives']
+    else:
+        current_alternatives = []
+    print(f"Preexisting: {exists}, current alternatives {current_alternatives}")
+    print(f"Adding entry to {kwargs['mirror_type']} ...")
+    if kwargs['mirror_type'] == 'cloudfront':
+        proto = 'https'
+        mtype = 'proxy'
+        mirror = cloudfront_add(domain=kwargs['domain'])
+    elif kwargs['mirror_type'] == 'azure':
+        proto = 'https'
+        mtype = 'proxy'
+        mirror = azure_add(domain=kwargs['domain'])
+    elif kwargs['mirror_type'] == 'fastly':
+        proto = 'https'
+        mtype = 'proxy'
+        mirror = fastly_add(domain=kwargs['domain'])
+    elif kwargs['mirror_type'] == 'onion':
+        proto = 'tor'
+        mtype = 'eotk'
+        if 'existing' in kwargs:
+            mirror = kwargs['existing']
+        else:
+            print("Need to include existing url!")
+    elif kwargs['mirror_type'] == 'ipfs':
+        proto = 'https'
+        mtype = 'ipfs'
+        if 'existing' not in kwargs:
             mirror = ipfs_add(domain=kwargs['domain'])
         else:
-            print("Need to define type of mirror. Use --mirror_type=cloudfront/azure/fastly/onion/ipfs")
-            return
-        if not mirror:
-            print(f"Sorry, mirror not created for {kwargs['domain']}!")
-            return
-        elif kwargs['nogithub']:
-            print(f"Mirror {mirror} added, but not added to Github as per your instructions!")
-            return
-        replace = False
-    else: #adding existing mirror/onion/ipfs
-        if kwargs['nogithub']:
-            print(f"You asked to add or replace an existing mirror but then didn't want it added to github! Bye!")
+            mirror = kwargs['existing']
+    elif kwargs['mirror_type'] == 'mirror':
+        proto = 'http'
+        mtype = 'mirror'
+        if 'existing' not in kwargs:
+            print("You didn't include URL - mirror type needs that!")
             return
         mirror = kwargs['existing']
+    else:
+        print("Need to define type of mirror. Use --mirror_type=cloudfront/azure/fastly/onion/mirror/ipfs")
+        return
 
+    if not mirror:
+        print(f"Sorry, mirror not created for {kwargs['domain']}!")
+        return
+
+    replace = False
+   
     if kwargs['nogithub']:
         print(f"You added this mirror: {mirror}. But no changes were made to github")
         return
     else:
-        domain_listing = add(domain=kwargs['domain'], mirror=[mirror], pre=exists)
+        domain_listing = add(domain=kwargs['domain'], mirror=mirror, pre=exists, proto=proto, mtype=mtype)
         print(f"New Domain listing: {domain_listing}")
         return
 

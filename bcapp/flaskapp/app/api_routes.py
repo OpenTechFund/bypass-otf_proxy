@@ -30,11 +30,11 @@ def domains_v2():
         return {"alternatives": "Unauthorized!"}
 
     req_data = request.get_json()
-    domain = req_data['domain']
-    if not domain:
+    url = req_data['url']
+    if not url:
         return {"alternatives" : 'None'}
     
-    domain_data = check(domain)
+    domain_data = check(url)
     return domain_data
 
 
