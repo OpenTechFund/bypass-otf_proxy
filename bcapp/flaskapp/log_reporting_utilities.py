@@ -239,7 +239,7 @@ def get_domain_data(domain):
     """
     Get domain data
     """
-    load_dotenv(dotenv_path='flaskapp/.env')
+    load_dotenv()
 
     engine = db.create_engine(os.environ['DATABASE_URL'])
     connection = engine.connect()
@@ -274,7 +274,7 @@ def report_save(**kwargs):
     """
     domain_data = get_domain_data(kwargs['domain'])
     domain_id = domain_data['id']
-    load_dotenv(dotenv_path='flaskapp/.env')
+    load_dotenv()
 
     engine = db.create_engine(os.environ['DATABASE_URL'])
     connection = engine.connect()

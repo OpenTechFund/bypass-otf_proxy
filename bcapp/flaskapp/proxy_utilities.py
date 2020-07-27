@@ -16,7 +16,8 @@ def get_configs():
     # Read configs
     config = configparser.ConfigParser()
 
-    config.read(os.path.join(os.path.dirname(__file__), 'auto.cfg'))
+    print(f"CWD: {os.getcwd()}")
+    config.read('auto.cfg')
 
     configs = {
         'profile': config.get('AWS', 'profile'),
