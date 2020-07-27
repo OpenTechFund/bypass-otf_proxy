@@ -1,7 +1,12 @@
 import json
 import base64
+import datetime
+import re
+import logging
 from github import Github
 from proxy_utilities import get_configs
+
+logger = logging.getLogger('logger')
 
 def domain_list():
     """
@@ -50,19 +55,16 @@ def remove_mirror(**kwargs):
     mirrors = domain_list()
     for domain in mirrors['sites']:
         if kwargs['domain'] == domain['main_domain']:
-            if '.onion' in kwargs['remove']:
-                domain['available_onions'] = [x for x in domain['available_onions'] if x != kwargs['remove']]
-            else:
-                domain['available_mirrors'] = [x for x in domain['available_mirrors'] if x != kwargs['remove']]
+            domain['available_alternatives'] = [x for x in domain['available_alternatives'] if x['url'] != kwargs['remove']]
             print(f"New listing: {domain}")
-            commit_msg = f"Removing {kwargs['remove']} from listing - generated automatically by script"
+    
+    commit_msg = f"Removing {kwargs['remove']} from listing - generated automatically by script"
 
     if not kwargs['nogithub']:
         final_mirrors = json.dumps(mirrors, indent=4)
         save_mirrors(final_mirrors, commit_msg)
     else:
         print(f"Removed {kwargs['remove']} but didn't save!")
-
     return
 
 def save_mirrors(mirrors, commit_msg):
@@ -89,6 +91,7 @@ def add(**kwargs):
     """
     function to add mirror to repository
     """
+    now = str(datetime.datetime.now())
     mirrors = domain_list()
     new_mirrors = dict(mirrors) # copy mirrors
     if 'replace' in kwargs and kwargs['replace']:
@@ -102,29 +105,23 @@ def add(**kwargs):
         quiet = False
 
     if not kwargs['pre']: # site is just a simple add
-        if '.onion' in kwargs['mirror'][0]: # onion
-            site = {
-                "main_domain": kwargs['domain'],
-                "available_onions": kwargs['mirror']
-            }
-            new_mirrors['sites'].append(site)
-            print(f"New Mirror: {site}")
-        elif '.' not in kwargs['mirror'][0]: # ipfs hash, not mirror
-            site = {
-                "main_domain": kwargs['domain'],
-                "available_ipfs_nodes": kwargs['mirror']
-            }
-            new_mirrors['sites'].append(site)
-        else: # mirror
-            site = {
-                "main_domain": kwargs['domain'],
-                "available_mirrors": kwargs['mirror']
-            }
-            new_mirrors['sites'].append(site)
-            print(f"New Mirror: {site}")
+        site = {
+            "main_domain": kwargs['domain'],
+            "available_alternatives": [
+                {
+                    "proto": kwargs['proto'],
+                    "type": kwargs['mtype'],
+                    "created_at": now,
+                    "url": kwargs['mirror']
+                }
+            ]
+        }
+        new_mirrors['sites'].append(site)
+        print(f"New Mirror: {site}")
         site_add = site
     else:
         for site in new_mirrors['sites']:
+            # TODO More robust matching
             if ((site['main_domain'] == kwargs['domain']) or
             ('www.' + site['main_domain'] == kwargs['domain']) or
             ('www.' + kwargs['domain'] == site['main_domain'])):
@@ -133,33 +130,22 @@ def add(**kwargs):
                     if change.lower() == 'n':
                         site_add = site
                         continue
-                if '.onion' in kwargs['mirror'][0]: # mirror not onion
-                    if 'available_onions' in site and not replace:
-                        site['available_onions'].extend(kwargs['mirror'])
-                    elif replace:
-                        site['available_onions'] = [x if (x != kwargs['replace']) else kwargs['mirror'][0] for x in site['available_onions']]
-                    else:
-                        site['available_onions'] = kwargs['mirror']
-                    if not quiet:
-                        print(f"Revised Site: {site}")
-                elif '.' not in kwargs['mirror'][0]: #ipfs hash
-                    if 'available_ipfs_nodes' in site and not replace:
-                        site['available_ipfs_nodes'].extend(kwargs['mirror'])
-                    elif replace:
-                        site['available_ipfs_nodes'] = [x if (x != kwargs['replace']) else kwargs['mirror'][0] for x in site['available_ipfs_nodes']]
-                    else:
-                        site['available_ipfs_nodes'] = kwargs['mirror']
-                    if not quiet:
-                        print(f"Revised Site: {site}")
-                else: # mirror
-                    if 'available_mirrors' in site and not replace:
-                        site['available_mirrors'].extend(kwargs['mirror'])
-                    elif replace:
-                        site['available_mirrors'] = [x if (x != kwargs['replace']) else kwargs['mirror'][0] for x in site['available_mirrors']]
-                    else:
-                        site['available_mirrors'] = kwargs['mirror']
-                    if not quiet:
-                        print(f"Revised Mirror: {site}")
+                if not replace:
+                    new_alternative = {
+                        "proto": kwargs['proto'],
+                        "type": kwargs['mtype'],
+                        "created_at": now,
+                        "url": kwargs['mirror']
+                    }
+                    site['available_alternatives'].append(new_alternative)
+                else:
+                    for alternative in site['available_alternatives']:
+                        if kwargs['replace'] == alternative['url']:
+                            print("Found it!")
+                            alternative['url'] = kwargs['mirror']
+                            alternative['updated_at'] = now
+                    print(f"Revised Site: {site}")
+                
                 site_add = site
 
     final_mirrors = json.dumps(new_mirrors, indent=4)
@@ -171,10 +157,10 @@ def add(**kwargs):
     
     return site_add
     
-def check(domain):
+def check(url):
     """
     Function to check to see what mirrors, nodes, and onions exist on a domain
-    :param domain
+    :param url
     :return list with current available mirrors
     """
     configs = get_configs()
@@ -186,22 +172,145 @@ def check(domain):
     mirrors = json.loads(str(mirrors_decoded, "utf-8"))
 
     for site in mirrors['sites']:
-        if ((site['main_domain'] == domain) or
-            ('www.' + site['main_domain'] == domain) or
-            ('www.' + domain == site['main_domain'])):
+        # TODO more robust matching
+        if ((site['main_domain'] == url) or
+            ('www.' + site['main_domain'] == url) or
+            ('www.' + url == site['main_domain'])):
             exists = True
+            if 'available_alternatives' in site:
+                available_alternatives = site['available_alternatives']
+            else:
+                available_alternatives = []
+
             if 'available_mirrors' in site:
                 available_mirrors = site['available_mirrors']
             else:
                 available_mirrors = []
+
             if 'available_onions' in site:
                 available_onions = site['available_onions']
             else:
                 available_onions = []
+
             if 'available_ipfs_nodes' in site:
                 available_ipfs_nodes = site['available_ipfs_nodes']
             else:
                 available_ipfs_nodes = []
-            return exists, available_mirrors, available_onions, available_ipfs_nodes
             
-    return False, [], [], []
+            return {
+                'main_domain': url,
+                'exists': exists,
+                'available_mirrors': available_mirrors,
+                'available_onions': available_onions,
+                'available_ipfs_nodes': available_ipfs_nodes,
+                'available_alternatives': available_alternatives
+            }
+            
+    return {}
+
+def convert_domain(domain, delete):
+    """
+    Convert domain from v1 to v2
+    """
+    if delete.lower() != 'y':
+        delete = False
+    else:
+        delete = True
+
+    configs = get_configs()
+    ipfs_domain = configs['ipfs_domain']
+    now = datetime.datetime.now()
+    domain_data = check(domain)
+    if 'exists' not in domain_data:
+        return
+    logger.debug("Converting...")
+    logger.debug(f"Old domain data: {domain_data}")
+    ip_match = re.compile('[0-9]{1,3}[\.]{1}[0-9]{1,3}[\.]{1}[0-9]{1,3}[\.]{1}[0-9]{1,3}')
+    proto_match = re.compile(':\/\/')
+    if ('available_alternatives' not in domain_data) or (not domain_data['available_alternatives']):
+        logger.debug("No alternatives. Adding...")
+        available_alternatives = []
+        if 'available_mirrors' in domain_data:
+            for mirror in domain_data['available_mirrors']:
+                alternative = {
+                    'created_at': str(now),
+                    'updated_at': str(now)
+                }
+                if ip_match.search(mirror): # it's an IP address, thus a mirror
+                    alternative['type'] = 'mirror'
+                    alternative['proto'] = 'http'
+                    if not proto_match.search(mirror):
+                        alternative['url'] = 'http://' + mirror
+                    else:
+                        alternative['url'] = mirror
+                elif ('fastly' in mirror) or ('cloudfront' in mirror) or ('azureedge' in mirror):
+                    alternative['type'] = 'proxy'
+                    alternative['proto'] = 'https'
+                    if not proto_match.search(mirror):
+                        alternative['url'] = 'https://' + mirror
+                    else:
+                        alternative['url'] = mirror
+                else:
+                    alternative['type'] = 'unknown'
+                    alternative['proto'] = 'https'
+                    if not proto_match.search(mirror):
+                        alternative['url'] = 'https://' + mirror
+                    else:
+                        alternative['url'] = mirror
+                available_alternatives.append(alternative)
+                logger.debug(f"Alternative: {alternative}")
+        if 'available_onions' in domain_data:
+            for onion in domain_data['available_onions']:
+                alternative = {
+                    'created_at': str(now),
+                    'updated_at': str(now),
+                    'proto': 'tor',
+                    'type': 'eotk'
+                }
+                if not proto_match.search(onion):
+                    alternative['url'] = 'https://' + onion
+                else:
+                    alternative['url'] = onion
+                available_alternatives.append(alternative)
+                logger.debug(f"Alternative: {alternative}")
+        if 'available_ipfs_nodes' in domain_data:
+            for ipfs_node in domain_data['available_ipfs_nodes']:
+                alternative = {
+                    'created_at': str(now),
+                    'updated_at': str(now),
+                    'proto': 'https',
+                    'type': 'ipfs_node'
+                }
+                if not proto_match.search(onion):
+                    alternative['url'] = 'https://' + ipfs_domain + ipfs_node
+                else:
+                    alternative['url'] = ipfs_node
+                available_alternatives.append(alternative)
+                logger.debug(f"Alternative: {alternative}")
+
+        domain_data['available_alternatives'] = available_alternatives
+        if delete:
+            del domain_data['available_mirrors']
+            del domain_data['available_onions']
+            del domain_data['available_ipfs_nodes']
+
+        logger.debug(f"New Domain Data: {domain_data}")
+
+        mirrors = domain_list()
+        for mirror in mirrors['sites']:
+            print(f"Mirror: {mirror}")
+            if domain == mirror['main_domain']:
+                mirrors['sites'].remove(mirror)
+                mirrors['sites'].append(domain_data)
+        commit_msg = f"Updated to convert domain {domain} to v2 - generated from automation script"
+        final_mirrors = json.dumps(mirrors, indent=4)
+        saved = save_mirrors(final_mirrors, commit_msg)
+        if saved:
+            return True
+        else:
+            return False
+
+    else:
+        logger.debug("Domain already converted!")   
+
+    return
