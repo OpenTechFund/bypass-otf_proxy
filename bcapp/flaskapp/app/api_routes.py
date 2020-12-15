@@ -3,6 +3,8 @@ from flask import request
 from app import app
 from app.models import Token, Domain, Mirror, Report
 from . import db
+import sys
+sys.path.insert(0, '../../')
 from repo_utilities import check
 
 ## API
