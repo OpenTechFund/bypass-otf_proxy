@@ -4,6 +4,7 @@ import datetime
 import re
 import logging
 from github import Github
+import tldextract
 from proxy_utilities import get_configs
 
 logger = logging.getLogger('logger')
@@ -157,6 +158,25 @@ def add(**kwargs):
     
     return site_add
     
+def site_match(main_domain, url):
+    """
+    Matching domain and URL
+    """
+    if (main_domain == url):
+        return True
+    tld_extract = tldextract.extract(url)
+    tld = tld_extract.domain + '.' + tld_extract.suffix
+    full_domain = tld_extract.subdomain + '.' + tld
+    if main_domain == full_domain:
+        return True
+    elif 'www.' + tld == main_domain:
+        return True
+    elif ((tld_extract.subdomain == 'www') and
+        (tld == main_domain)):
+        return True
+    else:
+        return False
+            
 def check(url):
     """
     Function to check to see what mirrors, nodes, and onions exist on a domain
@@ -172,10 +192,7 @@ def check(url):
     mirrors = json.loads(str(mirrors_decoded, "utf-8"))
 
     for site in mirrors['sites']:
-        # TODO more robust matching
-        if ((site['main_domain'] == url) or
-            ('www.' + site['main_domain'] == url) or
-            ('www.' + url == site['main_domain'])):
+        if site_match(site['main_domain'], url):
             exists = True
             if 'available_alternatives' in site:
                 available_alternatives = site['available_alternatives']
@@ -198,7 +215,8 @@ def check(url):
                 available_ipfs_nodes = []
             
             return {
-                'main_domain': url,
+                'main_domain': site['main_domain'],
+                'requested_url': url,
                 'exists': exists,
                 'available_mirrors': available_mirrors,
                 'available_onions': available_onions,
@@ -206,7 +224,7 @@ def check(url):
                 'available_alternatives': available_alternatives
             }
             
-    return {}
+    return {"alternatives" : 'None'}
 
 def convert_domain(domain, delete):
     """
