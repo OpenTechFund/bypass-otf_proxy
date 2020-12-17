@@ -179,8 +179,6 @@ Start the service:
 `sudo service ipfs start`
 
 
-
-
 ### Install YouTube Downloader
 
 ```
@@ -205,8 +203,6 @@ Add the following configuration file to the home directory of the user who is ru
 ```
 
 Configuration options can be found in the [youtube-dl repository](https://github.com/ytdl-org/youtube-dl).
-
-
 
 # Log Reporting Analysis Application
 

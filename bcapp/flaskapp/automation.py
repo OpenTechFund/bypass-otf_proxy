@@ -71,13 +71,15 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
         if testing:
             domain_testing(testing, proxy, mode)
     
-        if domain_list:
+        elif domain_list:
             dlist = domain_list()
             print(f""" List of all domains, mirrors and onions
             ___________________________________________________
             {dlist}
             ___________________________________________________
             """)
+        else:
+            click.echo("Invalid parameters! try --help")
     return
 
 def domain_testing(testing, proxy, mode):

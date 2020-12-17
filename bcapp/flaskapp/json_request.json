@@ -1,16 +1,3 @@
 {
-    "auth_token": "authentication token",
-    "domain" : "domain report is about",
-    "domain_status" : "status code for domain (is it blocked?)",
-    "domain_content": "Content of status",
-    "mirror_url" : "url of mirror site",
-    "mirror_status" : "status code for mirror",
-    "mirror_content": "Status content of mirror",
-    "user_agent" : "User Agent string from browser",
-    "ext_version" : "Version of extension",
-    "ext_uuid": "UUID of extension install",
-    "ip": "IP address",
-    "latitude" : "Latitude",
-    "longitude" : "Longitude",
-    "accuracy": "Accuracy of lat+long"
+    "url":"url"
 }

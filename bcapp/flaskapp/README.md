@@ -28,13 +28,15 @@ The API uses auth tokens just to protect from spurious/malicious reporting. You'
 
 `INSERT INTO auth_tokens (id, auth_token) VALUES ('1','some auth token here')`
 
-Then you'll add that auth_token to the json request to the API.
+Then you'll add that auth_token to the Authorization header in the request to the API.
 
 This api (bcapp/api) can take reports from the Bypass Censorship Browser extension (and eventually interface with proxies and mirrors.) This is currently a work in progress.
 
-The file bcapp/api/json_request.json is the format for the json request to the API. 
+The URL to request alternatives to a current URL is http(s)://host/api/v2/alternatives
 
-The URL for reporting is: http://host:5000/api/v1/report (development purposes)
+The file bcapp/flaskapp/json_request.json is the format for the json request to the API for information about alternatives to the domain
+
+The URL for reporting is: http(s)://host/api/v2/report (development purposes). The file bcapp/flaskapp/json_report.json is the format for reporting to the API about domain/url status.
 
 ## Reports available
 

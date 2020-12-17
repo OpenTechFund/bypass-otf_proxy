@@ -16,7 +16,6 @@ def get_configs():
     # Read configs
     config = configparser.ConfigParser()
 
-    print(f"CWD: {os.getcwd()}")
     config.read('auto.cfg')
 
     configs = {
