@@ -8,14 +8,24 @@ from requests_html import HTMLSession
 from proxy_utilities import get_configs
 from repo_utilities import check, convert_domain, delete_deprecated
 
-def test_domain(domain, proxy, mode):
+def test_domain(domain, proxy, mode, proto):
     """
     Get response code from domain
     :param domain
     :returns status code (int)
     """
-    https_domain = 'https://' + domain
-    http_domain = 'http://' + domain
+
+    if not proto:
+        https_domain = 'https://' + domain
+        http_domain = 'http://' + domain
+    else:
+        if 'https' in domain:
+            https_domain = domain
+            http_domain = False
+        else:
+            http_domain = domain
+            https_domain = False
+
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     if mode == 'console':
         print(f"Testing {domain}...")
@@ -25,14 +35,25 @@ def test_domain(domain, proxy, mode):
             request_proxy = { 'https' : proxy}
         else:
             request_proxy = { 'http': proxy}
-    try:
-        if proxy:
-            response = requests.get(https_domain, proxies=request_proxy)
-        else:
-            response = requests.get(https_domain)
-        response_return = response.status_code
-        response_url = response.url
-    except Exception as e:
+    if https_domain:
+        try:
+            if proxy:
+                response = requests.get(https_domain, proxies=request_proxy)
+            elif https_domain:
+                response = requests.get(https_domain)
+            response_return = response.status_code
+            response_url = response.url
+        except Exception as e:
+            try:
+                if proxy:
+                    response = requests.get(http_domain, proxies=request_proxy)
+                else:
+                    response = requests.get(http_domain)
+                response_return = response.status_code
+                response_url = response.url
+            except Exception as e:
+                return 500, ""
+    else:
         try:
             if proxy:
                 response = requests.get(http_domain, proxies=request_proxy)
@@ -51,16 +72,14 @@ def test_onion(onion, mode):
         'http': 'socks5h://localhost:9050',
         'https': 'socks5h://localhost:9050'
         }
-    full_onion = 'https://' + onion
     if mode == 'console':
         print(f"Testing {onion}...")
     try:
-        r = session.get(full_onion, verify=False)
+        r = session.get(onion, verify=False)
     except:
-        print("TOR not properly configured!")
-        return 500, full_onion
+        return 500, onion
         
-    return r.status_code, full_onion
+    return r.status_code, onion
 
 def mirror_detail(**kwargs):
     """
@@ -90,7 +109,7 @@ def mirror_detail(**kwargs):
     if kwargs['mode'] == 'console':  
         print(f"Mirror list: {current_mirrors} Onions: {current_onions}, IPFS Nodes: {current_ipfs_nodes}, Alternatives: {current_alternatives}")
 
-    mresp, murl = test_domain(domain, kwargs['proxy'], kwargs['mode'])
+    mresp, murl = test_domain(domain, kwargs['proxy'], kwargs['mode'], '')
     if kwargs['mode'] == 'console':
         print(f"Response code on domain: {mresp}, url: {murl}")
     output[domain] = mresp
@@ -102,7 +121,7 @@ def mirror_detail(**kwargs):
         
         if current_mirrors:
             for mirror in current_mirrors:
-                mresp, murl = test_domain(mirror, kwargs['proxy'], kwargs['mode'])
+                mresp, murl = test_domain(mirror, kwargs['proxy'], kwargs['mode'], '')
                 if kwargs['mode'] == 'console':
                     print(f"Response code on mirror: {mresp}, url: {murl}")
                 output[mirror] = mresp
@@ -125,7 +144,7 @@ def mirror_detail(**kwargs):
         output['current_alternatives'] = current_alternatives
         for alternative in current_alternatives:
             if alternative['proto'] == 'http' or alternative['proto'] == 'https':
-                mresp, murl = test_domain(alternative['url'], kwargs['proxy'], kwargs['mode'])
+                mresp, murl = test_domain(alternative['url'], kwargs['proxy'], kwargs['mode'], alternative['proto'])
                 if kwargs['mode'] == 'console':
                     print(f"Response code on mirror: {mresp}, url: {murl}")
                 alternative['result'] = mresp

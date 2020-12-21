@@ -6,12 +6,14 @@
 </h1>
 <h1>Hello!</h1>
 <h2 class="subtitle">
-  Access reporting Domain Reports
+  Recent Domain Reports for {{ domain_choice }}
 </h2>
-<h3> List of Domain Reports</h3>
+<h3> List of Recent Reports</h3>
 
-{% for item in domain_reports_list %}
- <p> Domain: {{ item.domain }} Hits: {{ item.hits }} <a href="{{ url_for ('display_log_report', id=item.id) }}"> See Report</a></p>
+{% for item in recent_reports %}
+  <p>____________________________ Report Date: {{ item.date_reported }} ______________________</p>
+  <p> Domain Status: {{ item.domain_status }} </p>
+  <p> Mirror: {{ item.mirror }} Status: {{ item.mirror_status }}</p>
 {% endfor %}
 
 

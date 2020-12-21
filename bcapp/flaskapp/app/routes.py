@@ -84,12 +84,16 @@ def admin():
     """
     Administration
     """
+    domain_list = Domain.query.all()
+    domains = []
+    for dom in domain_list:
+        domains.append(dom.domain)
     if current_user.admin:
         report_types = [
-            {
-                'name': 'Log Reports List',
-                'report': 'log_reports_list'
-             },
+            #{
+             #   'name': 'Log Reports List',
+             #   'report': 'log_reports_list'
+             #},
              {
                 'name': 'Recent Domain Reports',
                 'report': 'recent_domain_reports'
@@ -101,13 +105,9 @@ def admin():
              {
                  'name': "Last Week's Bad Mirrors",
                  'report': 'bad_mirrors'
-             },
-             {
-                 'name': "Last Week's Bad Onions",
-                 'report': 'bad_onions'
              }
         ]
-        return render_template('admin.html', name=current_user.name, report_types=report_types)
+        return render_template('admin.html', name=current_user.name, report_types=report_types, domains=domains)
     else:
         flash('Have to be an admin!')
         return redirect(url_for('profile'))
@@ -122,12 +122,14 @@ def log_reports_list():
         flash('Have to be an admin!')
         return redirect(url_for('profile'))
 
-@app.route('/admin/domain_reports')
+@app.route('/admin/domain_reports', methods=['GET'])
 @login_required
 def recent_domain_reports():
+    domain_choice = request.args.get('domain_choice')
     if current_user.admin:
-        recent_domain_reports = ['report 1', 'report 2']
-        return render_template('recent_domain_reports.html', name=current_user.name, recent_domain_reports=recent_domain_reports)
+        print(f"Domain choice: {domain_choice}")
+        recent_reports = admin_utilities.get_recent_domain_reports(domain_choice)
+        return render_template('recent_domain_reports.html', name=current_user.name, recent_reports=recent_reports, domain_choice=domain_choice)
     else:
         flash('Have to be an admin!')
         return redirect(url_for('profile'))
@@ -137,7 +139,11 @@ def recent_domain_reports():
 def bad_domains():
     if current_user.admin:
         bad_domains = admin_utilities.bad_domains()
-        return render_template('bad_domains.html', name=current_user.name, bad_domains=bad_domains)
+        if not bad_domains:
+            all_good = True
+        else:
+            all_good = False
+        return render_template('bad_domains.html', name=current_user.name, bad_domains=bad_domains, all_good=all_good)
     else:
         flash('Have to be an admin!')
         return redirect(url_for('profile'))

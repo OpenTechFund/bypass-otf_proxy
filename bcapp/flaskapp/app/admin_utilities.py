@@ -48,11 +48,39 @@ def mirror_list():
 
     return mirrors
 
+def get_recent_domain_reports(domain_choice):
+    """
+    Get most recent domain reports for a domain
+    """
+    # Find Domain ID for choice
+    now = datetime.datetime.now()
+    domain = Domain.query.filter_by(domain=domain_choice).first()
+    reports = Report.query.filter_by(domain_id=domain.id).all()
+    recent_reports = []
+    for rp in reports:
+        numdays = (now - rp.date_reported).days
+        if numdays > 7:
+            continue
+        mirror = Mirror.query.filter_by(id=rp.mirror_id).first()
+        recent_report = {
+            'domain_status': rp.domain_status,
+            'mirror': mirror.mirror_url,
+            'mirror_status': rp.mirror_status,
+            'user_agent': rp.user_agent,
+            'ip': rp.ip,
+            'date_reported': rp.date_reported
+        }
+        recent_reports.append(recent_report)
+    
+    print(recent_reports)
+    return recent_reports
+        
+
 def bad_domains():
     now = datetime.datetime.now()
     domains = domain_list()
     bad_domains = []
-    bad_domains_list = Report.query.filter(Report.domain_status != 200)
+    bad_domains_list = Report.query.filter(Report.domain_status != 200).distinct(Report.domain_id)
     for bd in bad_domains_list:
         numdays = (now - bd.date_reported).days
         if numdays > 7:
@@ -71,7 +99,7 @@ def bad_mirrors():
     domains = domain_list()
     mirrors = mirror_list()
     bad_mirrors = []
-    bad_mirrors_list = Report.query.filter(Report.mirror_status != '200').all()
+    bad_mirrors_list = Report.query.filter(Report.mirror_status != 200).all()
     for bm in bad_mirrors_list:
         numdays = (now - bm.date_reported).days
         if int(numdays) > 7:

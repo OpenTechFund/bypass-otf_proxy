@@ -7,7 +7,13 @@
 <h2 class="subtitle">
   Last Week's Bad Domains
 </h2>
-{% for item in bad_domains %}
-    <p> Domain: <em><a href="http://{{ item.domain }}">{{ item.domain }}</em></a> Status: {{ item.status }} Reported: {{ item.date_reported }}</p>
-{% endfor %}
+{% if all_good %}
+  <p>
+    No Bad Domains This Week!
+  </p>
+{% else %}
+  {% for item in bad_domains %}
+      <p> Domain: <em><a href="http://{{ item.domain }}">{{ item.domain }}</em></a> Status: {{ item.status }} Reported: {{ item.date_reported }}</p>
+  {% endfor %}
+{% endif %}
 {% endblock %}

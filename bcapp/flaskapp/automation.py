@@ -70,12 +70,16 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
 
     else:
         if testing:
-            test = input("Test all (Y/n)?")
+            if mode == 'console':
+                test = input("Test all (Y/n)?")
+            else:
+                test = 'y'
             if test.lower() != 'n':
                 domain_testing(testing, proxy, mode)
-            convert = input("Convert all (y/N)?")
-            if convert.lower() == 'y':
-                convert_all()
+            if mode == 'console':
+                convert = input("Convert all (y/N)?")
+                if convert.lower() == 'y':
+                    convert_all()
     
         elif domain_list:
             dlist = domain_list()
