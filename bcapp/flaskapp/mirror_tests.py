@@ -120,6 +120,7 @@ def mirror_detail(**kwargs):
             convert = input("This entry is in version 1 mode. Convert to Version 2 alternatives (Y/n)?")
             if convert.lower() != 'n':
                 convert_domain(domain)
+        return output
     else: # format is alternatives
         output['current_alternatives'] = current_alternatives
         for alternative in current_alternatives:
@@ -127,12 +128,12 @@ def mirror_detail(**kwargs):
                 mresp, murl = test_domain(alternative['url'], kwargs['proxy'], kwargs['mode'])
                 if kwargs['mode'] == 'console':
                     print(f"Response code on mirror: {mresp}, url: {murl}")
-                output[alternative['url']] = mresp
+                alternative['result'] = mresp
             elif alternative['proto'] == 'tor':
                 mresp, murl = test_onion(alternative['url'], kwargs['mode'])
                 if kwargs['mode'] == 'console':
                     print(f"Onion {alternative['url']}... Response code: {mresp} ... URL: {murl}")
-                output[alternative['url']] = mresp
+                alternative['result'] = mresp
             elif alternative['proto'] == 'ipfs':
                 pass
             else:
@@ -142,7 +143,5 @@ def mirror_detail(**kwargs):
             if delete.lower() == 'y':
                 delete_deprecated(domain)
 
-
-        
-    return output
+        return output
 

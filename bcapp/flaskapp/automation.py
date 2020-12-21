@@ -58,9 +58,10 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
             reporting = send_report(domain_data, mode)
             if mode =='console':
                 print(f"Latest {num} log files:")
-                for rpt in reports_list:
-                    date = rpt['date'].strftime('%m/%d/%Y:%H:%M:%S.%f')
-                    print(f"{date} : {rpt['file_name']}")
+                if reports_list:
+                    for rpt in reports_list:
+                        date = rpt['date'].strftime('%m/%d/%Y:%H:%M:%S.%f')
+                        print(f"{date} : {rpt['file_name']}")
                 print(f"Reported? {reporting}")
                 if not report:
                     print("No log reports stored!")

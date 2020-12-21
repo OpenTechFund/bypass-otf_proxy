@@ -3,6 +3,7 @@ import logging
 import os
 import re
 import socket
+import json
 import datetime
 import sqlalchemy as db
 import pandas as pd
@@ -89,7 +90,8 @@ def send_report(domain_data, mode):
     :returns nothing
     """
 
-    logger.debug(f"Domain Data: {domain_data}")
+    data_pretty = json.dumps(domain_data)
+    logger.debug(f"Domain Data: {data_pretty}")
     now = datetime.datetime.now()
     host_name = socket.gethostname()
     host_ip = socket.gethostbyname(host_name) 
@@ -122,18 +124,24 @@ def send_report(domain_data, mode):
         logger.debug(f"Domain ID: {domain_id}")
     
     # Add mirrors
-    for current_mirror in domain_data['current_mirrors']:
+    if (('current_alternatives' not in domain_data) or (not domain_data['current_alternatives'])):
+        return False
+    for current_alternative in domain_data['current_alternatives']:
         query = db.select([mirrors])
         result = connection.execute(query).fetchall()
         mirror_id = False
         for entry in result:
-            m_id, m_url, d_id = entry
-            if current_mirror == m_url:
+            m_id, m_url, d_id, proto, m_type = entry
+            if current_alternative['url'] == m_url:
                 mirror_id = m_id
         logger.debug(f"Mirror ID: {mirror_id}")
 
         if not mirror_id: # add it
-            insert = mirrors.insert().values(mirror_url=current_mirror, domain_id=domain_id)
+            insert = mirrors.insert().values(
+                mirror_url=current_alternative['url'],
+                domain_id=domain_id,
+                mirror_type=current_alternative['type'],
+                proto=current_alternative['proto'])
             result = connection.execute(insert)
             mirror_id = result.inserted_primary_key[0]
 
@@ -146,45 +154,10 @@ def send_report(domain_data, mode):
             'mirror_id': mirror_id,
             'user_agent': f'BC APP {mode}',
             'domain_status': domain_data[domain_data['domain']],
-            'mirror_status': domain_data[current_mirror],
+            'mirror_status': current_alternative['result'],
             'ip': host_ip
         }
         insert = reports.insert().values(**report_data)
         result = connection.execute(insert)
-
-    if 'current_onions' not in domain_data:
-        return True
-
-    onions = db.Table('onions', metadata, autoload=True, autoload_with=engine)
-    onion_reports = db.Table('onion_reports', metadata, autoload=True, autoload_with=engine)
-
-    query = db.select([onions])
-    o_result = connection.execute(query).fetchall()
-
-    # Do we have onions for this domain?
-    onion_id = False
-    for entry in o_result:
-        o_id, d_id, onion = entry
-        if d_id == domain_id: #we've got it
-            onion_id = o_id
-    
-    for current_onion in domain_data['current_onions']:
-        if not onion_id: # don't have it, need to add it
-            insert = onions.insert().values(domain_id=domain_id, onion=current_onion)
-            result = connection.execute(insert)
-            onion_id = result.inserted_primary_key[0]
-
-        # Make report
-        onion_report_data = {
-            'date_reported': now,
-            'domain_id': domain_id,
-            'onion_id': onion_id,
-            'user_agent': f'BC APP {mode}',
-            'onion_status': domain_data[domain_data['domain']],
-        }
-        logger.debug(f"Onion Report: {onion_report_data}")
-        insert = onion_reports.insert().values(**onion_report_data)
-        result = connection.execute(insert)
-        logger.debug(f"Report insert Result: {result}")
 
     return True
