@@ -6,7 +6,7 @@ import requests
 import urllib3
 from requests_html import HTMLSession
 from proxy_utilities import get_configs
-from repo_utilities import check, convert_domain
+from repo_utilities import check, convert_domain, delete_deprecated
 
 def test_domain(domain, proxy, mode):
     """
@@ -119,9 +119,7 @@ def mirror_detail(**kwargs):
         if kwargs['mode'] == 'console':
             convert = input("This entry is in version 1 mode. Convert to Version 2 alternatives (Y/n)?")
             if convert.lower() != 'n':
-                delete = input("Delete deprecated keys like 'available_mirrors' (y/N)?")
-                convert_domain(domain, delete)
-
+                convert_domain(domain)
     else: # format is alternatives
         output['current_alternatives'] = current_alternatives
         for alternative in current_alternatives:
@@ -139,6 +137,11 @@ def mirror_detail(**kwargs):
                 pass
             else:
                 pass
+        if kwargs['mode'] == 'console':
+            delete = input("This entry is in version 2 mode. Delete deprecated keys (y/N)?")
+            if delete.lower() == 'y':
+                delete_deprecated(domain)
+
 
         
     return output

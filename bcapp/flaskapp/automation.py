@@ -7,7 +7,7 @@ import sys
 import configparser
 import logging
 from aws_utils import cloudfront_add, cloudfront_replace
-from repo_utilities import add, check, domain_list, remove_domain, remove_mirror, convert_domain
+from repo_utilities import add, check, domain_list, remove_domain, remove_mirror, convert_domain, convert_all
 from report_utilities import domain_reporting, send_report
 from log_reporting_utilities import domain_log_reports, domain_log_list
 from mirror_tests import mirror_detail
@@ -69,7 +69,12 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
 
     else:
         if testing:
-            domain_testing(testing, proxy, mode)
+            test = input("Test all (Y/n)?")
+            if test.lower() != 'n':
+                domain_testing(testing, proxy, mode)
+            convert = input("Convert all (y/N)?")
+            if convert.lower() == 'y':
+                convert_all()
     
         elif domain_list:
             dlist = domain_list()

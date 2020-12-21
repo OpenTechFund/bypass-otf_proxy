@@ -108,7 +108,7 @@ This will add a mirror (or onion, if it is a .onion) to the json file. If the do
 
 To add a new mirror automatically for Cloudfront, Fastly, or Azure use:
 
-`python automation.py --domain=domain.com --mirror_type=cloudfront|fastly|azure|onion`
+`python automation.py --domain=domain.com --mirror_type=cloudfront|fastly|azure|onion|ipfs`
 
 (The cloudfront, fastly, and azure processes are automated. The onion and ipsf processes are not yet.)
 
@@ -125,7 +125,7 @@ To replace one mirror with another use:
 or
 *(implemented for cloudfront so far)*
 
-`python automation.py --domain=domain.com --replace=oldmirror.com --mirror_type=cloudfront|fastly|azure`
+`python automation.py --domain=domain.com --replace=oldmirror.com --mirror_type=cloudfront|fastly|azure|ipfs`
 
 If the mirror_type is defined, the replacement will be automated, and whatever is needed to reset the mirror url will be done. 
 
