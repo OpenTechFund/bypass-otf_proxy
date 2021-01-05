@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="title">
+  Bypass Censorship Application - Monthly reports
+</h1>
+<h2 class="subtitle">
+  Monthly Report
+</h2>
+<h3> Monthly Aggregate report</h3>
+How many URLs have been bad this month
+{% for item in monthly_bad %}
+    <p> Domain/Mirror: <em>{{ item.url }}</em> Number of days: {{ item.count }}</p>
+{% endfor %}
+{% endblock %}

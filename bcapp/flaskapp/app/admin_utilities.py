@@ -114,8 +114,38 @@ def bad_mirrors():
 
     return bad_mirrors
 
-def bad_onions():
-    return
+def monthly_bad():
+    today = datetime.datetime.today()
+    last_month = today - datetime.timedelta(days=30)
+    domains = domain_list()
+    domain_bad_count = {}
+    mirrors = mirror_list()
+    mirror_bad_count = {}
+    reports_list = Report.query.filter(Report.date_reported > last_month).all()
+    for report in reports_list:
+        if report.domain_status != 200:
+            if report.domain_id in domain_bad_count:
+                domain_bad_count[report.domain_id] += 1
+            else:
+                domain_bad_count[report.domain_id] = 1
+        if report.mirror_status != 200:
+            if report.mirror_id in mirror_bad_count:
+                mirror_bad_count[report.mirror_id] += 1
+            else:
+                mirror_bad_count[report.mirror_id] = 1
 
+    final_report = []
+    for db in domain_bad_count:
+        fp = {
+            'url': domains[db],
+            'count': domain_bad_count[db]
+        }
+        final_report.append(fp)
+    for mir in mirror_bad_count:
+        mp = {
+            'url': mirrors[mir],
+            'count': mirror_bad_count[mir]
+        }
+        final_report.append(mp)
 
-
+    return final_report

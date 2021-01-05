@@ -105,6 +105,10 @@ def admin():
              {
                  'name': "Last Week's Bad Mirrors",
                  'report': 'bad_mirrors'
+             },
+             {
+                 'name': "Monthly Aggregate Report",
+                 'report': 'monthly_bad'
              }
         ]
         return render_template('admin.html', name=current_user.name, report_types=report_types, domains=domains)
@@ -158,12 +162,12 @@ def bad_mirrors():
         flash('Have to be an admin!')
         return redirect(url_for('profile'))
 
-@app.route('/admin/bad_onions')
+@app.route('/admin/monthy_bad')
 @login_required
-def bad_onions():
+def monthly_bad():
     if current_user.admin:
-        bad_onions = admin_utilities.bad_onions()
-        return render_template('bad_onions.html', name=current_user.name, bad_onions=bad_onions)
+        monthly_bad = admin_utilities.monthly_bad()
+        return render_template('monthly_bad.html', name=current_user.name, monthly_bad=monthly_bad)
     else:
         flash('Have to be an admin!')
         return redirect(url_for('profile'))
