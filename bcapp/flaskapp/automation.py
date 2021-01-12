@@ -215,15 +215,24 @@ def new_add(**kwargs):
     if kwargs['mirror_type'] == 'cloudfront':
         proto = 'https'
         mtype = 'proxy'
-        mirror = cloudfront_add(domain=kwargs['domain'])
+        if kwargs['existing']:
+            mirror = kwargs['existing']
+        else:
+            mirror = cloudfront_add(domain=kwargs['domain'])
     elif kwargs['mirror_type'] == 'azure':
         proto = 'https'
         mtype = 'proxy'
-        mirror = azure_add(domain=kwargs['domain'])
+        if kwargs['existing']:
+            mirror = kwargs['existing']
+        else:
+            mirror = azure_add(domain=kwargs['domain'])
     elif kwargs['mirror_type'] == 'fastly':
         proto = 'https'
         mtype = 'proxy'
-        mirror = fastly_add(domain=kwargs['domain'])
+        if kwargs['existing']:
+            mirror = kwargs['existing']
+        else:
+            mirror = fastly_add(domain=kwargs['domain'])
     elif kwargs['mirror_type'] == 'onion':
         proto = 'tor'
         mtype = 'eotk'

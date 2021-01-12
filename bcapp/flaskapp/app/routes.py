@@ -6,13 +6,32 @@ from app import app
 from app.models import User, Token, Domain, Mirror, Report, LogReport
 from . import db
 from . import admin_utilities
+import mirror_tests
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def home():
     """
     Home page of APP
     """
-    return render_template('index.html', title='Home')
+    domain_list = Domain.query.all()
+    domains = []
+    if request.args.get('domain_choice'):
+        domain_choice = request.args.get('domain_choice')
+        mirror_details = mirror_tests.mirror_detail(domain=domain_choice, mode='web', proxy='')
+        print(mirror_details)
+        alt_domain = mirror_details['domain']
+        current_alternatives = mirror_details['current_alternatives']
+    else:
+        alt_domain = False
+        current_alternatives = False
+    
+    for dom in domain_list:
+        domains.append(dom.domain)
+    return render_template('index.html',
+                            title='Home',
+                            domains=domains,
+                            alt_domain=alt_domain,
+                            current_alternatives=current_alternatives)
 
 @app.route('/profile')
 @login_required
