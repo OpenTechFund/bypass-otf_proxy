@@ -8,8 +8,8 @@
   Monthly Report
 </h2>
 <h3> Monthly Aggregate report</h3>
-How many URLs have been bad this month
+How many URLs have bad status reports this month
 {% for item in monthly_bad %}
-    <p> Domain/Mirror: <em>{{ item.url }}</em> Number of days: {{ item.count }}</p>
+    <p> Domain/Mirror: <em>{{ item.url }}</em> Number of reports this month: {{ item.count }}</p>
 {% endfor %}
 {% endblock %}
