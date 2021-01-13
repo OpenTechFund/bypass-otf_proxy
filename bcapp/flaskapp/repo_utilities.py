@@ -223,8 +223,9 @@ def check(url):
                 'available_ipfs_nodes': available_ipfs_nodes,
                 'available_alternatives': available_alternatives
             }
-            
-    return {"alternatives" : 'None'}
+
+    # No match       
+    return {"exists": False, "alternatives" : 'None'}
 
 def convert_all():
     """

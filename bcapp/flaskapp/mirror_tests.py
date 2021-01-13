@@ -97,12 +97,12 @@ def mirror_detail(**kwargs):
     output['domain'] = domain
     domain_data = check(domain)
     exists = domain_data['exists']
-    current_mirrors = domain_data['available_mirrors']
-    current_onions = domain_data['available_onions'] 
-    current_ipfs_nodes = domain_data['available_ipfs_nodes']
-    current_alternatives = domain_data['available_alternatives']
-
-    if not exists:
+    if exists:
+        current_mirrors = domain_data['available_mirrors']
+        current_onions = domain_data['available_onions'] 
+        current_ipfs_nodes = domain_data['available_ipfs_nodes']
+        current_alternatives = domain_data['available_alternatives']
+    else:
         if kwargs['mode'] == 'console':
             print(f"{domain} doesn't exist in the mirror list.")
         return False
