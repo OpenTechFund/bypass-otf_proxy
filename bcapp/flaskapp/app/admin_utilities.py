@@ -148,4 +148,6 @@ def monthly_bad():
         }
         final_report.append(mp)
 
-    return final_report
+    sorted_final = sorted(final_report, key=lambda x: x['count'], reverse=True)
+
+    return sorted_final

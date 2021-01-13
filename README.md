@@ -92,6 +92,8 @@ To get a list of all domains and mirrors use:
 To get a list of one domain and it's mirrors (and test each) use:
 `python automation.py --domain=domain.com`
 
+(Note: This also works with URLs. If the URL has a '&', use quotes in this request - e.g. --domain='http://www.youtube.com/watch?v=xxxxxxxxxxxx&list=WL')
+
 ## Testing:
 
 `python automation.py --testing`

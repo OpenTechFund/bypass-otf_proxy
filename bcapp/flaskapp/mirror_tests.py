@@ -14,8 +14,7 @@ def test_domain(domain, proxy, mode, proto):
     :param domain
     :returns status code (int)
     """
-
-    if not proto:
+    if 'http' not in domain:
         https_domain = 'https://' + domain
         http_domain = 'http://' + domain
     else:
