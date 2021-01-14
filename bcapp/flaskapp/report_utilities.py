@@ -5,14 +5,16 @@ import re
 import socket
 import json
 import datetime
+from dotenv import load_dotenv
 import sqlalchemy as db
-import pandas as pd
 from proxy_utilities import get_configs
+from system_utilities import send_email
 
 logger = logging.getLogger('logger')
 
 def lists():
 
+    load_dotenv()
     engine = db.create_engine(os.environ['DATABASE_URL'])
     connection = engine.connect()
     metadata = db.MetaData()
@@ -81,6 +83,85 @@ def domain_reporting(**kwargs):
     reports(domain_id)
 
     return
+
+def translate_reports(report):
+    """
+    Translates report from postgres into text for display or email
+    """
+    load_dotenv()
+    engine = db.create_engine(os.environ['DATABASE_URL'])
+    connection = engine.connect()
+    metadata = db.MetaData()
+
+    domains = db.Table('domains', metadata, autoload=True, autoload_with=engine)
+    mirrors = db.Table('mirrors', metadata, autoload=True, autoload_with=engine)
+    domain_query = db.select([domains])
+    domain_list = connection.execute(domain_query).fetchall()
+    mirror_query = db.select([mirrors])
+    mirror_list = connection.execute(mirror_query).fetchall()
+
+    translated_report = f"Date Reported: {report['date_reported']} \n"
+    translated_report += f"User Agent: {report['user_agent']} \n"
+    for domain in domain_list:
+        if report['domain_id'] == domain['id']:
+            translated_report += f"Domain: {domain['domain']} Status: {report['domain_status']} \n"
+    
+    for mirror in mirror_list:
+        if report['mirror_id'] == mirror['id']:
+            translated_report += f"Mirror: {mirror['mirror_url']} Status: {report['mirror_status']} \n"
+
+    return(translated_report)
+
+def generate_admin_report(mode):
+    """
+    Generate a report with important data for the day - email if mode is daemon
+    """
+    yesterday = datetime.datetime.today() - datetime.timedelta(days=1)
+    configs = get_configs()
+
+    load_dotenv()
+    engine = db.create_engine(os.environ['DATABASE_URL'])
+    connection = engine.connect()
+    metadata = db.MetaData()
+
+    reports = db.Table('reports', metadata, autoload=True, autoload_with=engine)
+    report_query = db.select([reports]).where(reports.c.date_reported > yesterday)
+    report_list = connection.execute(report_query).fetchall()
+
+    important_reports = ""
+    for report in report_list:
+        if ((report['domain_status'] != 200) or (report['mirror_status'] != 200)):
+            translated_report = translate_reports(report)
+            important_reports += translated_report
+
+    if mode == 'daemon':
+        if important_reports:
+            message_to_send = f""" Reporting problematic Domains and/or Alternatives for Today: 
+
+            {important_reports}
+            """
+            users = db.Table('users', metadata, autoload=True, autoload_with=engine)
+            user_query = db.select([users]).where(users.c.admin == True)
+            user_list = connection.execute(user_query).fetchall()
+            for user in user_list:
+                email = send_email(
+                            sender=configs['from_email'],
+                            recipient=user['email'],
+                            subject="Daily Report From BC APP",
+                            message=message_to_send
+                        )
+            print(f"Email Sent? {email}")
+    else:
+        if important_reports:
+            print(f""" Here are the problematic domains and/or alternatives for Today: 
+
+            {important_reports}
+            """  ) 
+        else:
+            print("No problems today!")
+
+    return
+
 
 def send_report(domain_data, mode):
     """

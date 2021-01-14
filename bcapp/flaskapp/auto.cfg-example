@@ -26,6 +26,9 @@ log_storage_bucket =
 log_level = DEBUG
 local_tmp = 
 ipfs_peer = 
+smtp_server = 
+smtp_port = 
+from_email = 
 
 [DATABASE]
 url = 

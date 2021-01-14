@@ -39,7 +39,10 @@ def get_configs():
         'local_tmp': config.get('SYSTEM', 'local_tmp'),
         'database_url': config.get('DATABASE', 'url'),
         'ipfs_peer': config.get('SYSTEM', 'ipfs_peer'),
-        'ipfs_domain': config.get('SYSTEM', 'ipfs_domain')
+        'ipfs_domain': config.get('SYSTEM', 'ipfs_domain'),
+        'smtp_host': config.get('SYSTEM', 'smtp_host'),
+        'smtp_port': config.get('SYSTEM', 'smtp_port'),
+        'from_email': config.get('SYSTEM', 'from_email')
     }
 
     return configs

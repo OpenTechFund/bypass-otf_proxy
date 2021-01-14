@@ -8,7 +8,7 @@ import configparser
 import logging
 from aws_utils import cloudfront_add, cloudfront_replace
 from repo_utilities import add, check, domain_list, remove_domain, remove_mirror, convert_domain, convert_all
-from report_utilities import domain_reporting, send_report
+from report_utilities import domain_reporting, send_report, generate_admin_report
 from log_reporting_utilities import domain_log_reports, domain_log_list
 from mirror_tests import mirror_detail
 from fastly_add import fastly_add, fastly_replace
@@ -31,10 +31,11 @@ import click
 @click.option('--mirror_type', type=click.Choice(['cloudfront', 'azure', 'fastly', 'onion', 'mirror', 'ipfs']), help="Type of mirror")
 @click.option('--nogithub', is_flag=True, default=False, help="Do not add to github")
 @click.option('--report', is_flag=True, default=False, help="Get report from api database")
+@click.option('--generate_report', is_flag=True, default=False, help="Generate report and possibly send email to admins, etc.")
 @click.option('--mode', type=click.Choice(['daemon', 'web', 'console']), default='console', help="Mode: daemon, web, console")
 
 def automation(testing, domain, proxy, existing, delete, domain_list, mirror_list,
-    mirror_type, replace, nogithub, remove, report, mode, num):
+    mirror_type, replace, nogithub, remove, report, mode, num, generate_report):
     if domain:
         if delete:
             delete_domain(domain, nogithub)
@@ -68,28 +69,29 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
                 else:
                     print(f"Latest Log Report: \n {report}")
 
-    else:
-        if testing:
-            if mode == 'console':
-                test = input("Test all (Y/n)?")
-            else:
-                test = 'y'
-            if test.lower() != 'n':
-                domain_testing(testing, proxy, mode)
-            if mode == 'console':
-                convert = input("Convert all (y/N)?")
-                if convert.lower() == 'y':
-                    convert_all()
-    
-        elif domain_list:
-            dlist = domain_list()
-            print(f""" List of all domains, mirrors and onions
-            ___________________________________________________
-            {dlist}
-            ___________________________________________________
-            """)
+    elif testing:
+        if mode == 'console':
+            test = input("Test all (Y/n)?")
         else:
-            click.echo("Invalid parameters! try --help")
+            test = 'y'
+        if test.lower() != 'n':
+            domain_testing(testing, proxy, mode)
+        if mode == 'console':
+            convert = input("Convert all (y/N)?")
+            if convert.lower() == 'y':
+                convert_all()
+    elif generate_report:
+        generate_admin_report(mode)
+            
+    elif domain_list:
+        dlist = domain_list()
+        print(f""" List of all domains, mirrors and onions
+        ___________________________________________________
+        {dlist}
+        ___________________________________________________
+        """)
+    else:
+        click.echo("Invalid parameters! try --help")
     return
 
 def domain_testing(testing, proxy, mode):
