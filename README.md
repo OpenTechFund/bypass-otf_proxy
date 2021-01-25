@@ -100,6 +100,8 @@ To get a list of one domain and it's mirrors (and test each) use:
 
 This goes through the list of all domains, testing each domain, mirror and onion (ipfs testing forthcoming), and adding to the database.
 
+If you use `python automation.py --testing --mode=daemon` via cron, that will test all sites, and make reports to the database of the status of all sites.
+
 ## Domain addition: 
 
 To add an existing mirror (one that you have already set up, including onions) use:

@@ -6,7 +6,7 @@ Allows for testing and requests for BP mirrors from an API
 """
 import sys
 sys.path.insert(0, '.')
-from proxy_utilities import get_configs
+from system_utilities import get_configs
 from app import app
 
 if __name__ == '__main__':

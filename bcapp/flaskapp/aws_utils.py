@@ -2,9 +2,12 @@ import boto3
 import json
 import datetime
 import time
+import logging
 from datetime import tzinfo
 from dateutil.tz import tzutc
-from proxy_utilities import get_configs
+from system_utilities import get_configs
+
+logger = logging.getLogger('logger')
 
 def cloudfront_add(**kwargs):
     """
@@ -18,7 +21,7 @@ def cloudfront_add(**kwargs):
     session = boto3.Session(profile_name=configs['profile'])
     client = session.client('cloudfront', region_name=configs['region'])
 
-    print(f"For domain: {kwargs['domain']}")
+    logger.debug(f"For domain: {kwargs['domain']}")
     cdn_id = "Custom-" + kwargs['domain']
     response = client.create_distribution(
         DistributionConfig={
@@ -70,11 +73,11 @@ def cloudfront_add(**kwargs):
             }
         }
     )
-    print(f"Response: {response}")
+    logger.debug(f"Response: {response}")
     distro_id = response['Distribution']['Id']
     wait = input("Wait for distribution (y/N)?")
     if wait.lower() == 'y':
-        print("And now we wait...")
+        logger.debug("And now we wait...")
         waiter = client.get_waiter('distribution_deployed')
         waiter.wait(
             Id=distro_id,
@@ -113,7 +116,7 @@ def cloudfront_replace(domain, replace):
 
     # Get config
     distro_config = client.get_distribution_config(Id=delete_id)
-    print(f"Configuration: {distro_config}")
+    logger.debug(f"Configuration: {distro_config}")
     etag = distro_config['ETag']
     disable_config = dict(distro_config['DistributionConfig'])
     disable_config['Enabled'] = False
@@ -123,7 +126,7 @@ def cloudfront_replace(domain, replace):
     d_etag = response['ETag']
 
     # Wait for it...
-    print("Waiting for distribution to be disabled...")
+    logger.debug("Waiting for distribution to be disabled...")
     waiter = client.get_waiter('distribution_deployed')
     waiter.wait(Id=delete_id)
 

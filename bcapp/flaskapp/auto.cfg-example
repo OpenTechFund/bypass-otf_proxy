@@ -22,13 +22,16 @@ service_principal_key =
 path_file = 
 log_storage_bucket =
 
+[EMAIL]
+smtp_host = 
+smtp_port = 
+smtp_user = 
+smtp_password = 
+
 [SYSTEM]
 log_level = DEBUG
 local_tmp = 
 ipfs_peer = 
-smtp_server = 
-smtp_port = 
-from_email = 
 
 [DATABASE]
 url = 

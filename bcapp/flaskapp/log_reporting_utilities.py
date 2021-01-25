@@ -9,7 +9,7 @@ import logging
 from dotenv import load_dotenv
 from simple_AWS.s3_functions import *
 import sqlalchemy as db
-from proxy_utilities import get_configs
+from system_utilities import get_configs
 
 logger = logging.getLogger('logger')
 

@@ -5,18 +5,21 @@ Fastly Service Automation
 import os
 import sys
 import configparser
+import logging
 sys.path.insert(0, 'fastly-py')
 import fastly
 
+logger = logging.getLogger('logger')
+
 def fastly_add(**kwargs):
-    print("Getting configs...")
+    logger.debug("Getting configs...")
     # Set environment variables fastly needs from config file
     config = configparser.ConfigParser()
     CONFIG_FILE = 'fastly.cfg'
     try:
         config.read(CONFIG_FILE)
     except (IOError, OSError):
-        print('Config File not found or not readable!')
+        logger.info('Config File not found or not readable!')
         quit()
 
     fastly_user = config.get('FASTLY', 'FASTLY_USER')
@@ -35,7 +38,7 @@ def fastly_add(**kwargs):
 
     # list services
     services_list = api.services()
-    print ("List of current services:")
+    print("List of current services:")
     count = 0
     for service in services_list:
         svc = vars(service)['_original_attrs']
@@ -61,7 +64,7 @@ def fastly_add(**kwargs):
     new_version = int(target_service_vars['version']) + 1
     clone = input("Need to clone a new version (y/N)?")
     if clone.lower() == 'y':
-        print("Cloning version...")
+        logger.debug("Cloning version...")
         version.clone()
 
     # Domain
@@ -79,7 +82,7 @@ def fastly_add(**kwargs):
         # add new condition
         condition_name = fastly_subdomain
         cond_statement = 'req.http.host ~ "' + fastly_domain + '"'
-        print("Saving condition...")
+        logger.debug("Saving condition...")
         version.condition(name=condition_name, statement=cond_statement, type='REQUEST')
     else:
         condition_name = input(f"Name of current condition for {fastly_domain}?")
@@ -112,21 +115,21 @@ def fastly_add(**kwargs):
         )
     activate_version = input(f"Activate new version (y/N)?")
     if activate_version.lower() == 'y':
-        print("Activating new version!")
+        logger.debug("Activating new version!")
         version = api.version(target_service_vars['id'], new_version)
         version.activate()
 
     return fastly_domain
         
 def fastly_list():
-    print("Getting configs...")
+    logger.debug("Getting configs...")
     # Set environment variables fastly needs from config file
     config = configparser.ConfigParser()
     CONFIG_FILE = 'fastly.cfg'
     try:
         config.read(CONFIG_FILE)
     except (IOError, OSError):
-        print('Config File not found or not readable!')
+        logger.info('Config File not found or not readable!')
         quit()
 
     fastly_user = config.get('FASTLY', 'FASTLY_USER')
@@ -145,11 +148,11 @@ def fastly_list():
 
     # list services
     services_list = api.services()
-    print ("List of current services:")
+    print("List of current services:")
     count = 0
     for service in services_list:
         svc = vars(service)['_original_attrs']
-        print (f"{count}: {svc['name']} [{svc['id']}] Version {svc['version']}")
+        print(f"{count}: {svc['name']} [{svc['id']}] Version {svc['version']}")
          # list backends
         backends = api.backends(svc['id'], svc['version'])
         print(f"Number of Backends: {len(backends)}")

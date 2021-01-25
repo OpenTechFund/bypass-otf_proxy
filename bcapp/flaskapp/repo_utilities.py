@@ -5,7 +5,7 @@ import re
 import logging
 from github import Github
 import tldextract
-from proxy_utilities import get_configs
+from system_utilities import get_configs
 
 logger = logging.getLogger('logger')
 

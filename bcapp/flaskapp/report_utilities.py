@@ -7,8 +7,7 @@ import json
 import datetime
 from dotenv import load_dotenv
 import sqlalchemy as db
-from proxy_utilities import get_configs
-from system_utilities import send_email
+from system_utilities import get_configs, send_email
 
 logger = logging.getLogger('logger')
 
@@ -116,6 +115,7 @@ def generate_admin_report(mode):
     """
     Generate a report with important data for the day - email if mode is daemon
     """
+    logger.debug("Sending Admin Report...")
     yesterday = datetime.datetime.today() - datetime.timedelta(days=1)
     configs = get_configs()
 
@@ -130,6 +130,7 @@ def generate_admin_report(mode):
 
     important_reports = ""
     for report in report_list:
+        logger.debug(f"Report: {report}")
         if ((report['domain_status'] != 200) or (report['mirror_status'] != 200)):
             translated_report = translate_reports(report)
             important_reports += translated_report
@@ -150,7 +151,10 @@ def generate_admin_report(mode):
                             subject="Daily Report From BC APP",
                             message=message_to_send
                         )
-            print(f"Email Sent? {email}")
+                logger.debug(f"Message Sent to {user['email']}")
+                print(f"Email Sent? {email}")
+        else:
+            logger.debug("No problematic domains and/or alternatives for Today!")
     else:
         if important_reports:
             print(f""" Here are the problematic domains and/or alternatives for Today: 

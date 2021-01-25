@@ -2,7 +2,7 @@
 Azure add CDN using SDK
 """
 import logging
-from proxy_utilities import get_configs
+from system_utilities import get_configs
 
 logger = logging.getLogger('logger')
 
@@ -21,7 +21,7 @@ def azure_add(**kwargs):
     # Your service principal password
     KEY = configs['azure_key']
 
-    print("Authenticating...")
+    logger.debug("Authenticating...")
     credentials = ServicePrincipalCredentials(
         client_id = CLIENT,
         secret = KEY,
@@ -66,7 +66,7 @@ def azure_add(**kwargs):
     if cdn_confirm.lower() == 'n':
         return False
 
-    print("Adding...")
+    logger.debug("Adding...")
     endpoint_poller = cdn_client.endpoints.create(my_resource_group,
                                             cdn_name,
                                             endpoint_name,
@@ -81,7 +81,7 @@ def azure_add(**kwargs):
                                             })
     endpoint = endpoint_poller.result()
 
-    print("Done!")
+    logger.debug("Done!")
     return endpoint_full_name
 
 def azure_replace(**kwargs):

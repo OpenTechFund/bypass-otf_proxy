@@ -4,9 +4,12 @@ import base64
 from github import Github
 import requests
 import urllib3
+import logging
 from requests_html import HTMLSession
-from proxy_utilities import get_configs
+from system_utilities import get_configs
 from repo_utilities import check, convert_domain, delete_deprecated
+
+logger = logging.getLogger('logger')
 
 def test_domain(domain, proxy, mode, proto):
     """
@@ -26,10 +29,9 @@ def test_domain(domain, proxy, mode, proto):
             https_domain = False
 
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-    if mode == 'console':
-        print(f"Testing {domain}...")
+    logger.debug(f"Testing {domain}...")
     if proxy:
-        print(f"Using proxy: {proxy}...")
+        logger.debug(f"Using proxy: {proxy}...")
         if 'https' in proxy:
             request_proxy = { 'https' : proxy}
         else:
@@ -71,8 +73,7 @@ def test_onion(onion, mode):
         'http': 'socks5h://localhost:9050',
         'https': 'socks5h://localhost:9050'
         }
-    if mode == 'console':
-        print(f"Testing {onion}...")
+    logger.debug(f"Testing {onion}...")
     try:
         r = session.get(onion, verify=False)
     except:
@@ -91,8 +92,7 @@ def mirror_detail(**kwargs):
     """
     output = {}
     domain = kwargs['domain']
-    if kwargs['mode'] == 'console':
-        print(f"Listing and Testing {domain}...")
+    logger.debug(f"Listing and Testing {domain}...")
     output['domain'] = domain
     domain_data = check(domain)
     exists = domain_data['exists']
@@ -102,8 +102,7 @@ def mirror_detail(**kwargs):
         current_ipfs_nodes = domain_data['available_ipfs_nodes']
         current_alternatives = domain_data['available_alternatives']
     else:
-        if kwargs['mode'] == 'console':
-            print(f"{domain} doesn't exist in the mirror list.")
+        logger.debug(f"{domain} doesn't exist in the mirror list.")
         return False
     if kwargs['mode'] == 'console':  
         print(f"Mirror list: {current_mirrors} Onions: {current_onions}, IPFS Nodes: {current_ipfs_nodes}, Alternatives: {current_alternatives}")

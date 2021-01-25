@@ -24,7 +24,7 @@ def log_report_list():
             'hits':rpt.hits
         }
         log_reports.append(log_report)
-    print(log_reports)
+    logger.debug(log_reports)
     return log_reports
 
 def domain_list():
@@ -72,7 +72,7 @@ def get_recent_domain_reports(domain_choice):
         }
         recent_reports.append(recent_report)
     
-    print(recent_reports)
+    logger.debug(recent_reports)
     return recent_reports
         
 
@@ -98,20 +98,36 @@ def bad_mirrors():
     now = datetime.datetime.now()
     domains = domain_list()
     mirrors = mirror_list()
-    bad_mirrors = []
+    bad_mirrors = {
+        'onions': [],
+        'cloudfront': [],
+        'azure': [],
+        'fastly': [],
+        'other': []
+    }
     bad_mirrors_list = Report.query.filter(Report.mirror_status != 200).all()
     for bm in bad_mirrors_list:
         numdays = (now - bm.date_reported).days
         if int(numdays) > 7:
-            continue
+            continue 
         bad_mir = {
             'domain': domains[bm.domain_id],
             'mirror': mirrors[bm.mirror_id],
             'status': bm.mirror_status,
             'date_reported': bm.date_reported,
         }
-        bad_mirrors.append(bad_mir)
+        if '.onion' in mirrors[bm.mirror_id]:
+            bad_mirrors['onions'].append(bad_mir)
+        elif 'fastly.net' in mirrors[bm.mirror_id]:
+            bad_mirrors['fastly'].append(bad_mir)
+        elif 'cloudfront.net' in mirrors[bm.mirror_id]:
+            bad_mirrors['cloudfront'].append(bad_mir)
+        elif 'azureedge.net' in mirrors[bm.mirror_id]:
+            bad_mirrors['azure'].append(bad_mir)
+        else:
+            bad_mirrors['other'].append(bad_mir)
 
+    print(bad_mirrors)
     return bad_mirrors
 
 def monthly_bad():

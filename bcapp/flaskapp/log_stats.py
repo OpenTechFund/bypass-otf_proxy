@@ -10,7 +10,7 @@ import time
 import click
 import sh
 import logging
-from proxy_utilities import get_configs
+from system_utilities import get_configs
 from simple_AWS.s3_functions import *
 from log_reporting_utilities import analyze_file, output, report_save
 
@@ -143,8 +143,7 @@ def analyze(recursive, unzip, percent, num, daemon, skipsave, justsave, read_s3,
                             data=analyzed_data,
                             percent=percent,
                             num=num)
-                if not daemon:
-                    print(output_text)
+                logger.debug(output_text)
 
                 logger.debug("Saving log analysis file...")
                 key = 'LogAnalysis_' + just_file_name + '_' + now_string + '.json'

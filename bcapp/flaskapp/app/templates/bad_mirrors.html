@@ -7,7 +7,33 @@
 <h2 class="subtitle">
   Last Week's Bad Mirrors
 </h2>
-{% for item in bad_mirrors %}
-    <p> Domain: <em>{{ item.domain }}</em> Mirror URL: <a href="http://{{ item.mirror }}">{{ item.mirror }}</a> Status: {{ item.status }} Date Reported: {{ item.date_reported }}</p>
-{% endfor %}
+  {% for type in bad_mirrors %}
+      {% if type == 'cloudfront' %}
+      <h2 class="subtitle">Cloudfront</h2>
+        {% for item in bad_mirrors[type] %}
+          <p> <a href="http://{{ item.mirror }}">{{ item.mirror }}</a> Mirror For: <em>{{ item.domain }}</em> Status: {{ item.status }} Date Reported: {{ item.date_reported }}</p>
+        {% endfor %}
+      {% elif type == 'fastly' %}
+      <h2 class="subtitle">Fastly</h2>
+        {% for item in bad_mirrors[type] %}
+          <p> <a href="http://{{ item.mirror }}">{{ item.mirror }}</a> Mirror For: <em>{{ item.domain }}</em> Status: {{ item.status }} Date Reported: {{ item.date_reported }}</p>
+        {% endfor %}
+      {% elif type == 'azure' %}
+      <h2 class="subtitle">Azure</h2>
+        {% for item in bad_mirrors[type] %}
+          <p> <a href="http://{{ item.mirror }}">{{ item.mirror }}</a> Mirror For: <em>{{ item.domain }}</em> Status: {{ item.status }} Date Reported: {{ item.date_reported }}</p>
+        {% endfor %}
+      {% elif type == 'onions' %}
+      <h2 class="subtitle">Onions</h2>
+        {% for item in bad_mirrors[type] %}
+          <p> <a href="http://{{ item.mirror }}">{{ item.mirror }}</a> Mirror For: <em>{{ item.domain }}</em> Status: {{ item.status }} Date Reported: {{ item.date_reported }}</p>
+        {% endfor %}
+      {% else %}
+      <h2 class="subtitle">Other</h2>
+        {% for item in bad_mirrors[type] %}
+          <p> <a href="http://{{ item.mirror }}">{{ item.mirror }}</a> Mirror For: <em>{{ item.domain }}</em> Status: {{ item.status }} Date Reported: {{ item.date_reported }}</p>
+        {% endfor %}
+      {% endif %}
+      <hr>
+  {% endfor %}
 {% endblock %}
