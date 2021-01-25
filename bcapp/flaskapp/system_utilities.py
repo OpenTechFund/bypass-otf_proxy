@@ -47,7 +47,7 @@ def get_configs():
 
     return configs
 
-def send_email(subject, recipient, message):
+def send_email(recipient, subject, message):
 
     configs = get_configs()
 
@@ -56,7 +56,7 @@ def send_email(subject, recipient, message):
     msg['From']    = configs['smtp_user']
     msg['To']      = recipient
 
-    s = smtplib.SMTP(configs['smpt_host'], configs['smpt_port'])
+    s = smtplib.SMTP(configs['smtp_host'], configs['smtp_port'])
 
     logger.debug("Sending Messages...")
     try:

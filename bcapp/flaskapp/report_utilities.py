@@ -141,20 +141,21 @@ def generate_admin_report(mode):
 
             {important_reports}
             """
-            users = db.Table('users', metadata, autoload=True, autoload_with=engine)
-            user_query = db.select([users]).where(users.c.admin == True)
-            user_list = connection.execute(user_query).fetchall()
-            for user in user_list:
-                email = send_email(
-                            sender=configs['from_email'],
-                            recipient=user['email'],
-                            subject="Daily Report From BC APP",
-                            message=message_to_send
-                        )
-                logger.debug(f"Message Sent to {user['email']}")
-                print(f"Email Sent? {email}")
         else:
-            logger.debug("No problematic domains and/or alternatives for Today!")
+            message_to_send = "No Problematic Domains or Alternatives for the day. Check system."
+
+        users = db.Table('users', metadata, autoload=True, autoload_with=engine)
+        user_query = db.select([users]).where(users.c.admin == True)
+        user_list = connection.execute(user_query).fetchall()
+        for user in user_list:
+            email = send_email(
+                        user['email'],
+                        "Daily Report From BC APP",
+                        message_to_send
+                    )
+            logger.debug(f"Message Sent to {user['email']}")
+            print(f"Email Sent? {email}")
+
     else:
         if important_reports:
             print(f""" Here are the problematic domains and/or alternatives for Today: 
@@ -162,7 +163,7 @@ def generate_admin_report(mode):
             {important_reports}
             """  ) 
         else:
-            print("No problems today!")
+            print("No problems reported today - check your crontab!")
 
     return
 
