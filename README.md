@@ -157,6 +157,17 @@ Problems you might encounter:
 - Assets (css, video etc.) not completely proxied properly, leading to bad formatting or missing content
 - Other proxy difficulties that are hard to diagnose (for example, some  websites proxy fine with one service but not another.)
 
+## Ongoing reporting 
+
+To do ongoing reporting on domain and alternative status, set up a cron job with the following format:
+
+`30 08 * * * cd /path/to/bypass-otf_proxy/bcapp/flaskapp/; ~/path/to/venv/bin/python automation.py --testing --mode=daemon`
+
+This would run a test of all domains and alternatives each day at 8:30am. 
+
+To send a daily report by email (email setup in auto.cfg) use this:
+
+`01 04 * * * cd /path/to/bypass-otf_proxy/bcapp/flaskapp/; ~/path/to/venv/bin/python automation.py --generate_report --mode=daemon`
 ## To Use IPFS (Plus YouTube Dowloader)
 
 ### Install IPFS
@@ -209,8 +220,50 @@ Add the following configuration file to the home directory of the user who is ru
 Configuration options can be found in the [youtube-dl repository](https://github.com/ytdl-org/youtube-dl).
 
 # Log Reporting Analysis Application
+*This part of the application is in progress*
 
-## Usage
+This part of the application requires moving logs from wherever they are generated to S3 (or Azure storage, forthcoming). 
+## Moving local logs to S3
+
+The log reporting app only analyzes log files from S3 (*or Azure Storage, forthcoming*). If you have local files (onion, mirror, etc.) to analyze, you must move them to S3. move_logs.py does that for you.
+
+```
+Usage: move_logs.py [OPTIONS]
+
+  Move logs from local to s3
+
+Options:
+  --daemon         Run in daemon mode. All output goes to a file.
+  --zip            Save zipped log files
+  --recursive      Descent through directories
+  --range INTEGER  Days of log file age to save. Default is 10
+  --help           Show this message and exit.
+
+```
+
+A periodic cron job like this will do the trick:
+
+`15 12 * * 1 cd /path/to/bypass-otf_proxy/bcapp/flaskapp/; ~/path/to/venv/bypass-otf_proxy-fBr8tRtQ/bin/pythonpython move_logs.py --daemon --range=7 --recursive --unzip`
+
+This will move all files to S3 from the last week on Sunday at 12:15am. 
+
+Local log file configurations are in auto.cfg. auto.cfg points to a paths file, with the format:
+
+```
+domain1|/path/to/domain1/logfiles
+domain2|path/to/domain2/logfiles
+```
+
+## Generating Cloudfront Logs
+
+In order to get Cloudfront logs to S3, you need to [configure Cloudfront](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html) to do that. Once you do that, put the S3 bucket where those logs are stored into the configuration tools.
+
+## Generating AzureEdge Logs
+
+## Streaming Fastly logs to S3
+
+
+## Analyzing Logs
 
 ```
 Usage: python log_stats.py [OPTIONS]
@@ -222,9 +275,7 @@ Options:
   --recursive          Descent through directories
   --unzip              Unzip and analyze zipped log files (bz2 files only)
   --daemon             Run in daemon mode. Suppresses all output.
-  --skipsave           Skip saving log file to S3
-  --justsave           Just save log files to S3, don't run any analysis.
-  --read_s3            Read logfiles from S3, not from local paths.
+  --range              Days of log file age to analyze. Default is 7
   --help               Show this message and exit.
 ```
 

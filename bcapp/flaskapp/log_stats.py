@@ -19,15 +19,11 @@ logger = logging.getLogger('logger')
 @click.command()
 @click.option('--percent', type=int, help="Floor percentage to display for agents and codes (default is 5%)", default=5)
 @click.option('--num', type=int, help="Top number of pages to display (default is 10", default=10)
-@click.option('--recursive', is_flag=True, help="Descent through directories")
-@click.option('--unzip', is_flag=True, help="Save/analyze zipped log files", default=False)
+@click.option('--unzip', is_flag=True, help="Process zipped log files", default=False)
 @click.option('--daemon', is_flag=True, default=False, help="Run in daemon mode. All output goes to a file.")
-@click.option('--skipsave', is_flag=True, default=False, help="Skip saving log file to S3")
-@click.option('--justsave', is_flag=True, default=False, help="Just save log files to S3, don't run any analysis.")
-@click.option('--read_s3', is_flag=True, default=False, help="Read logfiles from S3, not from local paths.")
-@click.option('--range', type=int, help="Days of log file age to analyze. Default is 10", default=10)
+@click.option('--range', type=int, help="Days of log file age to analyze. Default is 7", default=7)
 
-def analyze(recursive, unzip, percent, num, daemon, skipsave, justsave, read_s3, range):
+def analyze(unzip, percent, num, daemon, range):
 
     import faulthandler; faulthandler.enable()
 
@@ -35,38 +31,32 @@ def analyze(recursive, unzip, percent, num, daemon, skipsave, justsave, read_s3,
     now = datetime.datetime.now()
     now_string = now.strftime('%d-%b-%Y:%H:%M:%S')
 
+    # TODO: Make this domain specific
     s3simple = S3Simple(region_name=configs['region'],
                                 profile=configs['profile'],
                                 bucket_name=configs['log_storage_bucket'])
 
     # get the file list to analyze
-    if not read_s3:
-        logger.debug("Reading Local Files...")
-        if configs['paths']:
-            # open paths file
-            with open(configs['paths']) as pathfile:
-                raw_path_list = pathfile.read()
-            paths = raw_path_list.split('\n')
-    else: # read from S3
-        logger.debug("Getting files from S3 bucket...")
-        file_list = s3simple.s3_bucket_contents()
-        logger.debug(f"File list: {file_list}")
-        paths = []
-        for ifile in file_list:
-            if (('.gz' in ifile or '.bz2' in ifile) and not unzip):
-                continue
-            logger.debug(f"Processing file: {ifile}")
-            try:
-                (prefix, domain, date, filename) = ifile.split('_')
-            except ValueError:
-                continue
-            if prefix != 'RawLogFile':
-                continue
-            file_date = datetime.datetime.strptime(date, "%d-%b-%Y:%H:%M:%S")
-            numdays = (now - file_date).days
-            if numdays > range:
-                continue
-            paths.append(f"{domain}|{ifile}")
+    # read from S3
+    logger.debug("Getting files from S3 bucket...")
+    file_list = s3simple.s3_bucket_contents()
+    logger.debug(f"File list: {file_list}")
+    paths = []
+    for ifile in file_list:
+        if (('.gz' in ifile or '.bz2' in ifile) and not unzip):
+            continue
+        logger.debug(f"Processing file: {ifile}")
+        try:
+            (prefix, domain, date, filename) = ifile.split('_')
+        except ValueError:
+            continue
+        if prefix != 'RawLogFile':
+            continue
+        file_date = datetime.datetime.strptime(date, "%d-%b-%Y:%H:%M:%S")
+        numdays = (now - file_date).days
+        if numdays > range:
+            continue
+        paths.append(f"{domain}|{ifile}")
 
     logger.debug(f"Paths: {paths}")
 
@@ -74,23 +64,12 @@ def analyze(recursive, unzip, percent, num, daemon, skipsave, justsave, read_s3,
         if not fpath:
             continue
         domain, path = fpath.split('|')
-        if not read_s3:
-            if not os.path.exists(path):
-                logger.critical("Path doesn't exist!")
-                return
         
-        logger.debug(f"Path: {path}")
-
-        if read_s3:
-            #download
-            local_path = configs['local_tmp'] + '/' + path
-            logger.debug(f"Downloading ... domain: {domain} to {local_path}")
-            s3simple.download_file(file_name=path, output_file=local_path)
-            files = [local_path]
-        elif not os.path.isdir(path):
-            files = [path]
-        else:
-            files = get_list(path, recursive, range)
+        #download
+        local_path = configs['local_tmp'] + '/' + path
+        logger.debug(f"Downloading ... domain: {domain} to {local_path}")
+        s3simple.download_file(file_name=path, output_file=local_path)
+        files = [local_path]
 
         logger.debug(f"File List: {files}")
 
@@ -106,88 +85,60 @@ def analyze(recursive, unzip, percent, num, daemon, skipsave, justsave, read_s3,
             if ((ext != 'log') and
                 (ext != 'bz2' and ext !='gz')): # not a log file, nor a zipped log file
                 continue
-            
-            # send to S3
-            if not skipsave and not read_s3:
-                if ((ext == 'bz2' or ext == 'gz')) and not unzip:
-                    continue 
-                logger.debug("sending to s3...")
-                s3_file =  'RawLogFile_' + domain + '_' + now_string + '_' + just_file_name
-                s3simple.send_file_to_s3(local_file=file_name, s3_file=s3_file)
 
-            if not justsave:
-                logger.debug(f"Analyzing... ")
-                if ext == 'bz2' or ext == 'gz':
-                    if unzip:
-                        if ext == 'bz2':
-                            raw_data = sh.bunzip2("-k", "-c", file_name)
-                        else:
-                            raw_data = sh.gunzip("-k", "-c", file_name)
+            logger.debug(f"Analyzing... ")
+            if ext == 'bz2' or ext == 'gz':
+                if unzip:
+                    if ext == 'bz2':
+                        raw_data = sh.bunzip2("-k", "-c", file_name)
                     else:
-                        continue
+                        raw_data = sh.gunzip("-k", "-c", file_name)
                 else:
-                    with open(file_name) as f:
-                        raw_data = f.read()
-
-                analyzed_data = analyze_file(raw_data, domain)
-                logger.debug(f"Visitor IPs:{analyzed_data['visitor_ips']}!")
-                if analyzed_data['visitor_ips']:
-                    log_type = 'nginx'
-                else:
-                    log_type = 'eotk'    
-                if not analyzed_data:
                     continue
-                logger.debug(f"Log type: {log_type}")
-                (output_text, first_date, last_date, hits) = output(
-                            file_name=file_name,
-                            data=analyzed_data,
-                            percent=percent,
-                            num=num)
-                logger.debug(output_text)
+            else:
+                with open(file_name) as f:
+                    raw_data = f.read()
 
-                logger.debug("Saving log analysis file...")
-                key = 'LogAnalysis_' + just_file_name + '_' + now_string + '.json'
-                body = str(analyzed_data)
-                s3simple.put_to_s3(key=key, body=body)
+            analyzed_data = analyze_file(raw_data, domain)
+            logger.debug(f"Visitor IPs:{analyzed_data['visitor_ips']}!")
+            if analyzed_data['visitor_ips']:
+                log_type = 'nginx'
+            else:
+                log_type = 'eotk'    
+            if not analyzed_data:
+                continue
+            logger.debug(f"Log type: {log_type}")
+            (output_text, first_date, last_date, hits) = output(
+                        file_name=file_name,
+                        data=analyzed_data,
+                        percent=percent,
+                        num=num)
+            logger.debug(output_text)
 
-                logger.debug("Saving output file....")
-                key = 'LogAnalysisOutput_' + domain + '_' + log_type + '_' + now_string + '.txt'
-                s3simple.put_to_s3(key=key, body=output_text)
+            logger.debug("Saving log analysis file...")
+            key = 'LogAnalysis_' + just_file_name + '_' + now_string + '.json'
+            body = str(analyzed_data)
+            s3simple.put_to_s3(key=key, body=body)
 
-                logger.debug(f"Deleting local temporary file {local_path}...")
-                if read_s3:
-                    os.remove(local_path)
-    
-                logger.debug("Sending Report to Database...")
-                report_save(
-                    domain=domain,
-                    datetime=now,
-                    report_text=output_text,
-                    hits=hits,
-                    first_date_of_log=first_date,
-                    last_date_of_log=last_date,
-                    log_type=log_type
-                    )
+            logger.debug("Saving output file....")
+            key = 'LogAnalysisOutput_' + domain + '_' + log_type + '_' + now_string + '.txt'
+            s3simple.put_to_s3(key=key, body=output_text)
+
+            logger.debug(f"Deleting local temporary file {local_path}...")
+            os.remove(local_path)
+
+            logger.debug("Sending Report to Database...")
+            report_save(
+                domain=domain,
+                datetime=now,
+                report_text=output_text,
+                hits=hits,
+                first_date_of_log=first_date,
+                last_date_of_log=last_date,
+                log_type=log_type
+                )
 
     return
-
-def get_list(path, recursive, range):
-    now = datetime.datetime.now()
-    file_list = os.listdir(path)
-    all_files = []
-    for entry in file_list:
-        full_path = os.path.join(path, entry)
-        # How old is the file?
-        modified = datetime.datetime.fromtimestamp(os.path.getmtime(full_path))
-        numdays = (now - modified).days
-        logger.debug(f"File: {full_path} Age: {numdays}")
-        if numdays > range:
-            continue
-        if os.path.isdir(full_path) and recursive:
-            all_files = all_files + get_list(full_path, recursive)
-        else:
-            all_files.append(full_path)
-    return all_files
 
 if __name__ == '__main__':
     configs = get_configs()
