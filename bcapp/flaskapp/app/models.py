@@ -11,9 +11,24 @@ class Domain(db.Model):
     domain = db.Column(db.String, unique=True)
     paths_ignore = db.Column(db.String)
     ext_ignore = db.Column(db.String)
+    s3_storage_bucket = db.Column(db.String)
     
     def __repr__(self):
         return '<id {}>'.format(self.id)
+
+class DomainGroup(db.Model):
+    __tablename__ = "domain_groups"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, unique=True)
+
+    def __repr__(self):
+        return '<id {}>'.format(self.id)
+
+class DGDomain(db.Model):
+    __tablename__ = "dg_domains"
+    id = db.Column(db.Integer, primary_key=True)
+    domain_group_id = db.Column(db.Integer)
+    domain_id = db.Column(db.Integer)
 
 class Onion(db.Model):
     __tablename__ = "onions"
@@ -81,7 +96,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), index=True, unique=True)
     password = db.Column(db.String(128))
     name = db.Column(db.String(120))
-    domain_id = db.Column(db.String(120))
+    domain_group_id = db.Column(db.String(120))
     admin = db.Column(db.Boolean)
     active = db.Column(db.Boolean)
 

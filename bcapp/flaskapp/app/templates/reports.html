@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="title">
+  Bypass Censorship Application - Reporting Page
+</h1>
+  <h2 class="subtitle">Reports Available</h2>
+    <ul>
+    {% for item in report_types %}
+      {% if item.report != "recent_domain_reports" %}
+        <li>{{ item.name }}:<a href="{{ url_for (item.report) }}" class="button is-info"> See Report</a></li>
+      {% else %}
+        <li>{{ item.name }}:
+          <form action="{{ url_for (item.report) }}">
+            <select name='domain_choice'>
+              {% for domain in domains %}
+              <option value="{{ domain }}">{{ domain }}</option>
+              {% endfor %}
+            </select>
+            <button type="submit">Submit</button>
+          </form>
+        </li>
+      {% endif %}
+    {% endfor %}
+    </ul>
+
+  <h2> </h2>
+  
+
+</div>
+{% endblock %}
