@@ -5,32 +5,59 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app import app
 from app.models import User, Domain
 from . import db
+import repo_utilities
 import mirror_tests
 
-@app.route('/', methods=['GET'])
+@app.route('/')
 def home():
     """
     Home page of APP
     """
     domain_list = Domain.query.all()
     domains = []
-    if request.args.get('domain_choice'):
-        domain_choice = request.args.get('domain_choice')
-        mirror_details = mirror_tests.mirror_detail(domain=domain_choice, mode='web', proxy='')
-        print(mirror_details)
-        alt_domain = mirror_details['domain']
-        current_alternatives = mirror_details['current_alternatives']
-    else:
-        alt_domain = False
-        current_alternatives = False
-    
     for dom in domain_list:
         domains.append(dom.domain)
     return render_template('index.html',
                             title='Home',
-                            domains=domains,
-                            alt_domain=alt_domain,
-                            current_alternatives=current_alternatives)
+                            domains=domains)
+
+@app.route('/public_alternatives', methods=['GET'])
+def public_alternatives():
+    """
+    Listing Alternatives
+    """
+    if request.args.get('url'):
+        alternatives = request.args.get('alternatives')
+        url = request.args.get('url')
+        if '.onion' in url:
+            status, final_url = mirror_tests.test_onion(url, 'web')
+            if status != 200:
+                result = 'down'
+            else:
+                result = 'up'
+        else:
+            status, final_url = mirror_tests.test_domain(url, '', 'web', '')
+            if status != 200:
+                result = 'down'
+            else:
+                result = 'up'
+    else:
+        url = False
+        result = 'none'
+    
+    domain_choice = request.args.get('domain_choice')
+    alternatives_list = repo_utilities.check(domain_choice)
+    if not alternatives_list['exists']:
+        alternatives = False
+    else:
+        alternatives = alternatives_list['available_alternatives']
+    return render_template('public_alternatives.html',
+                            title='Home',
+                            domain_choice=domain_choice,
+                            alternatives=alternatives,
+                            url=url,
+                            result=result)
+
 
 @app.route('/profile')
 @login_required

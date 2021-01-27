@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1 class="title">
+        Bypass Censorship Application - Testing Alternatives
+    </h1>
+    <h2>Alternatives</h2>
+    {% if not alternatives %}
+        <b>No Alternatives Exist!</b>
+    {% else %}
+        <ul>
+        {% for alternative in alternatives %}
+            <li>
+                Type: {{ alternative.type }}
+            </li>
+            <li>
+                Created: {{ alternative.created_at }}
+            </li>
+            <li>
+                URL: <a href="{{ alternative.url }}">{{ alternative.url }}</a>
+                <a href="{{ url_for ('alternatives', url=alternative.url, alternatives=alternatives, domain_choice=domain_choice) }}" class="button is-info">Test</a>
+                {% if url == alternative.url %}
+                    {% if result == 'up' %}
+                        <button class="button is-success">It's Up!</button>
+                    {% elif result == 'down' %}
+                        <button class="button is-danger">It's Down!</button>
+                    {% else %}
+                            <p></p>
+                    {% endif %}
+                {% endif %}
+            </li>
+        </ul>
+        {% endfor %}
+        <hr>
+    {% endif %}
+{% endblock %}

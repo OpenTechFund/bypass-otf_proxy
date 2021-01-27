@@ -7,6 +7,7 @@ from app.models import User, Token, Domain, Mirror, Report, LogReport, DomainGro
 from app.forms import UserForm
 from . import db
 from . import admin_utilities
+import repo_utilities
 import mirror_tests
 
 ### Admin
@@ -77,38 +78,99 @@ def edit_user(id):
         return render_template('edit_user.html', title='Edit User', user=user,
                             form=form)
 
+@app.route('/testing', methods=['GET'])
+@login_required
+def testing():
+    """
+    Domain and other tests
+    """
+    if not current_user.admin:
+        flash('Have to be an admin!')
+        return redirect(url_for('profile'))
+    else:
+        domain_list = Domain.query.all()
+        domains = []
+        for dom in domain_list:
+            domains.append(dom.domain)
+        if request.args.get('url'):
+            url = request.args.get('url')
+            if '.onion' in url:
+                status, final_url = mirror_tests.test_onion(url, 'web')
+            else:
+                status, final_url = mirror_tests.test_domain(url, '', 'web', '')
+        else:
+            status, final_url = False, False
+   
+        return render_template('testing.html', name=current_user.name, status=status, final_url=final_url, domains=domains)
+
+@app.route('/testing/alternatives', methods=['GET'])
+@login_required
+def alternatives():
+    """
+    Get alternatives from GitHub
+    """
+    if not current_user.admin:
+        flash('Have to be an admin!')
+        return redirect(url_for('profile'))
+    else:
+        if request.args.get('url'):
+            url = request.args.get('url')
+            if '.onion' in url:
+                status, final_url = mirror_tests.test_onion(url, 'web')
+                if status != 200:
+                    result = 'down'
+                else:
+                    result = 'up'
+            else:
+                status, final_url = mirror_tests.test_domain(url, '', 'web', '')
+                if status != 200:
+                    result = 'down'
+                else:
+                    result = 'up'
+        else:
+            url = False
+            result = 'none'
+        domain_choice = request.args.get('domain_choice')
+        alternatives_list = repo_utilities.check(domain_choice)
+        if not alternatives_list['exists']:
+            alternatives = False
+        else:
+            alternatives = alternatives_list['available_alternatives']
+        return render_template('alternatives.html', domain_choice=domain_choice, alternatives=alternatives, url=url, result=result)
+
+
 @app.route('/reports')
 @login_required
 def reports():
     """
     Reports
     """
-    domain_list = Domain.query.all()
-    domains = []
-    for dom in domain_list:
-        domains.append(dom.domain)
     if current_user.admin:
+        domain_list = Domain.query.all()
+        domains = []
+        for dom in domain_list:
+            domains.append(dom.domain)
         report_types = [
             #{
-             #   'name': 'Log Reports List',
-             #   'report': 'log_reports_list'
-             #},
-             {
+            #   'name': 'Log Reports List',
+            #   'report': 'log_reports_list'
+            #},
+            {
                 'name': 'Recent Domain Reports',
                 'report': 'recent_domain_reports'
-             },
-             {
-                 'name': "Last Week's Bad Domains",
-                 'report': 'bad_domains'
-             },
-             {
-                 'name': "Last Week's Bad Mirrors",
-                 'report': 'bad_mirrors'
-             },
-             {
-                 'name': "Monthly Aggregate Report",
-                 'report': 'monthly_bad'
-             }
+            },
+            {
+                'name': "Last Week's Bad Domains",
+                'report': 'bad_domains'
+            },
+            {
+                'name': "Last Week's Bad Mirrors",
+                'report': 'bad_mirrors'
+            },
+            {
+                'name': "Monthly Aggregate Report",
+                'report': 'monthly_bad'
+            }
         ]
         return render_template('reports.html', name=current_user.name, report_types=report_types, domains=domains)
     else:

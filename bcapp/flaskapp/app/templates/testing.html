@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1 class="title">
+    Bypass Censorship Application - Testing
+  </h1>
+  <h2>Get Alternatives</h2>
+  <form action="{{ url_for ('alternatives') }}">
+    <select name='domain_choice'>
+      {% for domain in domains %}
+      <option value="{{ domain }}">{{ domain }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit">Submit</button>
+  </form>
+  <hr>
+  <h2>URL Testing:</h2>
+  <form action="{{ url_for ('testing') }}">
+    <label for="url">Enter URL to test</label>
+    <input type="text" name="url">
+    <button type="submit">Submit</button>
+  </form>
+  <hr>
+  {% if status %}
+    <h2>Results:</h2>
+    <p>Status: {{ status }}</p>
+    <p>Final URL: {{ final_url }}</p>
+  {% endif %}
+{% endblock %}

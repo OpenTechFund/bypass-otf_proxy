@@ -7,7 +7,7 @@
   <h3>
     Get Domain Alternatives:
   </h3>
-    <form action="{{ url_for ('home') }}">
+    <form action="{{ url_for ('public_alternatives') }}">
       <select name='domain_choice'>
         {% for domain in domains %}
         <option value="{{ domain }}">{{ domain }}</option>
@@ -15,17 +15,4 @@
       </select>
       <button type="submit">Submit</button>
     </form>
-    {% if alt_domain %}
-      <h3>
-        Domain Alternatives for {{ alt_domain }}:
-      </h3>
-      <ul>
-        {% for current_alternative in current_alternatives %}
-          <li>
-            Alternative: <a href= "{{ current_alternative.url }}"> {{ current_alternative.url }}</a> <br/>
-            Current Status: <strong>{{ current_alternative.result }}</strong>
-          </li>
-        {% endfor %}
-    {% endif %}
-
 {% endblock %}
