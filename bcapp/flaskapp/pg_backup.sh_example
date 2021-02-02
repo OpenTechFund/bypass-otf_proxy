@@ -1,0 +1,26 @@
+#!/bin/bash
+
+########
+# Shell script to backup postgres database each day
+# Because it has the password for postgres user, make it chmod 0600
+########
+
+# Directory to save backups
+BACKUP_PATH='/path/to/pg_backups'
+HOST='hostname'
+PORT='port'
+DATABASE='dbname'
+USER='username'
+PASS='password'
+
+# Backup name
+YMD=$(date "+%Y-%m-%d")
+NAME="${BACKUP_PATH}/bc_api.${YMD}.psql"
+
+# Do the backup
+PGPASSWORD=$PASS pg_dump -w --host=$HOST --port=$PORT --user=$USER --dbname=$DATABASE --file=$NAME
+
+# Delete backup files older than 30 days
+find "$BACKUP_PATH/" -mindepth 1 -type d -mtime +30 -print0 |
+    xargs -0r rm -rfv
+

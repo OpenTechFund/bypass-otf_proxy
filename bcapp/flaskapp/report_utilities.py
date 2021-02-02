@@ -197,7 +197,7 @@ def send_report(domain_data, mode):
     
     domain_id = False
     for entry in result:
-        d_id, domain, ext, paths = entry
+        d_id, domain, ext, paths, s3_storage = entry
         if domain in domain_data['domain']:
             domain_id = d_id
     
@@ -227,7 +227,7 @@ def send_report(domain_data, mode):
                 mirror_url=current_alternative['url'],
                 domain_id=domain_id,
                 mirror_type=current_alternative['type'],
-                proto=current_alternative['proto'])
+                protocol=current_alternative['proto'])
             result = connection.execute(insert)
             mirror_id = result.inserted_primary_key[0]
 

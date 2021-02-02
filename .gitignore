@@ -15,6 +15,9 @@ __pycache__
 # socket files
 *.sock
 
+# Shell scripts
+pg_backup.sh
+
 #Pipfiles
 Pipfile_host
 Pipfile_remote

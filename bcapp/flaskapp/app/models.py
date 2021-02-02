@@ -56,6 +56,8 @@ class Mirror(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     mirror_url = db.Column(db.String, unique=True)
     domain_id = db.Column(db.Integer)
+    mirror_type = db.Column(db.String)
+    protocol = db.Column(db.String)
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
