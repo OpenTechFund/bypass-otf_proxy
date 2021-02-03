@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="title">
+  Bypass Censorship Application - Administrate Domains
+</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                ID
+            </th>
+            <th>
+                Domain
+            </th>
+            <th>
+                Paths to Ignore
+            </th>
+            <th>
+                Extensions to ignore
+            </th>
+            <th>
+               S3 Bucket
+            </th>
+            <th>
+                
+            </th>
+    </tr> 
+    </thead>
+    <tbody>
+        {% for domain in domains %}
+        <tr>
+            <td>
+                {{ domain.id }}
+            </td>
+            <td>
+                {{ domain.domain }}
+            </td>
+            <td>
+                {{ domain.paths_ignore }}
+            </td>
+            <td>
+                {{ domain.ext_ignore }}
+            </td>
+            <td>
+                {{ domain.s3_storage_bucket }}
+            </td>
+            <td>
+                <a class="button is-info" href="{{ url_for('edit_domain', id=domain.id) }}">Edit</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

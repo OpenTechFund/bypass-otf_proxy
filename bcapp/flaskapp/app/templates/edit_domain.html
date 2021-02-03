@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Edit Domain</h1>
+    <form action="" method="post">
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.domain.label }}<br>
+            {{ form.domain(size=30) }}<br>
+            {% for error in form.domain.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.ext_ignore.label }}<br>
+            {{ form.ext_ignore(size=30) }}<br>
+            {% for error in form.ext_ignore.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.paths_ignore.label }}<br>
+            {{ form.paths_ignore(size=30) }}<br>
+            {% for error in form.paths_ignore.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.s3_storage_bucket.label }}<br>
+            {{ form.s3_storage_bucket(size=30) }}<br>
+            {% for error in form.s3_storage_bucket.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>{{ form.submit() }}</p>
+    </form>
+{% endblock %}

@@ -4,7 +4,7 @@ from flask_login import login_required, current_user, login_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import app
 from app.models import User, Token, Domain, Mirror, Report, LogReport, DomainGroup
-from app.forms import UserForm
+from app.forms import UserForm, DomainForm
 from . import db
 from . import admin_utilities
 import repo_utilities
@@ -34,7 +34,52 @@ def admin_domains():
         flash('Have to be an admin!')
         return redirect(url_for('profile'))
     else:
-        return render_template('admin_domains.html')
+        domains = Domain.query.all()
+        return render_template('admin_domains.html', domains=domains)
+
+@app.route('/admin/domains/<id>', methods=['GET', 'POST'])
+@login_required
+def edit_domain(id):
+    """
+    Edit a domain
+    """
+    if not current_user.admin:
+        flash('Have to be admin')
+        return redirect(url_for('home'))
+    else:
+        domain = Domain.query.filter_by(id=id).first_or_404()
+        form = DomainForm()
+        if request.method == 'POST':
+            domain.domain = form.domain.data
+            domain.ext_ignore = form.ext_ignore.data
+            domain.paths_ignore = form.paths_ignore.data
+            domain.s3_storage_bucket = form.s3_storage_bucket.data
+            db.session.commit()
+            flash('Your changes have been saved.')
+            return redirect(url_for('admin_domains'))
+        elif request.method == 'GET':
+            form.domain.data = domain.domain
+            form.ext_ignore.data = domain.ext_ignore
+            form.paths_ignore.data = domain.paths_ignore
+            form.s3_storage_bucket.data = domain.s3_storage_bucket
+            
+        return render_template('edit_domain.html',
+                                    title='Edit Doman',
+                                    domain=domain,
+                                    form=form)
+
+
+@app.route('/admin/domain_groups')
+@login_required
+def admin_domain_groups():
+    """
+    Administer Domain Groups
+    """
+    if not current_user.admin:
+        flash('Have to be an admin!')
+        return redirect(url_for('profile'))
+    else:
+        return render_template('admin_domain_groups.html')
 
 @app.route('/admin/users')
 @login_required
@@ -46,7 +91,6 @@ def admin_users():
         flash('Have to be an admin!')
         return redirect(url_for('profile'))
     else:
-        # TODO: join with Domain Groups
         users = User.query.all()
         return render_template('admin_users.html', users=users)
 
@@ -75,8 +119,10 @@ def edit_user(id):
             form.name.data = user.name
             form.domain_group_id.choices = [(dg.id, dg.name) for dg in DomainGroup.query.order_by('name').all()]
             form.domain_group_id.data = user.domain_group_id
-        return render_template('edit_user.html', title='Edit User', user=user,
-                            form=form)
+        return render_template('edit_user.html',
+                                title='Edit User',
+                                user=user,
+                                form=form)
 
 @app.route('/testing', methods=['GET'])
 @login_required
