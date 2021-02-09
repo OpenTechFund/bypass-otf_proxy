@@ -85,7 +85,6 @@ def analyze(unzip, percent, num, daemon, range, domain):
                 s3simple.download_file(file_name=ifile, output_file=local_path)
                 
                 # Add to aggregate
-                logger.debug(f"Adding to compilation... ")
                 file_parts = ifile.split('.')
                 ext = file_parts[-1]
                 if ext == 'bz2' or ext == 'gz':
@@ -100,18 +99,14 @@ def analyze(unzip, percent, num, daemon, range, domain):
                     with open(flocal_path) as f:
                         raw_data = f.read()
 
-                logger.debug(f"Raw: {raw_data}")
+                #logger.debug(f"Raw: {raw_data}")
                 all_raw_data = all_raw_data + raw_data
 
-            logger.debug(f"All data: {all_raw_data}")
-            analyzed_data = analyze_file(all_raw_data, domain)
+            #logger.debug(f"All data: {all_raw_data}")
+            analyzed_data = analyze_file(all_raw_data, dm['name'])
             if not analyzed_data:
                 continue
-            logger.debug(f"Visitor IPs:{analyzed_data['visitor_ips']}!")
-            if analyzed_data['visitor_ips']:
-                log_type = 'nginx'
-            else:
-                log_type = 'eotk'    
+            log_type = analyzed_data['log_type']  
             logger.debug(f"Log type: {log_type}")
             (output_text, first_date, last_date, hits) = output(
                         domain=dm['name'],
@@ -121,12 +116,12 @@ def analyze(unzip, percent, num, daemon, range, domain):
             logger.debug(output_text)
 
             logger.debug("Saving log analysis file...")
-            key = 'LogAnalysis_' + domain + '_' + now_string + '.json'
+            key = 'LogAnalysis_' + dm['name'] + '_' + now_string + '.json'
             body = str(analyzed_data)
             s3simple.put_to_s3(key=key, body=body)
 
             logger.debug("Saving output file....")
-            key = 'LogAnalysisOutput_' + domain + '_' + log_type + '_' + now_string + '.txt'
+            key = 'LogAnalysisOutput_' + dm['name'] + '_' + log_type + '_' + now_string + '.txt'
             s3simple.put_to_s3(key=key, body=output_text)
 
             logger.debug(f"Deleting local temporary file {local_path}...")
@@ -134,7 +129,7 @@ def analyze(unzip, percent, num, daemon, range, domain):
 
             logger.debug("Sending Report to Database...")
             report_save(
-                domain=domain,
+                domain=dm['name'],
                 datetime=now,
                 report_text=output_text,
                 hits=hits,

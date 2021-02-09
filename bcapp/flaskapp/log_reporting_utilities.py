@@ -45,15 +45,17 @@ def analyze_file(raw_data, domain):
             'visitor_ips': {},
             'status': {},
             'user_agent': {},
-            'pages_visited' : {}
+            'pages_visited' : {},
+            'log_type' : log_type
         }
     analyzed_log_data['hits'] = len(raw_data_list)
     log_date_match = re.compile('[0-9]{2}[\/]{1}[A-Za-z]{3}[\/]{1}[0-9]{4}[:]{1}[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2}')
     log_status_match = re.compile('[\ ]{1}[0-9]{3}[\ ]{1}')
     log_ip_match = re.compile('[0-9]{1,3}[\.]{1}[0-9]{1,3}[\.]{1}[0-9]{1,3}[\.]{1}[0-9]{1,3}')
     datetimes = []
+    logger.debug("Analyzing Data...")
     for line in raw_data_list:
-        logger.debug(f"Line: {line}")
+        #logger.debug(f"Line: {line}")
         if not line:
             continue
         if line[0] == '#':
