@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="title">
+  Bypass Censorship Application - Log Reports
+</h1>
+<h2 class="subtitle">
+  Access reporting Log Reports - Choose Domain
+</h2>
+<form action="{{ url_for ('log_reports_list') }}">
+  <select name='domain_choice'>
+    {% for domain in domains %}
+    <option value="{{ domain }}">{{ domain }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit">Submit</button>
+</form>
+
+{% endblock %}

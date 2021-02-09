@@ -184,7 +184,60 @@ def alternatives():
             alternatives = alternatives_list['available_alternatives']
         return render_template('alternatives.html', domain_choice=domain_choice, alternatives=alternatives, url=url, result=result)
 
+## Reporting
 
+## Log Reporting
+
+@app.route('/log_reports')
+@login_required
+def log_reports():
+    """
+    Log reporting
+    """
+    if current_user.admin:
+        domain_list = Domain.query.all()
+        domains = []
+        for dom in domain_list:
+            domains.append(dom.domain)
+        return render_template('log_reports.html', name=current_user.name, domains=domains)
+    else:
+        flash('Have to be an admin!')
+        return redirect(url_for('profile'))
+
+@app.route('/admin/log_reports')
+@login_required
+def log_reports_list():
+    if current_user.admin:
+        domain_choice = request.args.get('domain_choice')
+        log_reports = admin_utilities.list_log_reports(domain_choice)
+        return render_template('log_reports_list.html', name=current_user.name, log_reports=log_reports, domain=domain_choice)
+    else:
+        flash('Have to be an admin!')
+        return redirect(url_for('profile'))
+
+
+@app.route('/log_reports/domain', methods=['GET'])
+@login_required
+def domain_log_report():
+    """
+    Log report for a specific domain
+    """
+    domain_list = Domain.query.all()
+    # grab report
+    domain_choice = request.args.get('domain_choice')
+    log_report = LogReport.query.filter_by(id=log_report_id).first()
+    domain_name = Domain.query.filter_by(id=log_report.domain_id).first().domain
+    if not log_report:
+        flash('No such report!')
+        return redirect(url_for('admin'))
+    if current_user.admin or int(current_user.domain_id) == int(log_report.domain_id):
+        report_text = log_report.report.split('\n')
+        return render_template('log_report.html', log_report=log_report, domain=domain_name, report_text=report_text)
+    else:
+        flash("Don't have access to that domain!!")
+        return redirect(url_for('profile'))
+
+## Domain Reporting
 @app.route('/reports')
 @login_required
 def reports():
@@ -197,10 +250,6 @@ def reports():
         for dom in domain_list:
             domains.append(dom.domain)
         report_types = [
-            #{
-            #   'name': 'Log Reports List',
-            #   'report': 'log_reports_list'
-            #},
             {
                 'name': 'Recent Domain Reports',
                 'report': 'recent_domain_reports'
@@ -219,16 +268,6 @@ def reports():
             }
         ]
         return render_template('reports.html', name=current_user.name, report_types=report_types, domains=domains)
-    else:
-        flash('Have to be an admin!')
-        return redirect(url_for('profile'))
-
-@app.route('/admin/log_reports')
-@login_required
-def log_reports_list():
-    if current_user.admin:
-        log_reports = admin_utilities.log_report_list()
-        return render_template('log_reports_list.html', name=current_user.name, log_reports=log_reports)
     else:
         flash('Have to be an admin!')
         return redirect(url_for('profile'))
@@ -279,23 +318,3 @@ def monthly_bad():
         flash('Have to be an admin!')
         return redirect(url_for('profile'))
 
-## Log Reports
-@app.route('/log_reports/display', methods=['GET'])
-@login_required
-def display_log_report():
-    """
-    List one report
-    """
-    # grab report
-    log_report_id = request.args.get('id')
-    log_report = LogReport.query.filter_by(id=log_report_id).first()
-    domain_name = Domain.query.filter_by(id=log_report.domain_id).first().domain
-    if not log_report:
-        flash('No such report!')
-        return redirect(url_for('admin'))
-    if current_user.admin or int(current_user.domain_id) == int(log_report.domain_id):
-        report_text = log_report.report.split('\n')
-        return render_template('log_report.html', log_report=log_report, domain=domain_name, report_text=report_text)
-    else:
-        flash("Don't have access to that domain!!")
-        return redirect(url_for('profile'))
