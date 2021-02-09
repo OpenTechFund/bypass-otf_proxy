@@ -5,14 +5,17 @@ version 0.2
 """
 import sys
 import os
+import re
 import datetime
 import time
 import click
 import sh
 import logging
+from dotenv import load_dotenv
+import sqlalchemy as db
 from system_utilities import get_configs
 from simple_AWS.s3_functions import *
-from log_reporting_utilities import analyze_file, output, report_save
+from log_reporting_utilities import analyze_file, output, report_save, filter_and_get_date
 
 logger = logging.getLogger('logger')
 
@@ -22,8 +25,9 @@ logger = logging.getLogger('logger')
 @click.option('--unzip', is_flag=True, help="Process zipped log files", default=False)
 @click.option('--daemon', is_flag=True, default=False, help="Run in daemon mode. All output goes to a file.")
 @click.option('--range', type=int, help="Days of log file age to analyze. Default is 7", default=7)
+@click.option('--domain', type=str, help="Domain to analyze. Default is 'all'", default='all')
 
-def analyze(unzip, percent, num, daemon, range):
+def analyze(unzip, percent, num, daemon, range, domain):
 
     import faulthandler; faulthandler.enable()
 
@@ -31,92 +35,93 @@ def analyze(unzip, percent, num, daemon, range):
     now = datetime.datetime.now()
     now_string = now.strftime('%d-%b-%Y:%H:%M:%S')
 
-    # TODO: Make this domain specific
-    s3simple = S3Simple(region_name=configs['region'],
-                                profile=configs['profile'],
-                                bucket_name=configs['log_storage_bucket'])
+    load_dotenv()
+    engine = db.create_engine(os.environ['DATABASE_URL'])
+    connection = engine.connect()
+    metadata = db.MetaData()
 
-    # get the file list to analyze
-    # read from S3
-    logger.debug("Getting files from S3 bucket...")
-    file_list = s3simple.s3_bucket_contents()
-    logger.debug(f"File list: {file_list}")
-    paths = []
-    for ifile in file_list:
-        if (('.gz' in ifile or '.bz2' in ifile) and not unzip):
-            continue
-        logger.debug(f"Processing file: {ifile}")
-        try:
-            (prefix, domain, date, filename) = ifile.split('_')
-        except ValueError:
-            continue
-        if prefix != 'RawLogFile':
-            continue
-        file_date = datetime.datetime.strptime(date, "%d-%b-%Y:%H:%M:%S")
-        numdays = (now - file_date).days
-        if numdays > range:
-            continue
-        paths.append(f"{domain}|{ifile}")
+    domains = db.Table('domains', metadata, autoload=True, autoload_with=engine)
+    domains_list = []
+    query = db.select([domains])
+    result = connection.execute(query).fetchall()
+    for line in result:
+        domains_list.append({'id' : line[0], 'name' : line[1], 's3_bucket' : line[4]})
 
-    logger.debug(f"Paths: {paths}")
 
-    for fpath in paths:
-        if not fpath:
-            continue
-        domain, path = fpath.split('|')
-        
-        #download
-        local_path = configs['local_tmp'] + '/' + path
-        logger.debug(f"Downloading ... domain: {domain} to {local_path}")
-        s3simple.download_file(file_name=path, output_file=local_path)
-        files = [local_path]
-
-        logger.debug(f"File List: {files}")
-
-        all_log_data = []
-        for file_name in files:
-            if 'access' not in file_name:
-                continue
-            file_path = file_name.split('/')
-            file_parts = file_path[-1].split('.')
-            just_file_name = '.'.join(file_path)
-            logger.debug(f"File Name {just_file_name}")
-            ext = file_parts[-1]
-            if ((ext != 'log') and
-                (ext != 'bz2' and ext !='gz')): # not a log file, nor a zipped log file
+    for dm in domains_list:
+        if ((domain == 'all') or (dm['name'] == domain)):
+            try:
+                s3simple = S3Simple(region_name=configs['region'],
+                                            profile=configs['profile'],
+                                            bucket_name=dm['s3_bucket'])
+            except:
+                logger.debug(f"No bucket set for domain {dm['name']}")
                 continue
 
-            logger.debug(f"Analyzing... ")
-            if ext == 'bz2' or ext == 'gz':
-                if unzip:
-                    if ext == 'bz2':
-                        raw_data = sh.bunzip2("-k", "-c", file_name)
-                    else:
-                        raw_data = sh.gunzip("-k", "-c", file_name)
-                else:
+            # get the file list to analyze
+            # read from S3
+            logger.debug(f"Getting files from S3 bucket {dm['s3_bucket']}...")
+            file_list = s3simple.s3_bucket_contents()
+            if not file_list:
+                continue
+            logger.debug(f"File List: {file_list}")
+            all_raw_data = ""
+            for ifile in file_list:
+                if 'LogAnalysis' in ifile:
                     continue
-            else:
-                with open(file_name) as f:
-                    raw_data = f.read()
+                if (('.gz' in ifile or '.bz2' in ifile) and not unzip):
+                    continue
+                logger.debug(f"Processing file: {ifile}")
+                file_date = filter_and_get_date(ifile)
+                if not file_date:
+                    continue
+                numdays = (now - file_date).days
+                if numdays > range:
+                    continue
 
-            analyzed_data = analyze_file(raw_data, domain)
+                #download
+                local_path = configs['local_tmp'] + '/' + ifile
+                logger.debug(f"Downloading ... domain: {dm['name']} to {local_path}")
+                s3simple.download_file(file_name=ifile, output_file=local_path)
+                
+                # Add to aggregate
+                logger.debug(f"Adding to compilation... ")
+                file_parts = ifile.split('.')
+                ext = file_parts[-1]
+                if ext == 'bz2' or ext == 'gz':
+                    if unzip:
+                        if ext == 'bz2':
+                            raw_data = str(sh.bunzip2("-k", "-c", local_path))
+                        else:
+                            raw_data = str(sh.gunzip("-k", "-c", local_path))
+                    else:
+                        continue
+                else:
+                    with open(flocal_path) as f:
+                        raw_data = f.read()
+
+                logger.debug(f"Raw: {raw_data}")
+                all_raw_data = all_raw_data + raw_data
+
+            logger.debug(f"All data: {all_raw_data}")
+            analyzed_data = analyze_file(all_raw_data, domain)
+            if not analyzed_data:
+                continue
             logger.debug(f"Visitor IPs:{analyzed_data['visitor_ips']}!")
             if analyzed_data['visitor_ips']:
                 log_type = 'nginx'
             else:
                 log_type = 'eotk'    
-            if not analyzed_data:
-                continue
             logger.debug(f"Log type: {log_type}")
             (output_text, first_date, last_date, hits) = output(
-                        file_name=file_name,
+                        domain=dm['name'],
                         data=analyzed_data,
                         percent=percent,
                         num=num)
             logger.debug(output_text)
 
             logger.debug("Saving log analysis file...")
-            key = 'LogAnalysis_' + just_file_name + '_' + now_string + '.json'
+            key = 'LogAnalysis_' + domain + '_' + now_string + '.json'
             body = str(analyzed_data)
             s3simple.put_to_s3(key=key, body=body)
 

@@ -20,7 +20,6 @@ service_principal_key =
 
 [LOGS]
 path_file = 
-log_storage_bucket =
 
 [EMAIL]
 smtp_host = 

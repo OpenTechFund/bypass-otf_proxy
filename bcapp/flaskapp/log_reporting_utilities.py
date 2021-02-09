@@ -20,6 +20,8 @@ def analyze_file(raw_data, domain):
     :returns: dict of dicts
     """
     domain_data = get_domain_data(domain)
+    if not domain_data:
+        return False
 
     if domain_data['paths_ignore']:
         paths_ignore_list = domain_data['paths_ignore'].split(',')
@@ -27,10 +29,18 @@ def analyze_file(raw_data, domain):
         paths_ignore_list = False
     if domain_data['ext_ignore']:
         exts_ignore_list = domain_data['ext_ignore'].split(',')
+    else:
+        exts_ignore_list = False
         
     raw_data_list = raw_data.split('\n')
-    if len(raw_data_list) < 5: # Not worth analyzing
-        return False
+    #What kind of log formats are these?
+    if 'Version' in raw_data_list[0]: #cloudfront
+        log_type = 'cloudfront'
+        raw_data_list = raw_data_list[2:] #getting rid of first two lines, which are comments
+    # elif ...
+    else:
+        log_type = 'nginx'
+
     analyzed_log_data = {
             'visitor_ips': {},
             'status': {},
@@ -43,27 +53,51 @@ def analyze_file(raw_data, domain):
     log_ip_match = re.compile('[0-9]{1,3}[\.]{1}[0-9]{1,3}[\.]{1}[0-9]{1,3}[\.]{1}[0-9]{1,3}')
     datetimes = []
     for line in raw_data_list:
-        has_ips = True
+        logger.debug(f"Line: {line}")
+        if not line:
+            continue
+        if line[0] == '#':
+            continue
         log_data = {}
-        line_split = line.split(' ')
         try:
-            log_data['ip'] = log_ip_match.search(line_split[0]).group(0)
+            log_data['ip'] = log_ip_match.search(line).group(0)
         except:
-            has_ips = False
-        try:
-            log_data['datetime'] = log_date_match.search(line).group(0)
-            log_data['status'] = log_status_match.search(line).group(0)
-        except:
-            continue
-        datetimes.append(datetime.datetime.strptime(log_data['datetime'], '%d/%b/%Y:%H:%M:%S'))
-        try:
-            log_data['user_agent'] = line.split(' "')[-1]
-        except:
-            continue
-        try:
-            log_data['page_visited'] = line.split(' "')[-3].split(' ')[1]
-        except:
-            continue
+            pass
+        if log_type == 'nginx':
+            try:
+                log_data['datetime'] = log_date_match.search(line).group(0)
+                log_data['status'] = log_status_match.search(line).group(0)
+            except:
+                continue
+            datetimes.append(datetime.datetime.strptime(log_data['datetime'], '%d/%b/%Y:%H:%M:%S'))
+        else:
+            line_items = line.split('\t')
+            ymd = line_items[0]
+            hms = line_items[1]
+            date_time = ymd + '\t' + hms
+            strpdate = datetime.datetime.strptime(date_time, '%Y-%m-%d\t%H:%M:%S')
+            datetimes.append(strpdate)
+            log_data['status'] = line_items[8]
+        if log_type == 'nginx':
+            try:
+                log_data['user_agent'] = line.split(' "')[-1]
+            except:
+                continue
+        else:
+            try:
+                log_data['user_agent'] = line.split('\t')[10]
+            except:
+                continue
+        if log_type == 'nginx':
+            try:
+                log_data['page_visited'] = line.split(' "')[-3].split(' ')[1]
+            except:
+                continue
+        else:
+            try:
+                log_data['page_visited'] = line.split('\t')[7]
+            except:
+                continue
         if exts_ignore_list:
             ext_ignore = False
             for ext in exts_ignore_list:
@@ -112,7 +146,7 @@ def output(**kwargs):
     hits = analyzed_log_data['hits']
     first_date = analyzed_log_data['earliest_date']
     last_date = analyzed_log_data['latest_date']
-    output = f"Analysis of: {kwargs['file_name']}, from {first_date} to {last_date}:\n"
+    output = f"Analysis of: {kwargs['domain']}, from {first_date} to {last_date}:\n"
     output += f"Hits: {hits}\n"
 
     if 'visitor_ips' in analyzed_log_data:
@@ -180,6 +214,22 @@ def domain_log_reports(domain, report_type):
             output_file=sorted_list[0]['file_name'],
             local_tmp=configs['local_tmp'])
         return output_contents
+
+def filter_and_get_date(filename):
+    """
+    Get date of filename, and make sure it's a file to analyze
+    """
+    # Discern Date Format
+    # Cloudfront file name format: DistributionID.%Y-%m-%d-%H.Some_weird_id.gz
+    cloudmatch = "[\d]{4}\-[0,1][\d]\-[\d]{2}\-[\d]{2}"
+    cfdate = re.search(cloudmatch, filename)
+    # other matching versions go here
+    if cfdate:
+        date = cfdate.group(0)
+
+    file_date = datetime.datetime.strptime(date, "%Y-%m-%d-%H")
+
+    return file_date
 
 def domain_log_list(domain, num):
     """
@@ -255,16 +305,15 @@ def get_domain_data(domain):
         'id': False
     }
     for entry in result:
-        d_id, domain_fetched, ext_ignore, paths_ignore = entry
+        d_id, domain_fetched, ext_ignore, paths_ignore, s3_bucket = entry
         if domain_fetched in domain:
             domain_data['id'] = d_id
             domain_data['ext_ignore'] = ext_ignore
             domain_data['paths_ignore'] = paths_ignore
+            domain_data['s3_bucket'] = s3_bucket
     
-    if not domain_data['id']: # we've not seen it before, add it
-        insert = domains.insert().values(domain=domain)
-        result = connection.execute(insert)
-        domain_data['id'] = result.inserted_primary_key[0]
+    if not domain_data['id']: 
+        domain_data = False
 
     return domain_data
 
@@ -273,6 +322,8 @@ def report_save(**kwargs):
     Saving report to database
     """
     domain_data = get_domain_data(kwargs['domain'])
+    if not domain_data:
+        return False
     domain_id = domain_data['id']
     load_dotenv()
 
