@@ -2,7 +2,9 @@
 
 ########
 # Shell script to backup postgres database each day
-# Because it has the password for postgres user, make it chmod 0600
+# Because it has the password for postgres user, make it chmod 0700
+# Crontab entry for database backups
+# m h * * * /path/to/pg_backup.sh
 ########
 
 # Directory to save backups

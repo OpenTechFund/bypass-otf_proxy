@@ -2,18 +2,18 @@
 
 {% block content %}
   <h1 class="title">
-    Bypass Censorship Application
+    Bypass Censorship Application - Log reports
   </h1>
-  <h1>Log Reports</h1>
   {% if not log_reports %}
     <h2 class="subtitle">No Log Reports for {{ domain }}</h2>
   {% else %}
+    <h2 class="subtitle">Domain: {{ domain }}</h2>
     {% for log_report in log_reports %}
-      <h2 class="subtitle">Domain: {{ log_report.domain }}</h2>
-
-      <p>Dates from: {{ log_report.first_date }} to: {{ log_report.last_date }}</p>
-      <p>{{ log_report.report_text }}</p>
-      </p>
+      <p><strong>Dates from: {{ log_report.first_date }} to: {{ log_report.last_date }}</strong></p>
+      {% for line in log_report.report_text.split('\n') %}
+        <p>{{ line }}</p>
+      {% endfor %}
+      <p><hr></p>
     {% endfor %}
   {% endif %}
 {% endblock %}
