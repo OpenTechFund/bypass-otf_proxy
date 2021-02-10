@@ -10,11 +10,16 @@ class UserForm(FlaskForm):
     active = BooleanField('Active?')
     admin = BooleanField('Admin?')
     domain_group_id = SelectField('Domain Group', coerce=int)
-    submit = SubmitField('Submit')
+    submit = SubmitField('Edit User')
 
 class DomainForm(FlaskForm):
     domain = StringField('Domain')
     ext_ignore = StringField('Extensions to ignore')
     paths_ignore = StringField('Paths to ignore')
     s3_storage_bucket = StringField('S3 Storage Bucket')
+    submit = SubmitField('Edit Domain')
+
+class DomainGroupForm(FlaskForm):
+    name = StringField('Name')
+    notes = TextAreaField('Notes')
     submit = SubmitField('Submit')

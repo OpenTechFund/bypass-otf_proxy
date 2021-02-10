@@ -3,8 +3,8 @@ from flask import render_template, redirect, url_for, request, flash
 from flask_login import login_required, current_user, login_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import app
-from app.models import User, Token, Domain, Mirror, Report, LogReport, DomainGroup
-from app.forms import UserForm, DomainForm
+from app.models import User, Token, Domain, Mirror, Report, LogReport, DomainGroup, DGDomain
+from app.forms import UserForm, DomainForm, DomainGroupForm
 from . import db
 from . import admin_utilities
 import repo_utilities
@@ -24,6 +24,8 @@ def admin():
     else:
         return render_template('admin.html', name=current_user.name)
 
+## Admin Domains/Groups
+
 @app.route('/admin/domains')
 @login_required
 def admin_domains():
@@ -35,7 +37,36 @@ def admin_domains():
         return redirect(url_for('profile'))
     else:
         domains = Domain.query.all()
-        return render_template('admin_domains.html', domains=domains)
+        dg_domains = DGDomain.query.all()
+        domain_groups = DomainGroup.query.all()
+        dg_dict = {}
+        for dg in domain_groups:
+            dg_dict[dg.id] = dg.name
+        for domain in domains:
+            for dgd in dg_domains:
+                if dgd.domain_id == domain.id:
+                    domain.coded_dg = dg_dict[dgd.domain_group_id]
+                    
+        return render_template('admin_domains.html', domains=domains, domain_groups=domain_groups)
+
+@app.route('/admin/domains/domain_group_choice', methods=['GET'])
+@login_required
+def domain_group_choice():
+    """
+    Add domain group to domain
+    """
+    if not current_user.admin:
+        flash('Have to be an admin!')
+        return redirect(url_for('profile'))
+    else:
+        if request.args.get('domain_group_choice'): 
+            dg_domain = DGDomain(
+                domain_id=request.args.get('domain_id'),
+                domain_group_id=request.args.get('domain_group_choice')
+            )
+            db.session.add(dg_domain)
+            db.session.commit()
+        return redirect(url_for('admin_domains'))
 
 @app.route('/admin/domains/<id>', methods=['GET', 'POST'])
 @login_required
@@ -64,10 +95,24 @@ def edit_domain(id):
             form.s3_storage_bucket.data = domain.s3_storage_bucket
             
         return render_template('edit_domain.html',
-                                    title='Edit Doman',
+                                    title='Edit Domain',
                                     domain=domain,
                                     form=form)
 
+@app.route('/admin/domains/delete/<id>')
+@login_required
+def delete_domain(id):
+    """
+    Delete domain
+    """
+    if not current_user.admin:
+        flash('Have to be an admin!')
+        return redirect(url_for('profile'))
+    else:
+        domain = Domain.query.filter_by(id=id).first_or_404()
+        db.session.delete(domain)
+        db.session.commit()
+        return redirect(url_for('admin_domains'))
 
 @app.route('/admin/domain_groups')
 @login_required
@@ -79,7 +124,73 @@ def admin_domain_groups():
         flash('Have to be an admin!')
         return redirect(url_for('profile'))
     else:
-        return render_template('admin_domain_groups.html')
+        domain_groups = DomainGroup.query.all()
+        return render_template('admin_domain_groups.html', domain_groups=domain_groups)
+
+@app.route('/admin/domain_groups/delete/<id>')
+@login_required
+def delete_domain_group(id):
+    """
+    Delete Domain Group
+    """
+    if not current_user.admin:
+        flash('Have to be an admin!')
+        return redirect(url_for('profile'))
+    else:
+        domain_group = DomainGroup.query.filter_by(id=id).first_or_404()
+        db.session.delete(domain_group)
+        db.session.commit()
+        return redirect(url_for('admin_domain_groups'))
+
+@app.route('/admin/domain_groups/<id>', methods=['GET', 'POST'])
+@login_required
+def edit_domain_group(id):
+    """
+    Edit Domain Group
+    """
+    if not current_user.admin:
+        flash('Have to be an admin!')
+        return redirect(url_for('profile'))
+    else:
+        domain_group = DomainGroup.query.filter_by(id=id).first_or_404()
+        form = DomainGroupForm()
+        if request.method == 'POST':
+            domain_group.name = form.name.data
+            domain_group.notes = form.notes.data
+            db.session.commit()
+            flash('Your changes have been saved.')
+            return redirect(url_for('admin_domain_groups'))
+        elif request.method == 'GET':
+            form.name.data = domain_group.name
+            form.notes.data = domain_group.notes
+        
+        return render_template('edit_domain_group.html',
+                                    title='Edit Domain Group',
+                                    domain_group=domain_group,
+                                    form=form)
+
+@app.route('/admin/domain_groups/add', methods=['GET', 'POST'])
+@login_required
+def add_domain_group():
+    """
+    Add domain groups
+    """
+    if not current_user.admin:
+        flash('Have to be an admin!')
+        return redirect(url_for('profile'))
+    else:
+        form = DomainGroupForm()
+        if request.method == 'POST':
+            name = form.name.data
+            notes = form.notes.data
+            domain_group = DomainGroup(name=name, notes=notes) 
+            db.session.add(domain_group)
+            db.session.commit()
+            return redirect(url_for('admin_domain_groups'))
+
+        return render_template('edit_domain_group.html', title="Add Domain Group", form=form)
+        
+## Admin Users
 
 @app.route('/admin/users')
 @login_required
@@ -93,6 +204,21 @@ def admin_users():
     else:
         users = User.query.all()
         return render_template('admin_users.html', users=users)
+
+@app.route('/admin/users/delete/<id>')
+@login_required
+def delete_user(id):
+    """
+    Delete User
+    """
+    if not current_user.admin:
+        flash('Have to be an admin!')
+        return redirect(url_for('profile'))
+    else:
+        user = User.query.filter_by(id=id).first_or_404()
+        db.session.delete(user)
+        db.session.commit()
+        return redirect(url_for('admin_users'))
 
 @app.route('/admin/users/<id>', methods=['GET', 'POST'])
 @login_required
@@ -123,6 +249,8 @@ def edit_user(id):
                                 title='Edit User',
                                 user=user,
                                 form=form)
+
+## Testing
 
 @app.route('/testing', methods=['GET'])
 @login_required
@@ -198,7 +326,8 @@ def log_reports():
         domain_list = Domain.query.all()
         domains = []
         for dom in domain_list:
-            domains.append(dom.domain)
+            if dom.s3_storage_bucket:
+                domains.append(dom.domain)
         return render_template('log_reports.html', name=current_user.name, domains=domains)
     else:
         flash('Have to be an admin!')

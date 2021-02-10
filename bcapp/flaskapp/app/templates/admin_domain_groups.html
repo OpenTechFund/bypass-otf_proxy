@@ -5,5 +5,51 @@
   Bypass Censorship Application - Administrate Domain Groups
 </h1>
 
+<table class="table">
+  <thead>
+      <tr>
+          <th>
+              ID
+          </th>
+          <th>
+              Name
+          </th>
+          <th>
+              Notes
+          </th>
+          <th>
+
+          </th>
+          <th>
+
+          </th>
+      </tr> 
+    </thead>
+    <tbody>
+      {% for domain_group in domain_groups %}
+        <tr>
+          <td>
+            {{ domain_group.id }}
+          </td>
+          <td>
+            {{ domain_group.name }}
+          </td>
+          <td>
+            {{ domain_group.notes }}
+          </td>
+          <td>
+            <a class="button is-info" href="{{ url_for('edit_domain_group', id=domain_group.id) }}">Edit</a>
+        </td>
+        <td>
+            <a class="button is-warning" href="{{ url_for('delete_domain_group', id=domain_group.id) }}">Delete</a>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p>
+    <a class="button is-info" href="{{ url_for('add_domain_group') }}">Add Domain Group</a>
+  </p>
+
 
 {% endblock %}
