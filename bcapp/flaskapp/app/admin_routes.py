@@ -233,6 +233,8 @@ def edit_user(id):
             user.admin = form.admin.data
             user.active = form.active.data
             user.email = form.email.data
+            if form.password.data:
+                user.password = generate_password_hash(form.password.data)
             user.name = form.name.data
             user.domain_group_id = form.domain_group_id.data
             db.session.commit()

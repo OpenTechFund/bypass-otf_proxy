@@ -33,6 +33,10 @@
             {% endfor %}
         </p>
         <p>
+            {{ form.password.label }}<br/>
+            {{ form.password(size=30) }}<br/>
+        </p>
+        <p>
             {{ form.domain_group_id.label }}<br>
             {{ form.domain_group_id() }}<br>
             {% for error in form.domain_group_id.errors %}

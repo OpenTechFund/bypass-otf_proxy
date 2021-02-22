@@ -148,13 +148,14 @@ Daemon mode is for things like cron jobs - it suppresses output.
 There are some defaults for all four systems, and if you want to change those, you would need to go to the documentation for each and modify the code:
 
 * [Cloudfront](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cloudfront.html#CloudFront.Client.create_distribution)
-* [Fastly](https://docs.fastly.com/api/config) and [Fastly-Python](https://github.com/maxpearl/fastly-py)
+* [Fastly](https://docs.fastly.com/api/config) and [Fastly-Python](https://github.com/fastly/fastly-py)
 * [Azure](https://docs.microsoft.com/en-us/python/api/overview/azure/cdn?view=azure-python)
 
 Problems you might encounter:
 
 - IP address of proxy source (Cloudfront, Fastly, etc.) blocked by origin website by policy
 - Assets (css, video etc.) not completely proxied properly, leading to bad formatting or missing content
+- Absolute rather than relative links/resource urls leading to the original site
 - Other proxy difficulties that are hard to diagnose (for example, some  websites proxy fine with one service but not another.)
 
 ## Ongoing reporting 
@@ -263,7 +264,7 @@ In order to get Cloudfront logs to S3, you need to [configure Cloudfront](https:
 (TBD)
 ## Streaming Fastly logs to S3
 
-(TBD)
+If you follow [these instructions](https://docs.fastly.com/en/guides/setting-up-remote-log-streaming) it should be fairly straightforward. However, the fastly logs are stored under individual services, and if you have multiple domains in one service, those logs will be aggregated in one S3 bucket.
 ## Analyzing Logs
 
 ```
