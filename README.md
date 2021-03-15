@@ -288,6 +288,10 @@ Reports on this analysis are stored in the S3 log buckets, as well as the databa
 `30 12 * * 1 cd /path/to/bypass-otf_proxy/bcapp/flaskapp/; ~/path/to/venv/bin/python log_stats.py --unzip`
 
 This would go through all domains and report on the ones with log files in S3 buckets and store in the database for reporting on the application front end (see docs on Flask application.)
+
+## Using your own external analytics program
+
+If you have an external analytics platform, such as google analytics, and it uses a javascript snippet to track visits, you *should* be able to track visits using the proxies and onions as well. The challenge is exposing the URL of the actual page visited. Most analytics packages only display the path of the page, not the domain - but they should have the data of the domain - it just needs to be exposed. For example, in Google Analytics, you can [use filters](https://support.google.com/analytics/answer/1033162?hl=en) to filter data from a particular hostname (such as your .onion, or your proxy/mirror).
 # Flask Application
 
 See documentation [here](bcapp/flaskapp/README.md)

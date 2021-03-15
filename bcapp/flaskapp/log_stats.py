@@ -20,8 +20,8 @@ from log_reporting_utilities import analyze_file, output, report_save, filter_an
 logger = logging.getLogger('logger')
 
 @click.command()
-@click.option('--percent', type=int, help="Floor percentage to display for agents and codes (default is 5%)", default=5)
-@click.option('--num', type=int, help="Top number of pages to display (default is 10", default=10)
+@click.option('--percent', type=int, help="Floor percentage to display for agents and codes (default is 1%)", default=1)
+@click.option('--num', type=int, help="Top number of pages to display (default is 30", default=30)
 @click.option('--unzip', is_flag=True, help="Process zipped log files", default=False)
 @click.option('--daemon', is_flag=True, default=False, help="Run in daemon mode. All output goes to a file.")
 @click.option('--range', type=int, help="Days of log file age to analyze. Default is 7", default=7)

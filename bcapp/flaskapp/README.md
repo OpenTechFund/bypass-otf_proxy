@@ -49,6 +49,7 @@ On the home page is a menu which allows you to display links to the alternatives
 The Flask application at http://host:5000/ presents a screen with a login menu item. If you haven't set up a user yet, you can go access this url: http://host:5000/signup, and add a user. Go into the database, and set 'active' and 'admin' for that user you just created to 'True' (they are boolean fields.) When you log in, and you choose 'Admin' from the upper right menu, you'll see these reports:
 
 - Recent Domain Reports - list of the last several reports on domains from the API and command-line reporting tool - choose a domain you want to report on
+- See Log Reports - this is the reports for logs of the available domains for which logging has been set up
 - Last Week's Bad Domains - list of the bad domains from the API and command-line reporting tool
 - Last Week's Bad Mirrors - list of the bad mirrors from the API and command-line reporting tool
 - Monthly aggregate report - aggregates the number of reports per domain/mirror for the month
