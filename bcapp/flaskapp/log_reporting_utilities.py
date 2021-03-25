@@ -55,7 +55,7 @@ def analyze_file(raw_data, domain):
     datetimes = []
     logger.debug("Analyzing Data...")
     for line in raw_data_list:
-        #logger.debug(f"Line: {line}")
+        logger.debug(f"Line: {line}")
         if not line:
             continue
         if line[0] == '#':
@@ -225,12 +225,17 @@ def filter_and_get_date(filename):
     # Cloudfront file name format: DistributionID.%Y-%m-%d-%H.Some_weird_id.gz
     cloudmatch = "[\d]{4}\-[0,1][\d]\-[\d]{2}\-[\d]{2}"
     cfdate = re.search(cloudmatch, filename)
+    nginx_match = "[\d]{2}\-[A-Z]{1}[a-z]{2}\-[\d]{4}\:[\d]{2}\:[\d]{2}\:[\d]{2}"
+    ngdate = re.search(nginx_match, filename)
     # other matching versions go here
     if cfdate:
         date = cfdate.group(0)
-
-    file_date = datetime.datetime.strptime(date, "%Y-%m-%d-%H")
-
+        file_date = datetime.datetime.strptime(date, "%Y-%m-%d-%H")
+    elif ngdate:
+        date = ngdate.group(0)
+        file_date = datetime.datetime.strptime(date, "%d-%b-%Y:%H:%M:%S")
+    else:
+        file_date = False
     return file_date
 
 def domain_log_list(domain, num):

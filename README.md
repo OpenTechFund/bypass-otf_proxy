@@ -237,14 +237,14 @@ Options:
   --daemon         Run in daemon mode. All output goes to a file.
   --zip            Save zipped log files
   --recursive      Descent through directories
-  --range INTEGER  Days of log file age to save. Default is 10
+  --range INTEGER  Days of log file age to save. Default is 7
   --help           Show this message and exit.
 
 ```
 
 A periodic cron job like this will do the trick:
 
-`15 12 * * 1 cd /path/to/bypass-otf_proxy/bcapp/flaskapp/; ~/path/to/venv/bin/python move_logs.py --daemon --range=7 --recursive --unzip`
+`15 12 * * 1 cd /path/to/bypass-otf_proxy/bcapp/flaskapp/; ~/path/to/venv/bin/python move_logs.py --daemon --range=10 --recursive --unzip`
 
 This will move all files to S3 from the last week on Sunday at 12:15am. 
 

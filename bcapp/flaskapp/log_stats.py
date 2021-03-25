@@ -72,8 +72,14 @@ def analyze(unzip, percent, num, daemon, range, domain):
                 if (('.gz' in ifile or '.bz2' in ifile) and not unzip):
                     continue
                 logger.debug(f"Processing file: {ifile}")
+                if ifile[-1] == '/':
+                    directory = configs['local_tmp'] + '/' + ifile
+                    if not os.path.isdir(directory):
+                        os.mkdir(directory)
+                    continue
                 file_date = filter_and_get_date(ifile)
                 if not file_date:
+                    logger.debug("Couldn't find date in logs!")
                     continue
                 numdays = (now - file_date).days
                 if numdays > range:
@@ -96,13 +102,13 @@ def analyze(unzip, percent, num, daemon, range, domain):
                     else:
                         continue
                 else:
-                    with open(flocal_path) as f:
+                    with open(local_path) as f:
                         raw_data = f.read()
 
                 #logger.debug(f"Raw: {raw_data}")
                 all_raw_data = all_raw_data + raw_data
 
-            #logger.debug(f"All data: {all_raw_data}")
+            logger.debug(f"All data: {all_raw_data}")
             analyzed_data = analyze_file(all_raw_data, dm['name'])
             if not analyzed_data:
                 continue

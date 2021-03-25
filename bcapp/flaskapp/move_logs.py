@@ -5,6 +5,8 @@ import time
 import click
 import sh
 import logging
+from dotenv import load_dotenv
+import sqlalchemy as db
 from system_utilities import get_configs
 from simple_AWS.s3_functions import *
 
@@ -23,11 +25,6 @@ def move_logs(daemon, zip, recursive, range):
     configs = get_configs()
     now = datetime.datetime.now()
     now_string = now.strftime('%d-%b-%Y:%H:%M:%S')
-
-    # TODO: Make this domain specific
-    s3simple = S3Simple(region_name=configs['region'],
-                        profile=configs['profile'],
-                        bucket_name=configs['log_storage_bucket'])
     
     logger.debug("Reading Local Files...")
     if configs['paths']:
@@ -40,6 +37,31 @@ def move_logs(daemon, zip, recursive, range):
         if not fpath:
             continue
         domain, path = fpath.split('|')
+
+        load_dotenv()
+        engine = db.create_engine(os.environ['DATABASE_URL'])
+        connection = engine.connect()
+        metadata = db.MetaData()
+
+        domains = db.Table('domains', metadata, autoload=True, autoload_with=engine)
+        domains_list = []
+        query = db.select([domains])
+        result = connection.execute(query).fetchall()
+        for line in result:
+            domains_list.append({'id' : line[0], 'name' : line[1], 's3_bucket' : line[4]})
+
+        domain_match = False
+        for db_domain in domains_list:
+            if ((db_domain['name'] == domain) and (db_domain['s3_bucket'])):
+                domain_match = True
+                s3simple = S3Simple(region_name=configs['region'],
+                                profile=configs['profile'],
+                                bucket_name=db_domain['s3_bucket'])
+
+        if not domain_match:
+            logger_debug("No s3 bucket match!")
+            continue
+
         if not os.path.exists(path):
             logger.critical("Path doesn't exist!")
             return
