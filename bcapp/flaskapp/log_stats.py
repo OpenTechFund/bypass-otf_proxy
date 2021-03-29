@@ -114,7 +114,7 @@ def analyze(unzip, percent, num, daemon, range, domain):
                 continue
             log_type = analyzed_data['log_type']  
             logger.debug(f"Log type: {log_type}")
-            (output_text, first_date, last_date, hits) = output(
+            (output_text, first_date, last_date, hits, home_page_hits) = output(
                         domain=dm['name'],
                         data=analyzed_data,
                         percent=percent,
@@ -139,6 +139,7 @@ def analyze(unzip, percent, num, daemon, range, domain):
                 datetime=now,
                 report_text=output_text,
                 hits=hits,
+                home_page_hits=home_page_hits,
                 first_date_of_log=first_date,
                 last_date_of_log=last_date,
                 log_type=log_type

@@ -131,8 +131,12 @@ def analyze_file(raw_data, domain):
 
         if log_data['page_visited'] in analyzed_log_data['pages_visited']:
             analyzed_log_data['pages_visited'][log_data['page_visited']] += 1
+            if log_data['page_visited'] == '/': #home page
+                analyzed_log_data['home_page_hits'] += 1
         else:
             analyzed_log_data['pages_visited'][log_data['page_visited']] = 1
+            if log_data['page_visited'] == '/': #home page
+                analyzed_log_data['home_page_hits'] = 1
 
     datetimes.sort()
     analyzed_log_data['earliest_date'] = datetimes[0].strftime('%d/%b/%Y:%H:%M:%S')
@@ -145,6 +149,7 @@ def output(**kwargs):
     Creates output
     """
     analyzed_log_data = kwargs['data']
+    home_page_hits = analyzed_log_data['home_page_hits']
     hits = analyzed_log_data['hits']
     first_date = analyzed_log_data['earliest_date']
     last_date = analyzed_log_data['latest_date']
@@ -179,6 +184,7 @@ def output(**kwargs):
     ordered_pages_visited = sorted(analyzed_log_data['pages_visited'].items(), key=lambda kv: kv[1], reverse=True)
     output += f"Number of pages visited: {len(ordered_pages_visited)}\n"
     output += f"Top {kwargs['num']} pages:\n"
+    output += f"Home Page Hits: {home_page_hits}\n"
     for (page, number) in ordered_pages_visited:
         perc = number/analyzed_log_data['hits'] * 100
         output += f"Page {page}: {number} {perc:.1f}%\n"
@@ -186,7 +192,7 @@ def output(**kwargs):
         if i > kwargs['num']:
             break
 
-    return (output, first_date, last_date, hits)
+    return (output, first_date, last_date, hits, home_page_hits)
 
 def domain_log_reports(domain, report_type):
     """
@@ -345,6 +351,7 @@ def report_save(**kwargs):
             'domain_id': domain_id,
             'report': kwargs['report_text'],
             'hits':kwargs['hits'],
+            'home_page_hits':kwargs['home_page_hits'],
             'first_date_of_log':kwargs['first_date_of_log'],
             'last_date_of_log':kwargs['last_date_of_log'],
             'log_type':kwargs['log_type']

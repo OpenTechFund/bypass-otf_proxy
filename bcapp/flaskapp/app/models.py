@@ -114,6 +114,7 @@ class LogReport(db.Model):
     first_date_of_log = db.Column(db.DateTime)
     last_date_of_log = db.Column(db.DateTime)
     hits = db.Column(db.Numeric)
+    home_page_hits = db.Column(db.Numeric)
     report = db.Column(db.String)
     log_type = db.Column(db.String)
 
