@@ -18,6 +18,7 @@ def list_log_reports(domain):
             log_report = {
                 'id':rpt.id,
                 'domain':domain,
+                'log_type':rpt.log_type,
                 'date':rpt.date_of_report,
                 'report_text':rpt.report,
                 'first_date':rpt.first_date_of_log,

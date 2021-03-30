@@ -33,73 +33,71 @@ def analyze_file(raw_data, domain):
         exts_ignore_list = False
         
     raw_data_list = raw_data.split('\n')
+    fastly_log_match = re.compile('\<\d{3}\>')
+    try:
+        fastly_match = fastly_log_match.search(raw_data_list[0]).group(0)
+    except:
+        fastly_match = False
     #What kind of log formats are these?
     if 'Version' in raw_data_list[0]: #cloudfront
         log_type = 'cloudfront'
         raw_data_list = raw_data_list[2:] #getting rid of first two lines, which are comments
-    # elif ...
+    elif fastly_match: # Fastly logs have '<###>' at the beginning of each line
+        log_type = 'fastly'
     else:
         log_type = 'nginx'
 
-    analyzed_log_data = {
-            'visitor_ips': {},
-            'status': {},
-            'user_agent': {},
-            'pages_visited' : {},
-            'log_type' : log_type
-        }
-    analyzed_log_data['hits'] = len(raw_data_list)
-    log_date_match = re.compile('[0-9]{2}[\/]{1}[A-Za-z]{3}[\/]{1}[0-9]{4}[:]{1}[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2}')
-    log_status_match = re.compile('[\ ]{1}[0-9]{3}[\ ]{1}')
-    log_ip_match = re.compile('[0-9]{1,3}[\.]{1}[0-9]{1,3}[\.]{1}[0-9]{1,3}[\.]{1}[0-9]{1,3}')
-    datetimes = []
-    logger.debug("Analyzing Data...")
+    final_log_data = []
     for line in raw_data_list:
-        logger.debug(f"Line: {line}")
+        #logger.debug(f"Line: {line}")
         if not line:
             continue
         if line[0] == '#':
             continue
         log_data = {}
-        try:
-            log_data['ip'] = log_ip_match.search(line).group(0)
-        except:
-            pass
         if log_type == 'nginx':
+            log_date_match = re.compile('[0-9]{2}[\/]{1}[A-Za-z]{3}[\/]{1}[0-9]{4}[:]{1}[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2}')
+            log_status_match = re.compile('[\ ]{1}[0-9]{3}[\ ]{1}')
+            log_ip_match = re.compile('[0-9]{1,3}[\.]{1}[0-9]{1,3}[\.]{1}[0-9]{1,3}[\.]{1}[0-9]{1,3}')
             try:
                 log_data['datetime'] = log_date_match.search(line).group(0)
                 log_data['status'] = log_status_match.search(line).group(0)
+                log_data['ip'] = log_ip_match.search(line).group(0)
             except:
-                continue
-            datetimes.append(datetime.datetime.strptime(log_data['datetime'], '%d/%b/%Y:%H:%M:%S'))
-        else:
-            line_items = line.split('\t')
-            ymd = line_items[0]
-            hms = line_items[1]
-            date_time = ymd + '\t' + hms
-            strpdate = datetime.datetime.strptime(date_time, '%Y-%m-%d\t%H:%M:%S')
-            datetimes.append(strpdate)
-            log_data['status'] = line_items[8]
-        if log_type == 'nginx':
+                pass
             try:
                 log_data['user_agent'] = line.split(' "')[-1]
             except:
-                continue
-        else:
-            try:
-                log_data['user_agent'] = line.split('\t')[10]
-            except:
-                continue
-        if log_type == 'nginx':
+                pass
             try:
                 log_data['page_visited'] = line.split(' "')[-3].split(' ')[1]
             except:
-                continue
-        else:
+                pass
+        elif log_type == 'cloudfront':
+            line_items = line.split('\t')
             try:
-                log_data['page_visited'] = line.split('\t')[7]
+                ymd = line_items[0]
+                hms = line_items[1]
+                date_time = ymd + '\t' + hms
+                log_data['datetime'] = date_time
+                log_data['status'] = line_items[8]
+                log_data['user_agent'] = line_items[10]
+                log_data['page_visited'] = line_items[7]
             except:
                 continue
+        elif log_type == 'fastly':
+            line_items = line.split(' ')
+            try:
+                log_data['status'] = line_items[11]
+                log_data['datetime'] = line_items[6]
+                log_data['user_agent'] = 'No User Agent Recorded'
+                log_data['page_visited'] = line_items[9]
+                log_data['ip'] = line_items[3]
+            except:
+                continue
+        else:
+            continue
+            
         if exts_ignore_list:
             ext_ignore = False
             for ext in exts_ignore_list:
@@ -115,6 +113,33 @@ def analyze_file(raw_data, domain):
             if should_skip:
                 continue
         
+        #logger.debug(f"Log Data: {log_data}")
+        final_log_data.append(log_data)
+        
+    return final_log_data, log_type
+
+def analyze_data(compiled_log_data, log_type):
+    """
+    Analyze compiled data from different logs
+    """
+
+    analyzed_log_data = {
+            'visitor_ips': {},
+            'status': {},
+            'user_agent': {},
+            'pages_visited' : {}
+        }
+    analyzed_log_data['hits'] = len(compiled_log_data)
+
+    datetimes = []
+    for log_data in compiled_log_data:
+        if log_type == 'nginx':
+            datetimes.append(datetime.datetime.strptime(log_data['datetime'], '%d/%b/%Y:%H:%M:%S'))
+        elif log_type == 'fastly':
+            datetimes.append(datetime.datetime.strptime(log_data['datetime'], '[%d/%b/%Y:%H:%M:%S'))
+        elif log_type == 'cloudfront':
+            datetimes.append(datetime.datetime.strptime(log_data['datetime'], '%Y-%m-%d\t%H:%M:%S'))
+
         if 'ip' in log_data:
             if log_data['ip'] in analyzed_log_data['visitor_ips']:
                 analyzed_log_data['visitor_ips'][log_data['ip']] += 1
@@ -157,7 +182,7 @@ def output(**kwargs):
     output += f"Hits: {hits}\n"
 
     if 'visitor_ips' in analyzed_log_data:
-        logger.debug(f"Visitor IPs in data: {analyzed_log_data['visitor_ips']}")
+        #logger.debug(f"Visitor IPs in data: {analyzed_log_data['visitor_ips']}")
         output += f"IP addresses: \n"
         for data in analyzed_log_data['visitor_ips']:
             perc = analyzed_log_data['visitor_ips'][data]/analyzed_log_data['hits'] * 100
@@ -233,13 +258,17 @@ def filter_and_get_date(filename):
     cfdate = re.search(cloudmatch, filename)
     nginx_match = "[\d]{2}\-[A-Z]{1}[a-z]{2}\-[\d]{4}\:[\d]{2}\:[\d]{2}\:[\d]{2}"
     ngdate = re.search(nginx_match, filename)
-    # other matching versions go here
+    fastly_match = "\d{4}-\d{2}-\d{2}T\d{2}\:\d{2}\:\d{2}"
+    fastly_date = re.search(fastly_match, filename)
     if cfdate:
         date = cfdate.group(0)
         file_date = datetime.datetime.strptime(date, "%Y-%m-%d-%H")
     elif ngdate:
         date = ngdate.group(0)
         file_date = datetime.datetime.strptime(date, "%d-%b-%Y:%H:%M:%S")
+    elif fastly_date:
+        date = fastly_date.group(0)
+        file_date = datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S")
     else:
         file_date = False
     return file_date
@@ -360,6 +389,6 @@ def report_save(**kwargs):
     result = connection.execute(insert)
     report_id = result.inserted_primary_key[0]
 
-    logger.debug(f"Report ID: {report_id}")
+    #logger.debug(f"Report ID: {report_id}")
 
     return

@@ -10,6 +10,7 @@
     <h2 class="subtitle">Domain: {{ domain }}</h2>
     {% for log_report in log_reports %}
       <p><strong>Dates from: {{ log_report.first_date }} to: {{ log_report.last_date }}</strong></p>
+      <p><strong>Log Type:</strong> {{ log_report.log_type }}</p>
       {% for line in log_report.report_text.split('\n') %}
         <p>{{ line }}</p>
       {% endfor %}

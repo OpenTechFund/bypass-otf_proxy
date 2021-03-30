@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 import sqlalchemy as db
 from system_utilities import get_configs
 from simple_AWS.s3_functions import *
-from log_reporting_utilities import analyze_file, output, report_save, filter_and_get_date
+from log_reporting_utilities import analyze_file, analyze_data, output, report_save, filter_and_get_date
 
 logger = logging.getLogger('logger')
 
@@ -55,23 +55,28 @@ def analyze(unzip, percent, num, daemon, range, domain):
                                             profile=configs['profile'],
                                             bucket_name=dm['s3_bucket'])
             except:
-                logger.debug(f"No bucket set for domain {dm['name']}")
+                logger.warning(f"No bucket set for domain {dm['name']}")
                 continue
 
             # get the file list to analyze
             # read from S3
-            logger.debug(f"Getting files from S3 bucket {dm['s3_bucket']}...")
+            #logger.debug(f"Getting files from S3 bucket {dm['s3_bucket']}...")
             file_list = s3simple.s3_bucket_contents()
             if not file_list:
                 continue
             logger.debug(f"File List: {file_list}")
-            all_raw_data = ""
+            compiled_data = {
+                'nginx': [],
+                'cloudfront': [],
+                'fastly': []
+            }
+            logger.debug(f"Analyzing {dm['name']}...")
             for ifile in file_list:
                 if 'LogAnalysis' in ifile:
                     continue
                 if (('.gz' in ifile or '.bz2' in ifile) and not unzip):
                     continue
-                logger.debug(f"Processing file: {ifile}")
+                #logger.debug(f"Processing file: {ifile}")
                 if ifile[-1] == '/':
                     directory = configs['local_tmp'] + '/' + ifile
                     if not os.path.isdir(directory):
@@ -79,7 +84,7 @@ def analyze(unzip, percent, num, daemon, range, domain):
                     continue
                 file_date = filter_and_get_date(ifile)
                 if not file_date:
-                    logger.debug("Couldn't find date in logs!")
+                    logger.warning("Couldn't find date in logs!")
                     continue
                 numdays = (now - file_date).days
                 if numdays > range:
@@ -87,7 +92,7 @@ def analyze(unzip, percent, num, daemon, range, domain):
 
                 #download
                 local_path = configs['local_tmp'] + '/' + ifile
-                logger.debug(f"Downloading ... domain: {dm['name']} to {local_path}")
+                #logger.debug(f"Downloading ... domain: {dm['name']} to {local_path}")
                 s3simple.download_file(file_name=ifile, output_file=local_path)
                 
                 # Add to aggregate
@@ -105,45 +110,50 @@ def analyze(unzip, percent, num, daemon, range, domain):
                     with open(local_path) as f:
                         raw_data = f.read()
 
-                #logger.debug(f"Raw: {raw_data}")
-                all_raw_data = all_raw_data + raw_data
+                #logger.debug(f"Files data: {raw_data}")
+                compiled_log_data, log_type = analyze_file(raw_data, dm['name'])
+                if not compiled_log_data:
+                    logger.warning("No Data!")
+                    continue
+                
+                compiled_data[log_type] += compiled_log_data
 
-            logger.debug(f"All data: {all_raw_data}")
-            analyzed_data = analyze_file(all_raw_data, dm['name'])
-            if not analyzed_data:
-                continue
-            log_type = analyzed_data['log_type']  
-            logger.debug(f"Log type: {log_type}")
-            (output_text, first_date, last_date, hits, home_page_hits) = output(
-                        domain=dm['name'],
-                        data=analyzed_data,
-                        percent=percent,
-                        num=num)
-            logger.debug(output_text)
+                #logger.debug(f"Deleting local temporary file {local_path}...")
+                os.remove(local_path)
 
-            logger.debug("Saving log analysis file...")
-            key = 'LogAnalysis_' + dm['name'] + '_' + now_string + '.json'
-            body = str(analyzed_data)
-            s3simple.put_to_s3(key=key, body=body)
+            for log_type in compiled_data:
+                logger.debug(f"Log type: {log_type}")
+                #logger.debug(f"Analyzed data: {compiled_data[log_type]}")
+                if not compiled_data[log_type]:
+                    continue
+                analyzed_log_data = analyze_data(compiled_data[log_type], log_type)
+                (output_text, first_date, last_date, hits, home_page_hits) = output(
+                            domain=dm['name'],
+                            data=analyzed_log_data,
+                            percent=percent,
+                            num=num)
+                logger.debug(output_text)
 
-            logger.debug("Saving output file....")
-            key = 'LogAnalysisOutput_' + dm['name'] + '_' + log_type + '_' + now_string + '.txt'
-            s3simple.put_to_s3(key=key, body=output_text)
+                logger.debug("Saving log analysis file...")
+                key = 'LogAnalysis_'  + dm['name'] + '_' + log_type + '_' + now_string + '.json'
+                body = str(analyzed_log_data)
+                s3simple.put_to_s3(key=key, body=body)
 
-            logger.debug(f"Deleting local temporary file {local_path}...")
-            os.remove(local_path)
+                logger.debug("Saving output file....")
+                key = 'LogAnalysisOutput_' + dm['name'] + '_' + log_type + '_' + now_string + '.txt'
+                s3simple.put_to_s3(key=key, body=output_text)
 
-            logger.debug("Sending Report to Database...")
-            report_save(
-                domain=dm['name'],
-                datetime=now,
-                report_text=output_text,
-                hits=hits,
-                home_page_hits=home_page_hits,
-                first_date_of_log=first_date,
-                last_date_of_log=last_date,
-                log_type=log_type
-                )
+                logger.debug("Sending Report to Database...")
+                report_save(
+                    domain=dm['name'],
+                    datetime=now,
+                    report_text=output_text,
+                    hits=hits,
+                    home_page_hits=home_page_hits,
+                    first_date_of_log=first_date,
+                    last_date_of_log=last_date,
+                    log_type=log_type
+                    )
 
     return
 
