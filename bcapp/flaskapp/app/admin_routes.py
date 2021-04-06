@@ -233,6 +233,7 @@ def edit_user(id):
             user.admin = form.admin.data
             user.active = form.active.data
             user.email = form.email.data
+            user.notifications = form.notifications.data
             if form.password.data:
                 user.password = generate_password_hash(form.password.data)
             user.name = form.name.data
@@ -245,6 +246,7 @@ def edit_user(id):
             form.active.data = user.active
             form.email.data = user.email
             form.name.data = user.name
+            form.notifications.data = user.notifications
             form.domain_group_id.choices = [(dg.id, dg.name) for dg in DomainGroup.query.order_by('name').all()]
             form.domain_group_id.data = user.domain_group_id
         return render_template('edit_user.html',

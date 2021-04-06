@@ -83,7 +83,7 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
     elif generate_report:
         generate_admin_report(mode)
             
-    elif domain_list:
+    elif domain_list: #assuming console mode
         dlist = domain_list()
         print(f""" List of all domains, mirrors and onions
         ___________________________________________________

@@ -108,8 +108,10 @@ def analyze_file(raw_data, domain):
         if paths_ignore_list:
             should_skip = False
             for ignore in paths_ignore_list:
-                if ignore in log_data['page_visited']:
+                ig_len = len(ignore)
+                if ignore == log_data['page_visited'][:ig_len]:
                     should_skip = True
+                #logger.debug(f"Ignore: {ignore} - page: {log_data['page_visited'][:ig_len]} - Skip: {should_skip}")
             if should_skip:
                 continue
         

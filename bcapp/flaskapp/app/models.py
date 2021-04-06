@@ -102,6 +102,7 @@ class User(UserMixin, db.Model):
     domain_group_id = db.Column(db.String(120))
     admin = db.Column(db.Boolean)
     active = db.Column(db.Boolean)
+    notifications = db.Column (db.Boolean)
 
     def __repr__(self):
         return '<id {}>'.format(self.id)

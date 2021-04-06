@@ -148,13 +148,13 @@ def generate_admin_report(mode):
         user_query = db.select([users]).where(users.c.admin == True)
         user_list = connection.execute(user_query).fetchall()
         for user in user_list:
-            email = send_email(
-                        user['email'],
-                        "Daily Report From BC APP",
-                        message_to_send
-                    )
-            logger.debug(f"Message Sent to {user['email']}")
-            print(f"Email Sent? {email}")
+            if user['notifications'] and user['active']:
+                email = send_email(
+                            user['email'],
+                            "Daily Report From BC APP",
+                            message_to_send
+                        )
+                logger.debug(f"Message Sent to {user['email']}: {email}")
 
     else:
         if important_reports:

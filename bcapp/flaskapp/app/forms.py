@@ -9,6 +9,7 @@ class UserForm(FlaskForm):
     email = StringField('Email Address')
     active = BooleanField('Active?')
     admin = BooleanField('Admin?')
+    notifications = BooleanField('Get Notifications?')
     password = StringField('New Password')
     domain_group_id = SelectField('Domain Group', coerce=int)
     submit = SubmitField('Edit User')

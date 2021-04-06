@@ -14,7 +14,13 @@
                     Domain Group
                 </th>
                 <th>
+                   Active?
+                </th>
+                <th>
                     Admin?
+                </th>
+                <th>
+                    Notifications?
                 </th>
                 <th>
                     
@@ -37,7 +43,13 @@
                     {{ user.domain_group_id }}
                 </td>
                 <td>
-                    {{ user.admin }}
+                    {{ user.active }}
+                </td>
+                <td>
+                    {{ user.admin}}
+                </td>
+                <td>
+                    {{ user.notifications }}
                 </td>
                 <td>
                     <a class="button is-info" href="{{ url_for('edit_user', id=user.id) }}">Edit</a>
