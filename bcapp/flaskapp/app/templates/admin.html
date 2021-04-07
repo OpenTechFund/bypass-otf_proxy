@@ -5,10 +5,22 @@
   Bypass Censorship Application - Administration Page
 </h1>
 
+<h2>
+  Reporting
+</h2>
+
 <p><a href="{{ url_for ('reports') }}" class="button is-info"> See Domain Reports</a></p>
 <p><a href="{{ url_for ('log_reports') }}" class="button is-info">See Log Reports</a></p>
-<p><a href="{{ url_for ('testing') }}" class="button is-info">Domain Testing</a></p>
 <hr>
+<h2>
+  Test/Add/Change Domain Alternatives
+</h2>
+<p><a href="{{ url_for ('testing') }}" class="button is-info">Domain Testing, Get/Change Alternatives</a></p>
+<p><a href="{{ url_for ('add_alternative') }}" class="button is-info"> Add new alternative</a></p>
+<hr>
+<h2>
+  Administration
+</h2>
 <p><a href="{{ url_for ('admin_domain_groups') }}" class="button is-info">Administer Domain Groups</a></p>
 <p><a href="{{ url_for ('admin_domains') }}" class="button is-info"> Administer Domains</a></p>
 <p><a href="{{ url_for ('admin_users') }}" class="button is-info">Administer Users</a></p>

@@ -18,6 +18,7 @@
             </li>
             <li>
                 URL: <a href="{{ alternative.url }}">{{ alternative.url }}</a>
+                <a ref="{{ url_for('edit_alternative', id=alternative.id) }}" class="button is-warning">Edit</a>
                 <a href="{{ url_for ('alternatives', url=alternative.url, alternatives=alternatives, domain_choice=domain_choice) }}" class="button is-info">Test</a>
                 {% if url == alternative.url %}
                     {% if result == 'up' %}

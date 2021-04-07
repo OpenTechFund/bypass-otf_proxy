@@ -14,7 +14,7 @@ login_manager = LoginManager()
 login_manager.login_view = 'login'
 login_manager.init_app(app)
 
-from app import routes, api_routes, admin_routes, models
+from app import routes, api_routes, admin_routes, auto_routes, models
 
 from .models import User
 
