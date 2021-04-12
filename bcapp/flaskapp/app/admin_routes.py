@@ -85,6 +85,7 @@ def edit_domain(id):
             domain.ext_ignore = form.ext_ignore.data
             domain.paths_ignore = form.paths_ignore.data
             domain.s3_storage_bucket = form.s3_storage_bucket.data
+            domain.azure_profile_name = form.azure_profile_name.data
             db.session.commit()
             flash('Your changes have been saved.')
             return redirect(url_for('admin_domains'))
@@ -93,6 +94,7 @@ def edit_domain(id):
             form.ext_ignore.data = domain.ext_ignore
             form.paths_ignore.data = domain.paths_ignore
             form.s3_storage_bucket.data = domain.s3_storage_bucket
+            form.azure_profile_name.data = domain.azure_profile_name
             
         return render_template('edit_domain.html',
                                     title='Edit Domain',

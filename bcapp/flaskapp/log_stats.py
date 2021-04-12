@@ -16,6 +16,7 @@ import sqlalchemy as db
 from system_utilities import get_configs
 from simple_AWS.s3_functions import *
 from log_reporting_utilities import analyze_file, analyze_data, output, report_save, filter_and_get_date
+from azure_utilities import retrieve_logs
 
 logger = logging.getLogger('logger')
 
@@ -45,11 +46,20 @@ def analyze(unzip, percent, num, daemon, range, domain):
     query = db.select([domains])
     result = connection.execute(query).fetchall()
     for line in result:
-        domains_list.append({'id' : line[0], 'name' : line[1], 's3_bucket' : line[4]})
+        domains_list.append({'id' : line[0], 'name' : line[1], 's3_bucket' : line[4], 'azure_profile' : line[5]})
 
 
     for dm in domains_list:
         if ((domain == 'all') or (dm['name'] == domain)):
+            # First, is there an azure profile set?
+            if ('azure_profile' in dm) and (dm['azure_profile']):
+                logger.debug(f"Domain: {dm['name']}: Azure Profile: {dm['azure_profile']}")
+                retrieve_logs()
+                continue
+            else:
+                continue
+
+
             try:
                 s3simple = S3Simple(region_name=configs['region'],
                                             profile=configs['profile'],
@@ -68,7 +78,8 @@ def analyze(unzip, percent, num, daemon, range, domain):
             compiled_data = {
                 'nginx': [],
                 'cloudfront': [],
-                'fastly': []
+                'fastly': [],
+                'azure': []
             }
             logger.debug(f"Analyzing {dm['name']}...")
             for ifile in file_list:

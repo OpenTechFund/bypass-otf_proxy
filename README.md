@@ -269,6 +269,7 @@ If you follow [these instructions](https://docs.fastly.com/en/guides/setting-up-
 
 Following [these instructions](https://docs.microsoft.com/en-us/azure/cdn/monitoring-and-access-log) you can stream logs (at the profile level) to an Azure storage account. One note - make sure to register your subscription (Azure Portal > Subscriptions > Choose yours > Resource Providers) with microsoft.insight. 
 
+Then go to the Azure portal, and find the access keys for that storage account, and add them to auto.cfg, in the appropriate settings space under the AZURE section.
 
 ## Analyzing Logs
 

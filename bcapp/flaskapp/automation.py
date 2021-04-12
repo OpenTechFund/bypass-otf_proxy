@@ -12,7 +12,7 @@ from report_utilities import domain_reporting, send_report, generate_admin_repor
 from log_reporting_utilities import domain_log_reports, domain_log_list
 from mirror_tests import mirror_detail
 from fastly_add import fastly_add, fastly_replace
-from azure_cdn import azure_add, azure_replace
+from azure_utilities import azure_add, azure_replace
 from system_utilities import get_configs
 from ipfs_utils import ipfs_add
 import click

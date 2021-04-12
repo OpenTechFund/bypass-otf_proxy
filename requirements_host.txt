@@ -17,4 +17,5 @@ azure-mgmt-cdn
 Flask-WTF
 gunicorn
 tldextract
+azure-storage-blob
 

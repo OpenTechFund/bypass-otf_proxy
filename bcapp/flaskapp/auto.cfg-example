@@ -17,6 +17,9 @@ subscription_id =
 tenant_id = 
 service_principal_app = 
 service_principal_key = 
+storage_account_name = 
+storage_key = 
+storage_connection_string = 
 
 [LOGS]
 path_file = 

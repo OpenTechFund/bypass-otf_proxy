@@ -19,6 +19,7 @@ class DomainForm(FlaskForm):
     ext_ignore = StringField('Extensions to ignore')
     paths_ignore = StringField('Paths to ignore')
     s3_storage_bucket = StringField('S3 Storage Bucket')
+    azure_profile_name = StringField('Azure Profile Name')
     submit = SubmitField('Edit Domain')
 
 class DomainGroupForm(FlaskForm):

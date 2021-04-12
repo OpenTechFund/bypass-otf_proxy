@@ -12,6 +12,7 @@ class Domain(db.Model):
     paths_ignore = db.Column(db.String)
     ext_ignore = db.Column(db.String)
     s3_storage_bucket = db.Column(db.String)
+    azure_profile_name = db.Column(db.String)
     
     def __repr__(self):
         return '<id {}>'.format(self.id)
