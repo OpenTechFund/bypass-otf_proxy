@@ -6,6 +6,7 @@ import re
 import os
 import datetime
 import logging
+import json
 from dotenv import load_dotenv
 from simple_AWS.s3_functions import *
 import sqlalchemy as db
@@ -33,13 +34,16 @@ def analyze_file(raw_data, domain):
         exts_ignore_list = False
         
     raw_data_list = raw_data.split('\n')
+    #logger.debug(f"raw length: {len(raw_data_list)} first chars: {raw_data_list[0][0]}")
     fastly_log_match = re.compile('\<\d{3}\>')
     try:
         fastly_match = fastly_log_match.search(raw_data_list[0]).group(0)
     except:
         fastly_match = False
     #What kind of log formats are these?
-    if 'Version' in raw_data_list[0]: #cloudfront
+    if raw_data_list[0][0] == '{': # it's json
+        log_type = 'azure'
+    elif 'Version' in raw_data_list[0]: #cloudfront
         log_type = 'cloudfront'
         raw_data_list = raw_data_list[2:] #getting rid of first two lines, which are comments
     elif fastly_match: # Fastly logs have '<###>' at the beginning of each line
@@ -47,6 +51,7 @@ def analyze_file(raw_data, domain):
     else:
         log_type = 'nginx'
 
+    logger.debug(F"Log type: {log_type}")
     final_log_data = []
     for line in raw_data_list:
         #logger.debug(f"Line: {line}")
@@ -95,6 +100,19 @@ def analyze_file(raw_data, domain):
                 log_data['ip'] = line_items[3]
             except:
                 continue
+        elif log_type == 'azure':
+            try:
+                line_json = json.loads(line)
+            except:
+                logger.debug("Can't parse - isn't json!")
+                continue
+
+            log_data['status'] = line_json['properties']['httpStatusCode']
+            log_data['datetime'] = line_json['time']
+            log_data['user_agent'] = line_json['properties']['userAgent']
+            log_data['page_visited'] = line_json['properties']['requestUri']
+            log_data['ip'] = line_json['properties']['clientIp']
+
         else:
             continue
             
@@ -141,6 +159,8 @@ def analyze_data(compiled_log_data, log_type):
             datetimes.append(datetime.datetime.strptime(log_data['datetime'], '[%d/%b/%Y:%H:%M:%S'))
         elif log_type == 'cloudfront':
             datetimes.append(datetime.datetime.strptime(log_data['datetime'], '%Y-%m-%d\t%H:%M:%S'))
+        elif log_type == 'azure':
+            datetimes.append(datetime.datetime.strptime(log_data['datetime'][:-2], '%Y-%m-%dT%H:%M:%S.%f'))
 
         if 'ip' in log_data:
             if log_data['ip'] in analyzed_log_data['visitor_ips']:
@@ -158,11 +178,14 @@ def analyze_data(compiled_log_data, log_type):
 
         if log_data['page_visited'] in analyzed_log_data['pages_visited']:
             analyzed_log_data['pages_visited'][log_data['page_visited']] += 1
-            if log_data['page_visited'] == '/': #home page
-                analyzed_log_data['home_page_hits'] += 1
+            if log_type != 'azure':
+                if ((log_data['page_visited'] == '/') or
+                    (re.compile("\:[0-9]{2,3}\/$").search(log_data['page_visited']))): #home page
+                    analyzed_log_data['home_page_hits'] += 1
         else:
             analyzed_log_data['pages_visited'][log_data['page_visited']] = 1
-            if log_data['page_visited'] == '/': #home page
+            if ((log_data['page_visited'] == '/') or
+                (re.compile("\:[0-9]{2,3}\/$").search(log_data['page_visited']))): #home page
                 analyzed_log_data['home_page_hits'] = 1
 
     datetimes.sort()
@@ -262,6 +285,8 @@ def filter_and_get_date(filename):
     ngdate = re.search(nginx_match, filename)
     fastly_match = "\d{4}-\d{2}-\d{2}T\d{2}\:\d{2}\:\d{2}"
     fastly_date = re.search(fastly_match, filename)
+    azure_match = "\_[0-9]{4}\-[0-9]{2}\-[0-9]{2}\-[0-9]{2}\-[0-9]{2}\.json"
+    azure_date = re.search(azure_match, filename)
     if cfdate:
         date = cfdate.group(0)
         file_date = datetime.datetime.strptime(date, "%Y-%m-%d-%H")
@@ -271,6 +296,9 @@ def filter_and_get_date(filename):
     elif fastly_date:
         date = fastly_date.group(0)
         file_date = datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S")
+    elif azure_date:
+        date = azure_date.group(0)
+        file_date = datetime.datetime.strptime(date, "_%Y-%m-%d-%H-%M")
     else:
         file_date = False
     return file_date
@@ -349,12 +377,13 @@ def get_domain_data(domain):
         'id': False
     }
     for entry in result:
-        d_id, domain_fetched, ext_ignore, paths_ignore, s3_bucket = entry
+        d_id, domain_fetched, ext_ignore, paths_ignore, s3_bucket, azure_profile = entry
         if domain_fetched in domain:
             domain_data['id'] = d_id
             domain_data['ext_ignore'] = ext_ignore
             domain_data['paths_ignore'] = paths_ignore
             domain_data['s3_bucket'] = s3_bucket
+            domain_data['azure_profile'] = azure_profile
     
     if not domain_data['id']: 
         domain_data = False

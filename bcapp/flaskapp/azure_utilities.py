@@ -102,6 +102,9 @@ def retrieve_logs(**kwargs):
     """
     configs = get_configs()
 
+    now = datetime.datetime.now()
+
+    logger.debug("Grabbing files from Azure...")
     # Create a client
     container_name = "insights-logs-azurecdnaccesslog" # it's always called this
     container = ContainerClient.from_connection_string(
@@ -116,14 +119,39 @@ def retrieve_logs(**kwargs):
         try:
             log_date_string = date_match.search(blob.name).group(0)
             log_date = datetime.datetime.strptime(log_date_string, "y=%Y/m=%m/d=%d/h=%H/m=%M")
-            print(f"Date: {log_date} & {log_date_string}")
+            #print(f"Date: {log_date} & {log_date_string}")
         except:
             continue
 
         # right profile?
-        if kwargs['profile_name'] not in blob:
+        #logger.debug(f"Profile: {kwargs['profile_name']} blob.name: {blob.name}")
+        if kwargs['profile_name'].upper() not in blob.name:
+            #logger.debug('Not right profile')
             continue
-
+        
         # TODO: Find right range of files, copy to S3
+        numdays = (now - log_date).days
+        if numdays > kwargs['range']:
+            logger.debug(f"File {blob.name} too old!")
+            continue
+        
+        file_date = datetime.datetime.strftime(log_date, "%Y-%m-%d-%H-%M")
+        s3_filename = "Azure_CDN_log_" + kwargs['profile_name'] + "_" + file_date + ".json"
+        local_path = configs['local_tmp'] + "/" + s3_filename
+        #logger.debug(f"Local path: {local_path}")
+
+        get_blob = BlobClient.from_connection_string(conn_str=configs['azure_storage_conn_string'], container_name=container_name, blob_name=blob.name)
+        with open(local_path, "wb") as tmp_blob:
+            blob_data = get_blob.download_blob()
+            blob_data.readinto(tmp_blob)
+
+        #upload to S3
+
+        s3simple = S3Simple(region_name=configs['region'], profile=configs['profile'], bucket_name=kwargs['s3_bucket'])
+        s3simple.send_file_to_s3(local_file=local_path, s3_file=s3_filename)
+
+        os.remove(local_path)
+
+
     return
 

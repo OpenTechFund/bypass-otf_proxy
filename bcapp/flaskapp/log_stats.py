@@ -54,11 +54,7 @@ def analyze(unzip, percent, num, daemon, range, domain):
             # First, is there an azure profile set?
             if ('azure_profile' in dm) and (dm['azure_profile']):
                 logger.debug(f"Domain: {dm['name']}: Azure Profile: {dm['azure_profile']}")
-                retrieve_logs()
-                continue
-            else:
-                continue
-
+                retrieve_logs(profile_name=dm['azure_profile'], range=range, s3_bucket=dm['s3_bucket'])
 
             try:
                 s3simple = S3Simple(region_name=configs['region'],
@@ -87,7 +83,7 @@ def analyze(unzip, percent, num, daemon, range, domain):
                     continue
                 if (('.gz' in ifile or '.bz2' in ifile) and not unzip):
                     continue
-                #logger.debug(f"Processing file: {ifile}")
+                logger.debug(f"Processing file: {ifile}")
                 if ifile[-1] == '/':
                     directory = configs['local_tmp'] + '/' + ifile
                     if not os.path.isdir(directory):
