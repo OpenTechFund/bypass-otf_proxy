@@ -150,10 +150,11 @@ def edit_domain_group(id):
     """
     Edit Domain Group
     """
-    if not current_user.admin:
-        flash('Have to be an admin!')
+    no_domain_group = DomainGroup.query.filter_by(name='None').first_or_404()
+    if current_user.domain_group_id == str(no_domain_group.id): # bump them
+        flash("Can't edit!")
         return redirect(url_for('profile'))
-    else:
+    elif ((current_user.admin) or (current_user.domain_group_id == str(id))):
         domain_group = DomainGroup.query.filter_by(id=id).first_or_404()
         form = DomainGroupForm()
         if request.method == 'POST':
@@ -170,6 +171,10 @@ def edit_domain_group(id):
                                     title='Edit Domain Group',
                                     domain_group=domain_group,
                                     form=form)
+    else:
+        flash('Have to have permission!')
+        return redirect(url_for('profile'))
+        
 
 @app.route('/admin/domain_groups/add', methods=['GET', 'POST'])
 @login_required
@@ -222,6 +227,42 @@ def delete_user(id):
         db.session.commit()
         return redirect(url_for('admin_users'))
 
+@app.route('/admin/users/add',  methods=['GET', 'POST'])
+@login_required
+def add_user():
+    """
+    Add user
+    """
+    if not current_user.admin:
+        flash('Have to be an admin!')
+        return redirect(url_for('profile'))
+    else:
+        form = UserForm()
+        if request.method == 'POST':
+            name = form.name.data
+            active = form.active.data
+            email = form.email.data
+            admin = form.admin.data
+            notifications = form.notifications.data
+            domain_group_id = form.domain_group_id.data
+            user = User(
+                name=name,
+                email=email,
+                active=active,
+                admin=admin,
+                notifications = notifications,
+                domain_group_id=domain_group_id
+            )
+            if form.password.data:
+                user.password = generate_password_hash(form.password.data)
+            db.session.add(user)
+            db.session.commit()
+            return redirect(url_for('admin_users'))
+
+        form.domain_group_id.choices = [(dg.id, dg.name) for dg in DomainGroup.query.order_by('name').all()]
+        return render_template('edit_user.html', title="Add User", form=form)
+
+
 @app.route('/admin/users/<id>', methods=['GET', 'POST'])
 @login_required
 def edit_user(id):
@@ -263,25 +304,25 @@ def edit_user(id):
 def testing():
     """
     Domain and other tests
-    """
-    if not current_user.admin:
-        flash('Have to be an admin!')
-        return redirect(url_for('profile'))
-    else:
+    """   
+    if current_user.admin:
         domain_list = Domain.query.all()
-        domains = []
-        for dom in domain_list:
-            domains.append(dom.domain)
-        if request.args.get('url'):
-            url = request.args.get('url')
-            if '.onion' in url:
-                status, final_url = mirror_tests.test_onion(url, 'web')
-            else:
-                status, final_url = mirror_tests.test_domain(url, '', 'web', '')
+    else:
+        domain_list = admin_utilities.get_domain_subset(current_user.domain_group_id)
+
+    domains = []
+    for dom in domain_list:
+        domains.append(dom.domain)
+    if request.args.get('url'):
+        url = request.args.get('url')
+        if '.onion' in url:
+            status, final_url = mirror_tests.test_onion(url, 'web')
         else:
-            status, final_url = False, False
-   
-        return render_template('testing.html', name=current_user.name, status=status, final_url=final_url, domains=domains)
+            status, final_url = mirror_tests.test_domain(url, '', 'web', '')
+    else:
+        status, final_url = False, False
+
+    return render_template('testing.html', name=current_user.name, status=status, final_url=final_url, domains=domains)
 
 @app.route('/testing/alternatives', methods=['GET'])
 @login_required
@@ -289,34 +330,30 @@ def alternatives():
     """
     Get alternatives from GitHub
     """
-    if not current_user.admin:
-        flash('Have to be an admin!')
-        return redirect(url_for('profile'))
-    else:
-        if request.args.get('url'):
-            url = request.args.get('url')
-            if '.onion' in url:
-                status, final_url = mirror_tests.test_onion(url, 'web')
-                if status != 200:
-                    result = 'down'
-                else:
-                    result = 'up'
+    if request.args.get('url'):
+        url = request.args.get('url')
+        if '.onion' in url:
+            status, final_url = mirror_tests.test_onion(url, 'web')
+            if status != 200:
+                result = 'down'
             else:
-                status, final_url = mirror_tests.test_domain(url, '', 'web', '')
-                if status != 200:
-                    result = 'down'
-                else:
-                    result = 'up'
+                result = 'up'
         else:
-            url = False
-            result = 'none'
-        domain_choice = request.args.get('domain_choice')
-        alternatives_list = repo_utilities.check(domain_choice)
-        if not alternatives_list['exists']:
-            alternatives = False
-        else:
-            alternatives = alternatives_list['available_alternatives']
-        return render_template('alternatives.html', domain_choice=domain_choice, alternatives=alternatives, url=url, result=result)
+            status, final_url = mirror_tests.test_domain(url, '', 'web', '')
+            if status != 200:
+                result = 'down'
+            else:
+                result = 'up'
+    else:
+        url = False
+        result = 'none'
+    domain_choice = request.args.get('domain_choice')
+    alternatives_list = repo_utilities.check(domain_choice)
+    if not alternatives_list['exists']:
+        alternatives = False
+    else:
+        alternatives = alternatives_list['available_alternatives']
+    return render_template('alternatives.html', domain_choice=domain_choice, alternatives=alternatives, url=url, result=result)
 
 ## Reporting
 
@@ -330,26 +367,23 @@ def log_reports():
     """
     if current_user.admin:
         domain_list = Domain.query.all()
-        domains = []
-        for dom in domain_list:
-            if dom.s3_storage_bucket:
-                domains.append(dom.domain)
-        return render_template('log_reports.html', name=current_user.name, domains=domains)
     else:
-        flash('Have to be an admin!')
-        return redirect(url_for('profile'))
+        domain_list = admin_utilities.get_domain_subset(current_user.domain_group_id)
+
+    domains = []
+    for dom in domain_list:
+        if dom.s3_storage_bucket:
+            domains.append(dom.domain)
+    return render_template('log_reports.html', name=current_user.name, domains=domains)
+
 
 @app.route('/admin/log_reports')
 @login_required
 def log_reports_list():
-    if current_user.admin:
-        domain_choice = request.args.get('domain_choice')
-        log_reports = admin_utilities.list_log_reports(domain_choice)
-        return render_template('log_reports_list.html', name=current_user.name, log_reports=log_reports, domain=domain_choice)
-    else:
-        flash('Have to be an admin!')
-        return redirect(url_for('profile'))
-
+    domain_choice = request.args.get('domain_choice')
+    log_reports = admin_utilities.list_log_reports(domain_choice)
+    return render_template('log_reports_list.html', name=current_user.name, log_reports=log_reports, domain=domain_choice)
+   
 
 @app.route('/log_reports/domain', methods=['GET'])
 @login_required
@@ -381,38 +415,43 @@ def reports():
     """
     if current_user.admin:
         domain_list = Domain.query.all()
-        domains = []
-        for dom in domain_list:
-            domains.append(dom.domain)
-        report_types = [
-            {
-                'name': 'Recent Domain Reports',
-                'report': 'recent_domain_reports'
-            },
-            {
-                'name': "Last Week's Bad Domains",
-                'report': 'bad_domains'
-            },
-            {
-                'name': "Last Week's Bad Mirrors",
-                'report': 'bad_mirrors'
-            },
-            {
-                'name': "Monthly Aggregate Report",
-                'report': 'monthly_bad'
-            }
-        ]
-        return render_template('reports.html', name=current_user.name, report_types=report_types, domains=domains)
     else:
-        flash('Have to be an admin!')
-        return redirect(url_for('profile'))
+        domain_list = admin_utilities.get_domain_subset(current_user.domain_group_id)
+
+    domains = []
+    for dom in domain_list:
+        domains.append(dom.domain)
+    report_types = [
+        {
+            'name': 'Recent Domain Reports',
+            'report': 'recent_domain_reports'
+        },
+        {
+            'name': "Last Week's Bad Domains",
+            'report': 'bad_domains'
+        },
+        {
+            'name': "Last Week's Bad Mirrors",
+            'report': 'bad_mirrors'
+        },
+        {
+            'name': "Monthly Aggregate Report",
+            'report': 'monthly_bad'
+        }
+    ]
+    return render_template('reports.html', name=current_user.name, report_types=report_types, domains=domains)
+
 
 @app.route('/admin/domain_reports', methods=['GET'])
 @login_required
 def recent_domain_reports():
     domain_choice = request.args.get('domain_choice')
     if current_user.admin:
-        print(f"Domain choice: {domain_choice}")
+        auth = True
+    else:
+        auth = admin_utilities.auth_user(current_user.domain_group_id, domain_choice)
+
+    if auth:
         recent_reports = admin_utilities.get_recent_domain_reports(domain_choice)
         return render_template('recent_domain_reports.html', name=current_user.name, recent_reports=recent_reports, domain_choice=domain_choice)
     else:
@@ -422,34 +461,39 @@ def recent_domain_reports():
 @app.route('/admin/bad_domains')
 @login_required
 def bad_domains():
-    if current_user.admin:
-        bad_domains = admin_utilities.bad_domains()
-        if not bad_domains:
-            all_good = True
-        else:
-            all_good = False
-        return render_template('bad_domains.html', name=current_user.name, bad_domains=bad_domains, all_good=all_good)
+    bad_domains = admin_utilities.bad_domains(current_user.admin, current_user.domain_group_id)
+    if not bad_domains:
+        all_good = True
     else:
-        flash('Have to be an admin!')
-        return redirect(url_for('profile'))
+        all_good = False
+    return render_template('bad_domains.html', name=current_user.name, bad_domains=bad_domains, all_good=all_good)
 
 @app.route('/admin/bad_mirrors')
 @login_required
 def bad_mirrors():
-    if current_user.admin:
-        bad_mirrors = admin_utilities.bad_mirrors()
-        return render_template('bad_mirrors.html', name=current_user.name, bad_mirrors=bad_mirrors)
-    else:
-        flash('Have to be an admin!')
-        return redirect(url_for('profile'))
+    bad_mirrors = admin_utilities.bad_mirrors(current_user.admin, current_user.domain_group_id)
+    return render_template('bad_mirrors.html', name=current_user.name, bad_mirrors=bad_mirrors)
 
 @app.route('/admin/monthy_bad')
 @login_required
 def monthly_bad():
-    if current_user.admin:
-        monthly_bad = admin_utilities.monthly_bad()
-        return render_template('monthly_bad.html', name=current_user.name, monthly_bad=monthly_bad)
-    else:
-        flash('Have to be an admin!')
+    monthly_bad = admin_utilities.monthly_bad(current_user.admin, current_user.domain_group_id)
+    return render_template('monthly_bad.html', name=current_user.name, monthly_bad=monthly_bad)
+    
+    
+### Domain Group User Admin
+
+@app.route('/domain_group/admin/')
+@login_required
+def domain_group_admin():
+    """
+    Admin page for domain groups
+    """
+    no_domain_group = DomainGroup.query.filter_by(name='None').first_or_404()
+    print(f"No: {no_domain_group} {type(current_user.domain_group_id)} {type(no_domain_group.id)}" )
+    if current_user.domain_group_id == str(no_domain_group.id): # bump them
+        flash("No Domains!")
         return redirect(url_for('profile'))
+    else:
+        return render_template('domain_group_admin.html', name=current_user.name, domain_group_id=current_user.domain_group_id)
 

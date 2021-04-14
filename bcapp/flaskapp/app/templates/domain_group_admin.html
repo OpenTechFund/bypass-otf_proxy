@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="title">
+  Bypass Censorship Application - Manage Your Domain Group
+</h1>
+
+<h2>
+  Reporting
+</h2>
+
+<p><a href="{{ url_for ('reports') }}" class="button is-info"> See Domain Reports</a></p>
+<p><a href="{{ url_for ('log_reports') }}" class="button is-info">See Log Reports</a></p>
+<hr>
+<h2>
+  Test Domains
+</h2>
+<p><a href="{{ url_for ('testing') }}" class="button is-info">Domain Testing, Get Alternatives</a></p>
+<hr>
+<h2>
+  Edit Domain Group
+</h2>
+<hr>
+<p><a href="{{ url_for ('edit_domain_group', id=domain_group_id) }}" class="button is-info">Edit Your Domain Group</a></p>
+
+{% endblock %}

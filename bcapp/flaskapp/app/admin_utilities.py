@@ -1,7 +1,7 @@
 import datetime
 import logging
 from app import app
-from app.models import User, Token, Domain, Mirror, Report, LogReport
+from app.models import User, Token, Domain, Mirror, Report, LogReport, DGDomain
 from . import db
 
 logger = logging.getLogger('logger')
@@ -10,7 +10,7 @@ def list_log_reports(domain):
     """
     Generate list of log reports
     """
-    domains = domain_list()
+    domains = get_domain_list(False)
     log_reports_list = LogReport.query.all()
     log_reports = []
     for rpt in log_reports_list:
@@ -29,26 +29,73 @@ def list_log_reports(domain):
         logger.debug(log_reports)
     return log_reports
 
-def domain_list():
+def get_domain_list(dg_id):
     """
     Generate list of domains
     """
     domains = {}
-    domains_list = Domain.query.all()
+    if not dg_id:
+        domains_list = Domain.query.all()
+    else:
+        domains_list = []
+        initial_domain_list = Domain.query.all()
+        domain_groups = DGDomain.query.filter_by(domain_group_id=dg_id).all()
+        for dom in initial_domain_list:
+            for dg in domain_groups:
+                if dg.domain_id == dom.id:
+                    domains_list.append(dom)
+
     for dom in domains_list:
         domains[dom.id] = dom.domain
     return domains
 
-def mirror_list():
+def mirror_list(dg_id):
     """
     Generate list of mirrors
     """
     mirrors = {}
-    mirrors_list = Mirror.query.all()
+    if not dg_id:
+        mirrors_list = Mirror.query.all()
+    else:
+        mirrors_list = []
+        initial_mirrors_list = Mirror.query.all()
+        domain_groups = DGDomain.query.filter_by(domain_group_id=dg_id).all()
+        for mir in initial_mirrors_list:
+            for dg in domain_groups:
+                if dg.domain_id == mir.domain_id:
+                    mirrors_list.append(mir)
+
     for mir in mirrors_list:
         mirrors[mir.id] = mir.mirror_url
 
     return mirrors
+
+def get_domain_subset(dg_id):
+    """
+    Get subset of domains based on user's domain group
+    """
+    initial_domain_list = Domain.query.all()
+    domain_groups = DGDomain.query.filter_by(domain_group_id=dg_id).all()
+    domain_subset = []
+    for dom in initial_domain_list:
+        for dg in domain_groups:
+            if dg.domain_id == dom.id:
+                domain_subset.append(dom)
+
+    return domain_subset
+
+def auth_user(user_dg_id, domain):
+    """
+    Does this user have access to this domain?
+    """
+    domain_groups = DGDomain.query.filter_by(domain_group_id=user_dg_id).all()
+    domain = Domain.query.filter_by(domain=domain).first_or_404()
+    auth = False
+    for ddg in domain_groups:
+        if ddg.domain_id == domain.id:
+            auth = True
+
+    return auth
 
 def get_recent_domain_reports(domain_choice):
     """
@@ -78,9 +125,11 @@ def get_recent_domain_reports(domain_choice):
     return recent_reports
         
 
-def bad_domains():
+def bad_domains(admin, dg_id):
     now = datetime.datetime.now()
-    domains = domain_list()
+    if admin:
+        dg_id = False
+    domains = get_domain_list(dg_id)
     bad_domains = []
     bad_domains_list = Report.query.filter(Report.domain_status != 200).distinct(Report.domain_id)
     for bd in bad_domains_list:
@@ -96,10 +145,12 @@ def bad_domains():
 
     return bad_domains
     
-def bad_mirrors():
+def bad_mirrors(admin, dg_id):
     now = datetime.datetime.now()
-    domains = domain_list()
-    mirrors = mirror_list()
+    if admin:
+        dg_id = False
+    domains = get_domain_list(dg_id)
+    mirrors = mirror_list(dg_id)
     bad_mirrors = {
         'onions': [],
         'cloudfront': [],
@@ -132,12 +183,14 @@ def bad_mirrors():
     print(bad_mirrors)
     return bad_mirrors
 
-def monthly_bad():
+def monthly_bad(admin, dg_id):
     today = datetime.datetime.today()
     last_month = today - datetime.timedelta(days=30)
-    domains = domain_list()
+    if admin:
+        dg_id = False
+    domains = get_domain_list(dg_id)
     domain_bad_count = {}
-    mirrors = mirror_list()
+    mirrors = mirror_list(dg_id)
     mirror_bad_count = {}
     reports_list = Report.query.filter(Report.date_reported > last_month).all()
     for report in reports_list:
