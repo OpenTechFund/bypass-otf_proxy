@@ -483,7 +483,7 @@ def monthly_bad():
     
 ### Domain Group User Admin
 
-@app.route('/domain_group/admin/')
+@app.route('/domain_group/admin')
 @login_required
 def domain_group_admin():
     """
