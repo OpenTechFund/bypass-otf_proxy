@@ -479,8 +479,7 @@ def bad_mirrors():
 def monthly_bad():
     monthly_bad = admin_utilities.monthly_bad(current_user.admin, current_user.domain_group_id)
     return render_template('monthly_bad.html', name=current_user.name, monthly_bad=monthly_bad)
-    
-    
+
 ### Domain Group User Admin
 
 @app.route('/domain_group/admin')

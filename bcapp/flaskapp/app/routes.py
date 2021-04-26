@@ -1,5 +1,5 @@
 import datetime
-from flask import render_template, redirect, url_for, request, flash
+from flask import render_template, redirect, url_for, request, flash, abort, jsonify
 from flask_login import login_required, current_user, login_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import app
@@ -120,3 +120,10 @@ def login_post():
 def logout():
     logout_user()
     return redirect(url_for('home'))
+
+# Error handling
+
+@app.errorhandler(404)
+def resource_not_found(e):
+    return jsonify(error=str(e)), 404
+
