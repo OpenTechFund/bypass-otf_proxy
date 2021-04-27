@@ -46,7 +46,7 @@ def admin_domains():
             for dgd in dg_domains:
                 if dgd.domain_id == domain.id:
                     domain.coded_dg = dg_dict[dgd.domain_group_id]
-                    
+          
         return render_template('admin_domains.html', domains=domains, domain_groups=domain_groups)
 
 @app.route('/admin/domains/domain_group_choice', methods=['GET'])
@@ -488,9 +488,11 @@ def domain_group_admin():
     """
     Admin page for domain groups
     """
-    no_domain_group = DomainGroup.query.filter_by(name='None').first_or_404()
-    print(f"No: {no_domain_group} {type(current_user.domain_group_id)} {type(no_domain_group.id)}" )
-    if current_user.domain_group_id == str(no_domain_group.id): # bump them
+    no_domain_group = DomainGroup.query.filter_by(name='None').first()
+    if not no_domain_group: # hasn't been set up
+        flash("This feature has not been set up yet!")
+        return redirect(url_for('home'))
+    if (not current_user.domain_group_id) or (current_user.domain_group_id == str(no_domain_group.id)): # bump them
         flash("No Domains!")
         return redirect(url_for('profile'))
     else:
