@@ -2,10 +2,13 @@ import boto3
 import json
 import datetime
 import time
+import os
 import logging
 from datetime import tzinfo
 from dateutil.tz import tzutc
 from system_utilities import get_configs
+from dotenv import load_dotenv
+import sqlalchemy as db
 
 logger = logging.getLogger('logger')
 
@@ -114,6 +117,10 @@ def cloudfront_replace(domain, replace):
         if distribution['DomainName'] == replace: #it's the one to be replaced
             delete_id = distribution['Id']
 
+    if not delete_id: 
+        print("Can't find right distribution - check domain name!")
+        return
+
     # Get config
     distro_config = client.get_distribution_config(Id=delete_id)
     logger.debug(f"Configuration: {distro_config}")
@@ -137,3 +144,74 @@ def cloudfront_replace(domain, replace):
     new_mirror = cloudfront_add(domain=domain)
     
     return new_mirror
+
+def cloudfront_add_logging(domain):
+    """
+    Add logging for a cloudfront distribution
+    """
+    load_dotenv()
+    engine = db.create_engine(os.environ['DATABASE_URL'])
+    connection = engine.connect()
+    metadata = db.MetaData()
+
+    domains = db.Table('domains', metadata, autoload=True, autoload_with=engine)
+
+    query = db.select([domains]).where(domains.c.domain == domain)
+    result = connection.execute(query)
+    row = result.fetchone()
+
+    logger.debug(f"Domain: {row} S3 storage {type(row.s3_storage_bucket)}")
+    
+    if not row.s3_storage_bucket:
+        print("No S3 Storage set up!")
+        return
+
+    # Find distribution based on domain
+    configs = get_configs()
+    session = boto3.Session(profile_name=configs['profile'])
+    client = session.client('cloudfront', region_name=configs['region'])
+
+    distributions = []
+    truncated = True
+    marker = ''
+    while truncated:
+        distribution_list = client.list_distributions(Marker=marker)
+        distributions.extend(distribution_list['DistributionList']['Items'])
+        if not distribution_list['DistributionList']['IsTruncated']:
+            truncated = False
+        else:
+            marker = distribution_list['DistributionList']['NextMarker']
+
+    for distribution in distributions:
+        logger.debug(F"Domain: {distribution['DomainName']}")
+        if domain in distribution['DomainName']: # it's what we want to edit
+            edit_id = distribution['Id']
+            
+        if not edit_id: 
+            print("Can't find right distribution - check domain name!")
+            return
+
+    # Get config
+    distro_config = client.get_distribution_config(Id=edit_id)
+    logger.debug(f"Configuration: {distro_config}")
+    etag = distro_config['ETag']
+    new_config = dict(distro_config['DistributionConfig'])
+    new_config['Logging'] =  {
+            'Enabled': True,
+            'IncludeCookies': False,
+            'Bucket': row.s3_storage_bucket
+        }
+    
+    # Update config to add logging
+    response = client.update_distribution(DistributionConfig=disable_config, Id=edit_id, IfMatch=etag)
+    d_etag = response['ETag']
+
+    # Wait for it...
+    logger.debug("Waiting for distribution to be reconfigured...")
+    waiter = client.get_waiter('distribution_deployed')
+    waiter.wait(Id=edit_id)
+
+    logger.debug("Distribution updated!")
+
+    return
+

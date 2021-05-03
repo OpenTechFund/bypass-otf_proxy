@@ -140,15 +140,21 @@ def add(**kwargs):
                     }
                     site['available_alternatives'].append(new_alternative)
                 else:
+                    replacing = False
                     for alternative in site['available_alternatives']:
                         if kwargs['replace'] == alternative['url']:
-                            print("Found it!")
+                            logger.debug("Found it!")
+                            replacing = True
                             alternative['url'] = kwargs['mirror']
                             alternative['updated_at'] = now
+                    if not replacing:
+                        logger.debug("No replacement found. No changes happened.")
                     print(f"Revised Site: {site}")
                 
                 site_add = site
-
+    if replace and (not replacing):
+        return site_add
+    
     final_mirrors = json.dumps(new_mirrors, indent=4)
     if not kwargs['pre']:
         commit_msg = f"Updated with new site {kwargs['domain']} - generated from automation script"

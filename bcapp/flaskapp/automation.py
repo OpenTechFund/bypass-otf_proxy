@@ -6,7 +6,7 @@ version 0.4
 import sys
 import configparser
 import logging
-from aws_utils import cloudfront_add, cloudfront_replace
+from aws_utils import cloudfront_add, cloudfront_replace, cloudfront_add_logging
 from repo_utilities import add, check, domain_list, remove_domain, remove_mirror, convert_domain, convert_all
 from report_utilities import domain_reporting, send_report, generate_admin_report
 from log_reporting_utilities import domain_log_reports, domain_log_list
@@ -25,6 +25,7 @@ import click
 @click.option('--existing', type=str, help="Mirror exists already, just add to github.")
 @click.option('--replace', type=str, help="Mirror/onion to replace.")
 @click.option('--delete', is_flag=True, default=False, help="Delete a domain from list")
+@click.option('--log', type=click.Choice(['enable', 'disable']), help="Enable or Disable Logging")
 @click.option('--remove', type=str, help="Mirror or onion to remove")
 @click.option('--domain_list', is_flag=True, default=False, help="List all domains and mirrors/onions")
 @click.option('--mirror_list', is_flag=True, help="List mirrors for domain")
@@ -34,7 +35,7 @@ import click
 @click.option('--generate_report', is_flag=True, default=False, help="Generate report and possibly send email to admins, etc.")
 @click.option('--mode', type=click.Choice(['daemon', 'web', 'console']), default='console', help="Mode: daemon, web, console")
 
-def automation(testing, domain, proxy, existing, delete, domain_list, mirror_list,
+def automation(testing, domain, proxy, existing, delete, domain_list, mirror_list, log,
     mirror_type, replace, nogithub, remove, report, mode, num, generate_report):
     if domain:
         if delete:
@@ -45,6 +46,8 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
         elif remove:
             convert_domain(domain, 'n')
             remove_mirror(domain=domain, remove=remove, nogithub=nogithub)
+        elif log:
+            add_logging(domain=domain, mirror_type=mirror_type)
         elif mirror_type or existing:
             convert_domain(domain, 'n')
             new_add(domain=domain, mirror_type=mirror_type, nogithub=nogithub, existing=existing)
@@ -54,20 +57,9 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
             domain_data = mirror_detail(domain=domain, proxy=proxy, mode=mode)
             if not domain_data:
                 return
-            reports_list = domain_log_list(domain, num)
-            report = domain_log_reports(domain, 'latest')
             reporting = send_report(domain_data, mode)
             if mode =='console':
-                print(f"Latest {num} log files:")
-                if reports_list:
-                    for rpt in reports_list:
-                        date = rpt['date'].strftime('%m/%d/%Y:%H:%M:%S.%f')
-                        print(f"{date} : {rpt['file_name']}")
                 print(f"Reported? {reporting}")
-                if not report:
-                    print("No log reports stored!")
-                else:
-                    print(f"Latest Log Report: \n {report}")
 
     elif testing:
         if mode == 'console':
@@ -93,6 +85,20 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
     else:
         click.echo("Invalid parameters! try --help")
     return
+
+def add_logging(domain, mirror_type):
+    """
+    Add logging to proxy
+    """
+    
+    if not mirror_type:
+        print("You must include mirror type!")
+        return
+    if mirror_type == 'cloudfront':
+        cloudfront_add_logging(domain)
+    else:
+        print("That mirror type is not supported!")
+        return
 
 def domain_testing(testing, proxy, mode):
     """
