@@ -263,7 +263,8 @@ In order to get Cloudfront logs to S3, you need to [configure Cloudfront](https:
 
 ## Streaming Fastly logs to S3
 
-If you follow [these instructions](https://docs.fastly.com/en/guides/setting-up-remote-log-streaming) it should be fairly straightforward. However, the fastly logs are stored under individual services, and if you have multiple domains in one service, those logs will be aggregated in one S3 bucket.
+If you follow [these instructions](https://docs.fastly.com/en/guides/setting-up-remote-log-streaming) it should be fairly straightforward. However, the fastly logs are stored under individual services, and if you have multiple domains in one service, those logs will be aggregated in one S3 bucket. You must use the following log format: `%v %h %t %m "%r" %>s` 
+(domain, remote IP address, time of request, method, "line of request", and final status. See [this page](https://docs.fastly.com/en/guides/custom-log-formats) for more details on log format.)
 
 ## Generating AzureEdge Logs
 

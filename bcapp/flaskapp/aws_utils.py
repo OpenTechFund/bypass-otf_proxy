@@ -9,6 +9,7 @@ from dateutil.tz import tzutc
 from system_utilities import get_configs
 from dotenv import load_dotenv
 import sqlalchemy as db
+from simple_AWS.s3_functions import *
 
 logger = logging.getLogger('logger')
 
@@ -145,6 +146,35 @@ def cloudfront_replace(domain, replace):
     
     return new_mirror
 
+def add_s3_storage(domain, s3):
+    """
+    Add Storage Bucket
+    """
+    configs = get_configs()
+    
+    load_dotenv()
+    engine = db.create_engine(os.environ['DATABASE_URL'])
+    connection = engine.connect()
+    metadata = db.MetaData()
+
+    domains = db.Table('domains', metadata, autoload=True, autoload_with=engine)
+
+    query = db.select([domains]).where(domains.c.domain == domain)
+    result = connection.execute(query)
+    row = result.fetchone()
+
+    logger.debug(f"Domain: {row} S3 storage {type(row.s3_storage_bucket)}")
+    if row.s3_storage_bucket:
+        return 'bucket_exists'
+    else:
+        s3simple = S3Simple(region_name=configs['region'], profile=configs['profile'], bucket_name=s3)
+        new_bucket = s3simple.s3_new_bucket()
+
+    row.s3_storage_bucket = s3
+    session.commit()
+    
+    return 'bucket_created'
+
 def cloudfront_add_logging(domain):
     """
     Add logging for a cloudfront distribution
@@ -160,11 +190,11 @@ def cloudfront_add_logging(domain):
     result = connection.execute(query)
     row = result.fetchone()
 
-    logger.debug(f"Domain: {row} S3 storage {type(row.s3_storage_bucket)}")
+    logger.debug(f"Domain: {row} S3 storage {row.s3_storage_bucket}")
     
     if not row.s3_storage_bucket:
-        print("No S3 Storage set up!")
-        return
+        logger.debug("No S3 Storage set up!")
+        return False
 
     # Find distribution based on domain
     configs = get_configs()
@@ -182,14 +212,14 @@ def cloudfront_add_logging(domain):
         else:
             marker = distribution_list['DistributionList']['NextMarker']
 
+    edit_id = False
     for distribution in distributions:
-        logger.debug(F"Domain: {distribution['DomainName']}")
-        if domain in distribution['DomainName']: # it's what we want to edit
+        if domain in distribution['Origins']['Items'][0]['DomainName']: # it's what we want to edit
             edit_id = distribution['Id']
             
-        if not edit_id: 
-            print("Can't find right distribution - check domain name!")
-            return
+    if not edit_id: 
+        logger.debug("Can't find right distribution - check domain name!")
+        return False
 
     # Get config
     distro_config = client.get_distribution_config(Id=edit_id)
@@ -199,12 +229,14 @@ def cloudfront_add_logging(domain):
     new_config['Logging'] =  {
             'Enabled': True,
             'IncludeCookies': False,
-            'Bucket': row.s3_storage_bucket
+            'Bucket': row.s3_storage_bucket,
+            'Prefix': ''
         }
     
     # Update config to add logging
-    response = client.update_distribution(DistributionConfig=disable_config, Id=edit_id, IfMatch=etag)
+    response = client.update_distribution(DistributionConfig=new_config, Id=edit_id, IfMatch=etag)
     d_etag = response['ETag']
+    logger.debug(f"Response: {response}")
 
     # Wait for it...
     logger.debug("Waiting for distribution to be reconfigured...")
@@ -213,5 +245,5 @@ def cloudfront_add_logging(domain):
 
     logger.debug("Distribution updated!")
 
-    return
+    return True
 

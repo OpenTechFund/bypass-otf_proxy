@@ -6,7 +6,7 @@ version 0.4
 import sys
 import configparser
 import logging
-from aws_utils import cloudfront_add, cloudfront_replace, cloudfront_add_logging
+from aws_utils import cloudfront_add, cloudfront_replace, cloudfront_add_logging, add_s3_storage
 from repo_utilities import add, check, domain_list, remove_domain, remove_mirror, convert_domain, convert_all
 from report_utilities import domain_reporting, send_report, generate_admin_report
 from log_reporting_utilities import domain_log_reports, domain_log_list
@@ -26,6 +26,7 @@ import click
 @click.option('--replace', type=str, help="Mirror/onion to replace.")
 @click.option('--delete', is_flag=True, default=False, help="Delete a domain from list")
 @click.option('--log', type=click.Choice(['enable', 'disable']), help="Enable or Disable Logging")
+@click.option('--s3', type=str, help="Add this s3 log storage bucket")
 @click.option('--remove', type=str, help="Mirror or onion to remove")
 @click.option('--domain_list', is_flag=True, default=False, help="List all domains and mirrors/onions")
 @click.option('--mirror_list', is_flag=True, help="List mirrors for domain")
@@ -36,7 +37,7 @@ import click
 @click.option('--mode', type=click.Choice(['daemon', 'web', 'console']), default='console', help="Mode: daemon, web, console")
 
 def automation(testing, domain, proxy, existing, delete, domain_list, mirror_list, log,
-    mirror_type, replace, nogithub, remove, report, mode, num, generate_report):
+    mirror_type, replace, nogithub, remove, report, mode, num, generate_report, s3):
     if domain:
         if delete:
             delete_domain(domain, nogithub)
@@ -47,7 +48,11 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
             convert_domain(domain, 'n')
             remove_mirror(domain=domain, remove=remove, nogithub=nogithub)
         elif log:
-            add_logging(domain=domain, mirror_type=mirror_type)
+            add_logging(domain=domain, mirror_type=mirror_type, mode=mode)
+        elif s3:
+            s3_storage_add = add_s3_storage(domain=domain, s3=s3)
+            if mode == 'console':
+                print (f"Result: {s3_storage_add}")
         elif mirror_type or existing:
             convert_domain(domain, 'n')
             new_add(domain=domain, mirror_type=mirror_type, nogithub=nogithub, existing=existing)
@@ -86,19 +91,24 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
         click.echo("Invalid parameters! try --help")
     return
 
-def add_logging(domain, mirror_type):
+def add_logging(domain, mirror_type, mode):
     """
     Add logging to proxy
     """
-    
     if not mirror_type:
-        print("You must include mirror type!")
-        return
+        if mode == 'console':
+            print("You must include mirror type!")
+        return False
     if mirror_type == 'cloudfront':
-        cloudfront_add_logging(domain)
+        log_add = cloudfront_add_logging(domain)
+        if not log_add and mode == 'console':
+            print("Log couldn't be added!")
     else:
-        print("That mirror type is not supported!")
-        return
+        if mode == 'console':
+            print("That mirror type is not supported!")
+        return False
+
+    return log_add
 
 def domain_testing(testing, proxy, mode):
     """

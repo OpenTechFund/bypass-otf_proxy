@@ -54,7 +54,7 @@ def analyze_file(raw_data, domain):
     logger.debug(F"Log type: {log_type}")
     final_log_data = []
     for line in raw_data_list:
-        #logger.debug(f"Line: {line}")
+        logger.debug(f"Line: {line}")
         if not line:
             continue
         if line[0] == '#':
@@ -92,14 +92,20 @@ def analyze_file(raw_data, domain):
                 continue
         elif log_type == 'fastly':
             line_items = line.split(' ')
+            # We will parse assuming format: %v %h %t %m "%r" %>s
             try:
-                log_data['status'] = line_items[11]
-                log_data['datetime'] = line_items[6]
+                log_data['status'] = line_items[8]
+                log_data['datetime'] = line_items[5]
                 log_data['user_agent'] = 'No User Agent Recorded'
-                log_data['page_visited'] = line_items[9]
-                log_data['ip'] = line_items[3]
+                log_data['page_visited'] = line_items[7]
+                log_data['ip'] = line_items[4]
+                log_domain = line_items[3]
             except:
                 continue
+            if ((len(log_data['status']) != 3) or ('.' not in log_data['ip']) or (log_data['datetime'][0] != '[')):
+                # log format is off
+                continue
+            
         elif log_type == 'azure':
             try:
                 line_json = json.loads(line)
@@ -133,7 +139,7 @@ def analyze_file(raw_data, domain):
             if should_skip:
                 continue
         
-        #logger.debug(f"Log Data: {log_data}")
+        logger.debug(f"Log Data: {log_data}")
         final_log_data.append(log_data)
         
     return final_log_data, log_type
@@ -142,6 +148,7 @@ def analyze_data(compiled_log_data, log_type):
     """
     Analyze compiled data from different logs
     """
+    logger.debug(f"Compiled data: {compiled_log_data}")
 
     analyzed_log_data = {
             'visitor_ips': {},
@@ -154,14 +161,31 @@ def analyze_data(compiled_log_data, log_type):
     datetimes = []
     for log_data in compiled_log_data:
         if log_type == 'nginx':
-            datetimes.append(datetime.datetime.strptime(log_data['datetime'], '%d/%b/%Y:%H:%M:%S'))
+            try:
+                log_date = datetime.datetime.strptime(log_data['datetime'], '%d/%b/%Y:%H:%M:%S')
+            except:
+                log_date = False
         elif log_type == 'fastly':
-            datetimes.append(datetime.datetime.strptime(log_data['datetime'], '[%d/%b/%Y:%H:%M:%S'))
+            try:
+                log_date = datetime.datetime.strptime(log_data['datetime'], '[%d/%b/%Y:%H:%M:%S')
+            except:
+                log_date = False
         elif log_type == 'cloudfront':
-            datetimes.append(datetime.datetime.strptime(log_data['datetime'], '%Y-%m-%d\t%H:%M:%S'))
+            try:
+                log_date = datetime.datetime.strptime(log_data['datetime'], '%Y-%m-%d\t%H:%M:%S')
+            except:
+                log_date = False
         elif log_type == 'azure':
-            datetimes.append(datetime.datetime.strptime(log_data['datetime'][:-2], '%Y-%m-%dT%H:%M:%S.%f'))
+            try:
+                log_date = datetime.datetime.strptime(log_data['datetime'][:-2], '%Y-%m-%dT%H:%M:%S.%f')
+            except:
+                log_date = False
 
+        if log_date:
+            datetimes.append(log_date)
+        else:
+            continue
+        
         if 'ip' in log_data:
             if log_data['ip'] in analyzed_log_data['visitor_ips']:
                 analyzed_log_data['visitor_ips'][log_data['ip']] += 1
@@ -189,8 +213,9 @@ def analyze_data(compiled_log_data, log_type):
                 analyzed_log_data['home_page_hits'] = 1
 
     datetimes.sort()
-    analyzed_log_data['earliest_date'] = datetimes[0].strftime('%d/%b/%Y:%H:%M:%S')
-    analyzed_log_data['latest_date'] = datetimes[-1].strftime('%d/%b/%Y:%H:%M:%S')
+    if datetimes:
+        analyzed_log_data['earliest_date'] = datetimes[0].strftime('%d/%b/%Y:%H:%M:%S')
+        analyzed_log_data['latest_date'] = datetimes[-1].strftime('%d/%b/%Y:%H:%M:%S')
 
     return(analyzed_log_data)
 
@@ -199,10 +224,22 @@ def output(**kwargs):
     Creates output
     """
     analyzed_log_data = kwargs['data']
-    home_page_hits = analyzed_log_data['home_page_hits']
-    hits = analyzed_log_data['hits']
-    first_date = analyzed_log_data['earliest_date']
-    last_date = analyzed_log_data['latest_date']
+    if 'home_page_hits' in analyzed_log_data:
+        home_page_hits = analyzed_log_data['home_page_hits']
+    else:
+        home_page_hits = 1
+    if 'hits' in analyzed_log_data:
+        hits = analyzed_log_data['hits']
+    else:
+       return False
+    
+    if ('earliest_date' in analyzed_log_data) and ('latest_date' in analyzed_log_data):
+        first_date = analyzed_log_data['earliest_date']
+        last_date = analyzed_log_data['latest_date']
+    else:
+        first_date = False
+        last_date = False
+
     output = f"Analysis of: {kwargs['domain']}, from {first_date} to {last_date}:\n"
     output += f"Hits: {hits}\n"
 
