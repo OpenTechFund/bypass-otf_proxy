@@ -137,6 +137,8 @@ def bad_domains(admin, dg_id):
         numdays = (now - bd.date_reported).days
         if numdays > 7:
             continue
+        if bm.domain_id not in domains:
+            continue
         bad_dom = {
             'domain': domains[bd.domain_id],
             'status': bd.domain_status,
