@@ -38,22 +38,7 @@ The file bcapp/flaskapp/json_request.json is the format for the json request to 
 
 The URL for reporting is: http(s)://host/api/v2/report (development purposes). The file bcapp/flaskapp/json_report.json is the format for reporting to the API about domain/url status.
 
-## Reports available
+## Web Front End
 
-### Query for alternatives
-
-On the home page is a menu which allows you to display links to the alternatives for a domain in that menu list, as well as tests on the fly whether or not the domain and alternatives are live.
-
-### Administrative Reports
-
-The Flask application at http://host:5000/ presents a screen with a login menu item. If you haven't set up a user yet, you can go access this url: http://host:5000/signup, and add a user. Go into the database, and set 'active' and 'admin' for that user you just created to 'True' (they are boolean fields.) When you log in, and you choose 'Admin' from the upper right menu, you'll see these reports:
-
-- Recent Domain Reports - list of the last several reports on domains from the API and command-line reporting tool - choose a domain you want to report on
-- See Log Reports - this is the reports for logs of the available domains for which logging has been set up
-- Last Week's Bad Domains - list of the bad domains from the API and command-line reporting tool
-- Last Week's Bad Mirrors - list of the bad mirrors from the API and command-line reporting tool
-- Monthly aggregate report - aggregates the number of reports per domain/mirror for the month
-
-
-
+Please [see these docs](docs/users.md) for information on the web front end.
 
