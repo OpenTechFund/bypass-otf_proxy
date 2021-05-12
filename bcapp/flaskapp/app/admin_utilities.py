@@ -212,6 +212,8 @@ def monthly_bad(admin, dg_id):
 
     final_report = []
     for db in domain_bad_count:
+        if db not in domains:
+            continue
         fp = {
             'url': domains[db],
             'count': domain_bad_count[db]
