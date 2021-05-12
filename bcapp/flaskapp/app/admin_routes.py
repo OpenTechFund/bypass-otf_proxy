@@ -353,7 +353,7 @@ def alternatives():
         alternatives = False
     else:
         alternatives = alternatives_list['available_alternatives']
-    return render_template('alternatives.html', domain_choice=domain_choice, alternatives=alternatives, url=url, result=result)
+    return render_template('alternatives.html', domain_choice=domain_choice, alternatives=alternatives, url=url, result=result, admin=current_user.admin)
 
 ## Reporting
 
