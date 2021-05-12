@@ -2,6 +2,7 @@ import datetime
 import logging
 from app import app
 from app.models import User, Token, Domain, Mirror, Report, LogReport, DGDomain
+from sqlalchemy import desc
 from . import db
 
 logger = logging.getLogger('logger')
@@ -11,7 +12,7 @@ def list_log_reports(domain):
     Generate list of log reports
     """
     domains = get_domain_list(False)
-    log_reports_list = LogReport.query.all()
+    log_reports_list = LogReport.query.order_by(LogReport.first_date_of_log.desc()).all()
     log_reports = []
     for rpt in log_reports_list:
         if domains[rpt.domain_id] == domain:
@@ -162,7 +163,9 @@ def bad_mirrors(admin, dg_id):
     for bm in bad_mirrors_list:
         numdays = (now - bm.date_reported).days
         if int(numdays) > 7:
-            continue 
+            continue
+        if bm.domain_id not in domains:
+            continue
         bad_mir = {
             'domain': domains[bm.domain_id],
             'mirror': mirrors[bm.mirror_id],
