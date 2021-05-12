@@ -220,6 +220,8 @@ def monthly_bad(admin, dg_id):
         }
         final_report.append(fp)
     for mir in mirror_bad_count:
+        if mir not in mirrors:
+            continue
         mp = {
             'url': mirrors[mir],
             'count': mirror_bad_count[mir]
