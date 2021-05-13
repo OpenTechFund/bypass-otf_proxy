@@ -94,7 +94,7 @@ def analyze_file(raw_data, domain):
             line_items = line.split(' ')
             # We will parse assuming format: %v %h %t %m "%r" %>s
             try:
-                log_data['status'] = line_items[8]
+                log_data['status'] = line_items[11]
                 log_data['datetime'] = line_items[5]
                 log_data['user_agent'] = 'No User Agent Recorded'
                 log_data['page_visited'] = line_items[7]
