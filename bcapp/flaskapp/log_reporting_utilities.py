@@ -97,7 +97,7 @@ def analyze_file(raw_data, domain):
                 log_data['status'] = line_items[11]
                 log_data['datetime'] = line_items[5]
                 log_data['user_agent'] = 'No User Agent Recorded'
-                log_data['page_visited'] = line_items[7]
+                log_data['page_visited'] = line_items[9]
                 log_data['ip'] = line_items[4]
                 log_domain = line_items[3]
             except:
