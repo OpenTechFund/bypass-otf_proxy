@@ -59,10 +59,24 @@ def domain_group_choice():
         flash('Have to be an admin!')
         return redirect(url_for('profile'))
     else:
-        if request.args.get('domain_group_choice'): 
+        domain_group = request.args.get('domain_group_choice')
+        domain_id = request.args.get('domain_id')
+        if not domain_group or not domain_id:
+            return redirect(url_for('admin_domains'))
+        # Get current mappings
+        dgds = DGDomain.query.all()
+        newdg = False
+        for dgd in dgds:
+            if str(dgd.domain_id) == str(domain_id):
+                # There's already a mapping, update
+                newdg = True
+                dbDg = DGDomain.query.filter_by(id=dgd.id).first()
+                dbDg.domain_group_id = domain_group
+                db.session.commit()
+        if not newdg: #new, must add
             dg_domain = DGDomain(
-                domain_id=request.args.get('domain_id'),
-                domain_group_id=request.args.get('domain_group_choice')
+                domain_id=domain_id,
+                domain_group_id=domain_group
             )
             db.session.add(dg_domain)
             db.session.commit()
