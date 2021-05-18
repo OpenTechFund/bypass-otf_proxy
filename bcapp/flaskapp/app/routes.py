@@ -13,7 +13,7 @@ def home():
     """
     Home page of APP
     """
-    domain_list = Domain.query.all()
+    domain_list = Domain.query.filter((Domain.inactive==None) | (Domain.inactive!=True)).all()
     domains = []
     for dom in domain_list:
         domains.append(dom.domain)

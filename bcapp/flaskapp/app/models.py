@@ -13,6 +13,7 @@ class Domain(db.Model):
     ext_ignore = db.Column(db.String)
     s3_storage_bucket = db.Column(db.String)
     azure_profile_name = db.Column(db.String)
+    inactive = db.Column(db.Boolean)
     
     def __repr__(self):
         return '<id {}>'.format(self.id)
@@ -37,6 +38,7 @@ class Onion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     domain_id = db.Column(db.Integer)
     onion = db.Column(db.String, unique=True)
+    inactive = db.Column(db.Boolean)
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
@@ -60,6 +62,7 @@ class Mirror(db.Model):
     domain_id = db.Column(db.Integer)
     mirror_type = db.Column(db.String)
     protocol = db.Column(db.String)
+    inactive = db.Column(db.Boolean)
 
     def __repr__(self):
         return '<id {}>'.format(self.id)

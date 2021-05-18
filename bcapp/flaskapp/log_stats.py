@@ -15,7 +15,8 @@ from dotenv import load_dotenv
 import sqlalchemy as db
 from system_utilities import get_configs
 from simple_AWS.s3_functions import *
-from log_reporting_utilities import analyze_file, analyze_data, output, report_save, filter_and_get_date
+from log_reporting_utilities import analyze_file, analyze_data, output, filter_and_get_date
+from db_utilities import report_save
 from azure_utilities import retrieve_logs
 
 logger = logging.getLogger('logger')

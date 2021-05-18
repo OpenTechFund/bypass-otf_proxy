@@ -40,7 +40,12 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
     mirror_type, replace, nogithub, remove, report, mode, num, generate_report, s3):
     if domain:
         if delete:
-            delete_domain(domain, nogithub)
+            delete = delete_domain(domain, nogithub)
+            if mode == 'console':
+                if not delete:
+                    print(f"Domain {domain} not deleted from github.")
+                else:
+                    print(f"Domain {domain} deleted from github, and {delete}")
         elif replace:
             convert_domain(domain, 'n')
             replace_mirror(domain=domain, existing=existing, replace=replace, nogithub=nogithub, mirror_type=mirror_type)
@@ -131,26 +136,29 @@ def delete_domain(domain, nogithub):
     """
     print(f"Deleting {domain}...")
     domain_data = check(domain)
-    exists = domain_data['exists'] 
-    current_mirrors = domain_data['available_mirrors']
-    current_onions = domain_data['available_onions'] 
-    current_ipfs_nodes = domain_data['available_ipfs_nodes']
-    print(f"Preexisting: {exists}, current Mirrors: {current_mirrors}, current onions: {current_onions}, current IPFS nodes: {current_ipfs_nodes}")
+    exists = domain_data['exists']
+    if 'available_alternatives' in domain_data:
+        print(f"Preexisting: {exists}, current Alternatives: {domain_data['available_alternatives']}")
+    else:
+        if 'available_mirrors' in domain_data:
+            current_mirrors = domain_data['available_mirrors']
+        else:
+            current_mirrors = []
+        if 'available_onions' in domain_data:
+            current_onions = domain_data['available_onions']
+        else:
+            current_onions = []
+        print(f"Preexisting: {exists}, current Mirrors: {current_mirrors}, current onions: {current_onions}")
     if not exists:
         print("Domain doesn't exist!")
-        return
+        return False
     elif nogithub:
         print("You said you wanted to delete a domain, but you also said no to github. Bye!")
-        return
+        return False
     else:
         removed = remove_domain(domain)
 
-    if removed:
-        print(f"{domain} removed from repo.")
-    else:
-        print(f"Something went wrong. {domain} not removed from repo.")
-
-    return
+    return removed
 
 def replace_mirror(**kwargs):
     """

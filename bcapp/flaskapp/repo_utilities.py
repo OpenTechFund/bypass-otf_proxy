@@ -6,6 +6,7 @@ import logging
 from github import Github
 import tldextract
 from system_utilities import get_configs
+from db_utilities import set_domain_inactive
 
 logger = logging.getLogger('logger')
 
@@ -37,12 +38,16 @@ def remove_domain(domain):
             if remove.lower() != 'y':
                 return False
             mirrors['sites'].remove(mirror)
-            print(f"New Mirrors: {mirrors['sites']}")
             commit_msg = f"Updated to remove domain {domain} - generated from automation script"
             final_mirrors = json.dumps(mirrors, indent=4)
             saved = save_mirrors(final_mirrors, commit_msg)
             if saved:
-                return True
+                # Add inactive in database
+                inactive = set_domain_inactive(domain)
+                if inactive:
+                    return "Set to inactive in database!"
+                else:
+                    return "No such domain in DB!"
             else:
                 return False
 
@@ -83,6 +88,7 @@ def save_mirrors(mirrors, commit_msg):
                 mirrors_object.sha
                 )
 
+    print(f"Repo Result: {result}")
     if 'commit' in result:
         return True
     else:
