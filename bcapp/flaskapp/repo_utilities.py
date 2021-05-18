@@ -268,7 +268,7 @@ def convert_process(domain_data):
     ip_match = re.compile('[0-9]{1,3}[\.]{1}[0-9]{1,3}[\.]{1}[0-9]{1,3}[\.]{1}[0-9]{1,3}')
     proto_match = re.compile(':\/\/')
     if ('available_alternatives' not in domain_data) or (not domain_data['available_alternatives']):
-        logger.debug("No alternatives. Adding...")
+        logger.debug("No alternatives.")
         available_alternatives = []
         if 'available_mirrors' in domain_data:
             for mirror in domain_data['available_mirrors']:

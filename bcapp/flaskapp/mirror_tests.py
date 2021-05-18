@@ -88,11 +88,12 @@ def mirror_detail(**kwargs):
     :kwarg domain
     :kwarg proxy
     :kwarg mode
+    :kwarg test
     :returns: json with data
     """
     output = {}
     domain = kwargs['domain']
-    logger.debug(f"Listing and Testing {domain}...")
+    logger.debug(f"Listing {domain}...")
     output['domain'] = domain
     domain_data = check(domain)
     exists = domain_data['exists']
@@ -107,58 +108,62 @@ def mirror_detail(**kwargs):
     if kwargs['mode'] == 'console':  
         print(f"Mirror list: {current_mirrors} Onions: {current_onions}, IPFS Nodes: {current_ipfs_nodes}, Alternatives: {current_alternatives}")
 
-    mresp, murl = test_domain(domain, kwargs['proxy'], kwargs['mode'], '')
-    if kwargs['mode'] == 'console':
-        print(f"Response code on domain: {mresp}, url: {murl}")
-    output[domain] = mresp
-
-    if not current_alternatives:
-        output['current_mirrors'] = current_mirrors
-        output['current_onions'] = current_onions
-        output['current_ipfs_nodes'] = current_ipfs_nodes
-        
-        if current_mirrors:
-            for mirror in current_mirrors:
-                mresp, murl = test_domain(mirror, kwargs['proxy'], kwargs['mode'], '')
-                if kwargs['mode'] == 'console':
-                    print(f"Response code on mirror: {mresp}, url: {murl}")
-                output[mirror] = mresp
-        if current_onions:
-            for onion in current_onions:
-                mresp, murl = test_onion(onion, kwargs['mode'])
-                if kwargs['mode'] == 'console':
-                    print(f"Onion {onion}... Response code: {mresp} ... URL: {murl}")
-                output[onion] = mresp
-
-        if current_ipfs_nodes:
-            ## Testing here
-            pass
+    if ('test' in kwargs) and (kwargs['test']):
+        logger.debug(f"Testing {domain}...")
+        mresp, murl = test_domain(domain, kwargs['proxy'], kwargs['mode'], '')
         if kwargs['mode'] == 'console':
-            convert = input("This entry is in version 1 mode. Convert to Version 2 alternatives (Y/n)?")
-            if convert.lower() != 'n':
-                convert_domain(domain)
-        return output
-    else: # format is alternatives
-        output['current_alternatives'] = current_alternatives
-        for alternative in current_alternatives:
-            if alternative['proto'] == 'http' or alternative['proto'] == 'https':
-                mresp, murl = test_domain(alternative['url'], kwargs['proxy'], kwargs['mode'], alternative['proto'])
-                if kwargs['mode'] == 'console':
-                    print(f"Response code on mirror: {mresp}, url: {murl}")
-                alternative['result'] = mresp
-            elif alternative['proto'] == 'tor':
-                mresp, murl = test_onion(alternative['url'], kwargs['mode'])
-                if kwargs['mode'] == 'console':
-                    print(f"Onion {alternative['url']}... Response code: {mresp} ... URL: {murl}")
-                alternative['result'] = mresp
-            elif alternative['proto'] == 'ipfs':
-                pass
-            else:
-                pass
-        if kwargs['mode'] == 'console':
-            delete = input("This entry is in version 2 mode. Delete deprecated keys (y/N)?")
-            if delete.lower() == 'y':
-                delete_deprecated(domain)
+            print(f"Response code on domain: {mresp}, url: {murl}")
+        output[domain] = mresp
 
-        return output
+        if not current_alternatives:
+            output['current_mirrors'] = current_mirrors
+            output['current_onions'] = current_onions
+            output['current_ipfs_nodes'] = current_ipfs_nodes
+            
+            if current_mirrors:
+                for mirror in current_mirrors:
+                    mresp, murl = test_domain(mirror, kwargs['proxy'], kwargs['mode'], '')
+                    if kwargs['mode'] == 'console':
+                        print(f"Response code on mirror: {mresp}, url: {murl}")
+                    output[mirror] = mresp
+            if current_onions:
+                for onion in current_onions:
+                    mresp, murl = test_onion(onion, kwargs['mode'])
+                    if kwargs['mode'] == 'console':
+                        print(f"Onion {onion}... Response code: {mresp} ... URL: {murl}")
+                    output[onion] = mresp
+
+            if current_ipfs_nodes:
+                ## Testing here
+                pass
+            if kwargs['mode'] == 'console':
+                convert = input("This entry is in version 1 mode. Convert to Version 2 alternatives (Y/n)?")
+                if convert.lower() != 'n':
+                    convert_domain(domain)
+            return output
+        else: # format is alternatives
+            output['current_alternatives'] = current_alternatives
+            for alternative in current_alternatives:
+                if alternative['proto'] == 'http' or alternative['proto'] == 'https':
+                    mresp, murl = test_domain(alternative['url'], kwargs['proxy'], kwargs['mode'], alternative['proto'])
+                    if kwargs['mode'] == 'console':
+                        print(f"Response code on mirror: {mresp}, url: {murl}")
+                    alternative['result'] = mresp
+                elif alternative['proto'] == 'tor':
+                    mresp, murl = test_onion(alternative['url'], kwargs['mode'])
+                    if kwargs['mode'] == 'console':
+                        print(f"Onion {alternative['url']}... Response code: {mresp} ... URL: {murl}")
+                    alternative['result'] = mresp
+                elif alternative['proto'] == 'ipfs':
+                    pass
+                else:
+                    pass
+            if kwargs['mode'] == 'console':
+                delete = input("This entry is in version 2 mode. Delete deprecated keys (y/N)?")
+                if delete.lower() == 'y':
+                    delete_deprecated(domain)
+    else:
+        output = "Not Tested."
+
+    return output
 

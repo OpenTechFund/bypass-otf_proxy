@@ -59,12 +59,11 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
         elif report:
             domain_reporting(domain=domain, mode=mode)
         else:
-            domain_data = mirror_detail(domain=domain, proxy=proxy, mode=mode)
-            if not domain_data:
-                return
-            reporting = send_report(domain_data, mode)
-            if mode =='console':
-                print(f"Reported? {reporting}")
+            domain_data = mirror_detail(domain=domain, proxy=proxy, mode=mode, testing=False)
+            if mode == 'console':
+                if not domain_data:
+                    print("No data returned!")
+            return
 
     elif testing:
         if mode == 'console':
@@ -116,7 +115,7 @@ def domain_testing(testing, proxy, mode):
     """
     mirror_list = domain_list()
     for domain in mirror_list['sites']:
-        domain_data = mirror_detail(domain=domain['main_domain'], proxy=proxy, mode=mode)
+        domain_data = mirror_detail(domain=domain['main_domain'], proxy=proxy, mode=mode, test=True)
         reporting = send_report(domain_data, mode)
         if mode =='console':
             print(f"Reported? {reporting}")
