@@ -197,7 +197,9 @@ def send_report(domain_data, mode):
     
     domain_id = False
     for entry in result:
-        d_id, domain, ext, paths, s3_storage, azure_profile = entry
+        d_id, domain, ext, paths, s3_storage, azure_profile, inactive = entry
+        if inactive:
+            return False
         if domain in domain_data['domain']:
             domain_id = d_id
     
