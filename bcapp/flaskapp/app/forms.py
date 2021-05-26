@@ -12,6 +12,7 @@ class UserForm(FlaskForm):
     notifications = BooleanField('Get Notifications?')
     password = StringField('New Password')
     domain_group_id = SelectField('Domain Group', coerce=int)
+    user_bio = TextAreaField('Bio')
     submit = SubmitField('Edit User')
 
 class DomainForm(FlaskForm):

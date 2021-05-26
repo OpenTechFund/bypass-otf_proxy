@@ -4,20 +4,29 @@
     <h1>Edit User</h1>
     <form action="" method="post">
         {{ form.hidden_tag() }}
-        <p>
-            {{ form.admin.label }}<br>
-            {{ form.admin }}<br>
-            {% for error in form.admin.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>
-            {{ form.active.label }}<br>
-            {{ form.active }}<br>
-            {% for error in form.active.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
+        {% if current_user.admin %}
+            <p>
+                {{ form.admin.label }}<br>
+                {{ form.admin }}<br>
+                {% for error in form.admin.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.active.label }}<br>
+                {{ form.active }}<br>
+                {% for error in form.active.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.domain_group_id.label }}<br>
+                {{ form.domain_group_id() }}<br>
+                {% for error in form.domain_group_id.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+        {% endif %}
         <p>
             {{ form.email.label }}<br>
             {{ form.email(size=30) }}<br>
@@ -37,15 +46,15 @@
             {{ form.password(size=30) }}<br/>
         </p>
         <p>
-            {{ form.domain_group_id.label }}<br>
-            {{ form.domain_group_id() }}<br>
-            {% for error in form.domain_group_id.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>
             {{ form.notifications.label }}
             {{ form.notifications() }}
+        </p>
+        <p>
+            {{ form.user_bio.label }}
+            {{ form.user_bio(size=40) }}
+            {% for error in form.user_bio.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
         </p>
         <p>{{ form.submit() }}</p>
     </form>

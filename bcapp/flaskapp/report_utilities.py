@@ -196,16 +196,20 @@ def send_report(domain_data, mode):
     result = connection.execute(query).fetchall()
     
     domain_id = False
+    inactive = False
     for entry in result:
         d_id, domain, ext, paths, s3_storage, azure_profile, inactive = entry
-        if inactive:
-            return False
+        logger.debug(f"Entry: {entry}")
         if domain in domain_data['domain']:
             domain_id = d_id
+            if inactive:
+                logger.debug("Inactive Domain!")
+                return False
     
     logger.debug(f"Domain ID: {domain_id}")
     
     if not domain_id: # we've not seen it before, add it
+        logger.debug("New Domain!")
         insert = domains.insert().values(domain=domain_data['domain'])
         result = connection.execute(insert)
         domain_id = result.inserted_primary_key[0]
@@ -213,18 +217,20 @@ def send_report(domain_data, mode):
     
     # Add mirrors
     if (('current_alternatives' not in domain_data) or (not domain_data['current_alternatives'])):
+        logger.debug("Not reporting on v1 data!")
         return False
     for current_alternative in domain_data['current_alternatives']:
         query = db.select([mirrors])
         result = connection.execute(query).fetchall()
         mirror_id = False
         for entry in result:
-            m_id, m_url, d_id, proto, m_type = entry
+            m_id, m_url, d_id, proto, m_type, inactive = entry
             if current_alternative['url'] == m_url:
                 mirror_id = m_id
         logger.debug(f"Mirror ID: {mirror_id}")
 
         if not mirror_id: # add it
+            logger.debug("New Alternative!")
             insert = mirrors.insert().values(
                 mirror_url=current_alternative['url'],
                 domain_id=domain_id,

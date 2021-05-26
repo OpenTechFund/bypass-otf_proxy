@@ -7,6 +7,7 @@ from app.models import User, Domain
 from . import db
 import repo_utilities
 import mirror_tests
+from .admin_utilities import get_domain_group
 
 @app.route('/')
 def home():
@@ -66,7 +67,8 @@ def profile():
     Profile
     """
     # TODO: add list of available reports for the domain this user is a part of
-    return render_template('profile.html', name=current_user.name)
+    domain_group = get_domain_group(current_user.id)
+    return render_template('profile.html', user=current_user, domain_group=domain_group)
 
 @app.route('/signup')
 def signup():

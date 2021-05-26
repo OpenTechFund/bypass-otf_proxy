@@ -28,6 +28,23 @@ def set_domain_inactive(del_domain):
     logger.debug(f"Update: {update}")
 
     return True
+    
+def set_alternative_inactive(alternative):
+    """
+    When removing an alternative, set it to inactive in the database
+    """
+    load_dotenv()
+    engine = db.create_engine(os.environ['DATABASE_URL'])
+    connection = engine.connect()
+    metadata = db.MetaData()
+
+    mirrors = db.Table('mirrors', metadata, autoload=True, autoload_with=engine)
+    update = mirrors.update().where(mirrors.c.mirror_url == alternative).values(inactive=True)
+    connection.execute(update)
+
+    logger.debug(f"Update: {update}")
+
+    return True
 
 def get_domain_data(domain):
     """

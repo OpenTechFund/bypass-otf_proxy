@@ -38,6 +38,8 @@ import click
 
 def automation(testing, domain, proxy, existing, delete, domain_list, mirror_list, log,
     mirror_type, replace, nogithub, remove, report, mode, num, generate_report, s3):
+    configs = get_configs()
+    logger.debug(f"Repo: {configs['repo']}")
     if domain:
         if delete:
             delete = delete_domain(domain, nogithub)
@@ -61,6 +63,7 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
         elif mirror_type or existing:
             convert_domain(domain, 'n')
             new_add(domain=domain, mirror_type=mirror_type, nogithub=nogithub, existing=existing)
+            domain_testing(proxy, mode, domain)
         elif report:
             domain_reporting(domain=domain, mode=mode)
         else:
@@ -76,7 +79,7 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
         else:
             test = 'y'
         if test.lower() != 'n':
-            domain_testing(testing, proxy, mode)
+            domain_testing(proxy, mode, '')
         if mode == 'console':
             convert = input("Convert all (y/N)?")
             if convert.lower() == 'y':
@@ -114,16 +117,19 @@ def add_logging(domain, mirror_type, mode):
 
     return log_add
 
-def domain_testing(testing, proxy, mode):
+def domain_testing(proxy, mode, chosen_domain):
     """
     Tests domains, mirrors and onions in repo
     """
     mirror_list = domain_list()
     for domain in mirror_list['sites']:
-        domain_data = mirror_detail(domain=domain['main_domain'], proxy=proxy, mode=mode, test=True)
-        reporting = send_report(domain_data, mode)
-        if mode =='console':
-            print(f"Reported? {reporting}")
+        if ((not chosen_domain) or (chosen_domain == domain['main_domain'])):
+            domain_data = mirror_detail(domain=domain['main_domain'], proxy=proxy, mode=mode, test=True)
+            reporting = send_report(domain_data, mode)
+            if mode =='console':
+                print(f"Reported? {reporting}")
+        else:
+            continue
     return
 
 

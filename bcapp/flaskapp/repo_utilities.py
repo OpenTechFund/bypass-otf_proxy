@@ -6,7 +6,7 @@ import logging
 from github import Github
 import tldextract
 from system_utilities import get_configs
-from db_utilities import set_domain_inactive
+from db_utilities import set_domain_inactive, set_alternative_inactive
 
 logger = logging.getLogger('logger')
 
@@ -68,10 +68,19 @@ def remove_mirror(**kwargs):
 
     if not kwargs['nogithub']:
         final_mirrors = json.dumps(mirrors, indent=4)
-        save_mirrors(final_mirrors, commit_msg)
+        saved = (final_mirrors, commit_msg)
+        if saved:
+            # Add inactive in database
+            inactive = set_alternative_inactive(kwargs['remove'])
+            if inactive:
+                return "Set to inactive in Database!"
+            else:
+                return "No such alternative in DB!"
+        else:
+            return False
     else:
         print(f"Removed {kwargs['remove']} but didn't save!")
-    return
+        return False
 
 def save_mirrors(mirrors, commit_msg):
     configs = get_configs()

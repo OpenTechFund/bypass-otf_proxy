@@ -1,7 +1,7 @@
 import datetime
 import logging
 from app import app
-from app.models import User, Token, Domain, Mirror, Report, LogReport, DGDomain
+from app.models import User, Token, Domain, Mirror, Report, LogReport, DGDomain, DomainGroup
 from sqlalchemy import desc
 from . import db
 
@@ -231,3 +231,20 @@ def monthly_bad(admin, dg_id):
     sorted_final = sorted(final_report, key=lambda x: x['count'], reverse=True)
 
     return sorted_final
+
+def get_domain_group(user_id):
+    """
+    Get the domain group name for the user ID.
+    """
+
+    user = User.query.filter_by(id=user_id).first_or_404()
+    if not user:
+        return False
+    dgs = DomainGroup.query.all()
+
+    dg_name = False
+    for domain_group in dgs:
+        if domain_group.id == user.domain_group_id:
+            dg_name = domain_group.name
+
+    return dg_name

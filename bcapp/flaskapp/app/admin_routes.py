@@ -141,7 +141,7 @@ def delete_domain(id):
         domain = Domain.query.filter_by(id=id).first_or_404()
         db.session.delete(domain)
         db.session.commit()
-        return redirect(url_for('admin_domains'))
+        return redirect(url_for('admin_domains', status='active'))
 
 @app.route('/admin/domain_groups')
 @login_required
@@ -293,7 +293,8 @@ def add_user():
 @app.route('/admin/users/<id>', methods=['GET', 'POST'])
 @login_required
 def edit_user(id):
-    if not current_user.admin:
+    print(current_user.id, id)
+    if ((not current_user.admin) and (int(current_user.id) != int(id))):
         flash('Have to be admin')
         return redirect(url_for('home'))
     else:
@@ -308,6 +309,7 @@ def edit_user(id):
                 user.password = generate_password_hash(form.password.data)
             user.name = form.name.data
             user.domain_group_id = form.domain_group_id.data
+            user.user_bio = form.user_bio.data
             db.session.commit()
             flash('Your changes have been saved.')
             return redirect(url_for('admin_users'))
@@ -319,6 +321,7 @@ def edit_user(id):
             form.notifications.data = user.notifications
             form.domain_group_id.choices = [(dg.id, dg.name) for dg in DomainGroup.query.order_by('name').all()]
             form.domain_group_id.data = user.domain_group_id
+            form.user_bio.data = user.user_bio
         return render_template('edit_user.html',
                                 title='Edit User',
                                 user=user,

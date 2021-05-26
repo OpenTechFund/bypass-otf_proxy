@@ -32,29 +32,6 @@ class DGDomain(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     domain_group_id = db.Column(db.Integer)
     domain_id = db.Column(db.Integer)
-
-class Onion(db.Model):
-    __tablename__ = "onions"
-    id = db.Column(db.Integer, primary_key=True)
-    domain_id = db.Column(db.Integer)
-    onion = db.Column(db.String, unique=True)
-    inactive = db.Column(db.Boolean)
-
-    def __repr__(self):
-        return '<id {}>'.format(self.id)
-
-class OnionReport(db.Model):
-    __tablename__ = "onion_reports"
-    id = db.Column(db.Integer, primary_key=True)
-    onion_id = db.Column(db.Integer)
-    domain_id = db.Column(db.Integer)
-    date_reported = db.Column(db.DateTime)
-    onion_status = db.Column(db.Integer)
-    user_agent = db.Column(db.String)
-
-    def __repr__(self):
-        return '<id {}>'.format(self.id)
-
 class Mirror(db.Model):
     __tablename__ = "mirrors"
     id = db.Column(db.Integer, primary_key=True)
@@ -106,7 +83,8 @@ class User(UserMixin, db.Model):
     domain_group_id = db.Column(db.String(120))
     admin = db.Column(db.Boolean)
     active = db.Column(db.Boolean)
-    notifications = db.Column (db.Boolean)
+    notifications = db.Column(db.Boolean)
+    user_bio = db.Column(db.String)
 
     def __repr__(self):
         return '<id {}>'.format(self.id)

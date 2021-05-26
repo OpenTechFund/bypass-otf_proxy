@@ -9,6 +9,25 @@
 {% endif %}
 {% endwith %}
 <h1 class="title">
-  Welcome {{ name }}!
+  Welcome {{ current_user.name }}!
 </h1>
+
+<h2>
+  User Data:
+</h2>
+
+<p>
+  <strong>Email:</strong>{{ current_user.email }}
+</p>
+<p>
+  <strong>Notifications:</strong>{{ current_user.notifications }}
+</p>
+<p>
+  <strong>Domain Group:</strong>{{ domain_group }}
+</p>
+<p>
+  <strong>Bio:</strong>{{ current_user.user_bio }}
+</p>
+
+<a href="{{ url_for ('edit_user', id=current_user.id) }}" class="button is-info">Edit your profile</a>
 {% endblock %}
