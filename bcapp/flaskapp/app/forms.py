@@ -20,6 +20,7 @@ class DomainForm(FlaskForm):
     paths_ignore = StringField('Paths to ignore')
     s3_storage_bucket = StringField('S3 Storage Bucket')
     azure_profile_name = StringField('Azure Profile Name')
+    inactive = BooleanField('Inactive?')
     submit = SubmitField('Edit Domain')
 
 class DomainGroupForm(FlaskForm):

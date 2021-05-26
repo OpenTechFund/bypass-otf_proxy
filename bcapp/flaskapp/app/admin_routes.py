@@ -2,6 +2,7 @@ import datetime
 from flask import render_template, redirect, url_for, request, flash
 from flask_login import login_required, current_user, login_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import or_
 from app import app
 from app.models import User, Token, Domain, Mirror, Report, LogReport, DomainGroup, DGDomain
 from app.forms import UserForm, DomainForm, DomainGroupForm
@@ -26,9 +27,9 @@ def admin():
 
 ## Admin Domains/Groups
 
-@app.route('/admin/domains')
+@app.route('/admin/domains/status/<status>')
 @login_required
-def admin_domains():
+def admin_domains(status):
     """
     Administer Domains
     """
@@ -36,7 +37,13 @@ def admin_domains():
         flash('Have to be an admin!')
         return redirect(url_for('profile'))
     else:
-        domains = Domain.query.all()
+        print(f"status: {status}")
+        if status == 'active':
+            domains = Domain.query.filter(or_(Domain.inactive==False, Domain.inactive==None)).all()
+            
+        else:
+            domains = Domain.query.filter(Domain.inactive==True).all()
+
         dg_domains = DGDomain.query.all()
         domain_groups = DomainGroup.query.all()
         dg_dict = {}
@@ -47,7 +54,7 @@ def admin_domains():
                 if dgd.domain_id == domain.id:
                     domain.coded_dg = dg_dict[dgd.domain_group_id]
           
-        return render_template('admin_domains.html', domains=domains, domain_groups=domain_groups)
+        return render_template('admin_domains.html', domains=domains, domain_groups=domain_groups, status=status)
 
 @app.route('/admin/domains/domain_group_choice', methods=['GET'])
 @login_required
@@ -100,15 +107,21 @@ def edit_domain(id):
             domain.paths_ignore = form.paths_ignore.data
             domain.s3_storage_bucket = form.s3_storage_bucket.data
             domain.azure_profile_name = form.azure_profile_name.data
+            domain.inactive = form.inactive.data
+            if domain.inactive:
+                status = 'inactive'
+            else:
+                status = 'active'
             db.session.commit()
             flash('Your changes have been saved.')
-            return redirect(url_for('admin_domains'))
+            return redirect(url_for('admin_domains', status=status))
         elif request.method == 'GET':
             form.domain.data = domain.domain
             form.ext_ignore.data = domain.ext_ignore
             form.paths_ignore.data = domain.paths_ignore
             form.s3_storage_bucket.data = domain.s3_storage_bucket
             form.azure_profile_name.data = domain.azure_profile_name
+            form.inactive.data = domain.inactive
             
         return render_template('edit_domain.html',
                                     title='Edit Domain',

@@ -22,7 +22,7 @@
   Administration
 </h2>
 <p><a href="{{ url_for ('admin_domain_groups') }}" class="button is-info">Administer Domain Groups</a></p>
-<p><a href="{{ url_for ('admin_domains') }}" class="button is-info"> Administer Domains</a></p>
+<p><a href="{{ url_for ('admin_domains', status='active') }}" class="button is-info"> Administer Domains</a></p>
 <p><a href="{{ url_for ('admin_users') }}" class="button is-info">Administer Users</a></p>
 
 {% endblock %}

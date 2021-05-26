@@ -5,6 +5,12 @@
   Bypass Censorship Application - Administrate Domains
 </h1>
 
+{% if status == 'inactive' %}
+    <a class="button is-info" href="{{ url_for('admin_domains', status='active') }}">List Active Domains</a>
+{% else %}
+    <a class="button is-info" href="{{ url_for('admin_domains', status='inactive') }}">List Inactive Domains</a>
+{% endif %}
+
 <table class="table">
     <thead>
         <tr>
