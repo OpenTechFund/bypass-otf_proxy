@@ -17,6 +17,7 @@ __pycache__
 
 # Shell scripts
 pg_backup.sh
+deploy_new.sh
 
 #Pipfiles
 Pipfile_host
