@@ -197,6 +197,17 @@ def site_match(main_domain, url):
         return True
     else:
         return False
+
+def strip_www(domain):
+    """
+    Stripping any leading 'www.' from domain names
+    """
+    tld_extract = tldextract.extract(domain)
+    if tld_extract.subdomain == 'www':
+        stripped_domain = tld_extract.domain + '.' + tld_extract.suffix
+        return stripped_domain
+    else:
+        return domain
             
 def check(url):
     """
@@ -401,4 +412,28 @@ def convert_domain(domain, delete):
     else:
         return False 
 
-    return
+
+def edit_domain_in_repo(old_domain, new_domain):
+    """
+    Edit the repo listing for a domain
+    """
+    
+    mirrors = domain_list()
+    print(f"Old {old_domain} New: {new_domain}")
+    change = False
+    for mirror in mirrors['sites']:
+        if mirror['main_domain'] == old_domain:
+            mirror['main_domain'] = new_domain
+            change = True
+            print(mirror)
+    
+    if change:
+        final_mirrors = json.dumps(mirrors, indent=4)
+        saved = save_mirrors(final_mirrors, f"Editing {old_domain} to {new_domain}")
+        if saved:
+            return True
+        else:
+            return False
+
+
+    

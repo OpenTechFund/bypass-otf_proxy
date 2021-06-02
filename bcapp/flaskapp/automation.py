@@ -7,7 +7,7 @@ import sys
 import configparser
 import logging
 from aws_utils import cloudfront_add, cloudfront_replace, cloudfront_add_logging, add_s3_storage
-from repo_utilities import add, check, domain_list, remove_domain, remove_mirror, convert_domain, convert_all
+from repo_utilities import add, check, domain_list, remove_domain, remove_mirror, convert_domain, convert_all, strip_www
 from report_utilities import domain_reporting, send_report, generate_admin_report
 from log_reporting_utilities import domain_log_reports, domain_log_list
 from mirror_tests import mirror_detail
@@ -61,6 +61,7 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
             if mode == 'console':
                 print (f"Result: {s3_storage_add}")
         elif mirror_type or existing:
+            domain = strip_www(domain)
             convert_domain(domain, 'n')
             new_add(domain=domain, mirror_type=mirror_type, nogithub=nogithub, existing=existing)
             domain_testing(proxy, mode, domain)

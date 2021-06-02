@@ -11,6 +11,7 @@
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
         </p>
+            {{ form.old_domain() }}
         <p>
             {{ form.ext_ignore.label }}<br>
             {{ form.ext_ignore(size=30) }}<br>

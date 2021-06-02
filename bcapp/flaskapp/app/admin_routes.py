@@ -103,6 +103,7 @@ def edit_domain(id):
         form = DomainForm()
         if request.method == 'POST':
             domain.domain = form.domain.data
+            old_domain = form.old_domain.data
             domain.ext_ignore = form.ext_ignore.data
             domain.paths_ignore = form.paths_ignore.data
             domain.s3_storage_bucket = form.s3_storage_bucket.data
@@ -112,11 +113,18 @@ def edit_domain(id):
                 status = 'inactive'
             else:
                 status = 'active'
-            db.session.commit()
+            try:
+                db.session.commit()
+            except:
+                flash('Your changes were not saved!')
+                return redirect(url_for('admin_domains', status=status))
+            if old_domain != form.domain.data:
+                repo_change = repo_utilities.edit_domain_in_repo(old_domain, form.domain.data)
             flash('Your changes have been saved.')
             return redirect(url_for('admin_domains', status=status))
         elif request.method == 'GET':
             form.domain.data = domain.domain
+            form.old_domain.data = domain.domain
             form.ext_ignore.data = domain.ext_ignore
             form.paths_ignore.data = domain.paths_ignore
             form.s3_storage_bucket.data = domain.s3_storage_bucket

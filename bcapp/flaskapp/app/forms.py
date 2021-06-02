@@ -2,6 +2,7 @@ from wtforms import (StringField, TextAreaField, SubmitField,
                      BooleanField, SelectField, SelectMultipleField,
                      FileField, widgets)
 from flask_wtf import FlaskForm
+from wtforms.fields.simple import HiddenField
 from wtforms.validators import DataRequired, Length
 
 class UserForm(FlaskForm):
@@ -17,6 +18,7 @@ class UserForm(FlaskForm):
 
 class DomainForm(FlaskForm):
     domain = StringField('Domain')
+    old_domain = HiddenField('Old Domain')
     ext_ignore = StringField('Extensions to ignore')
     paths_ignore = StringField('Paths to ignore')
     s3_storage_bucket = StringField('S3 Storage Bucket')
