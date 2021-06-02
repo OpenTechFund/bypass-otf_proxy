@@ -66,6 +66,7 @@ def domain_group_choice():
         flash('Have to be an admin!')
         return redirect(url_for('profile'))
     else:
+        status = request.args.get('status')
         domain_group = request.args.get('domain_group_choice')
         domain_id = request.args.get('domain_id')
         if not domain_group or not domain_id:
@@ -87,7 +88,7 @@ def domain_group_choice():
             )
             db.session.add(dg_domain)
             db.session.commit()
-        return redirect(url_for('admin_domains'))
+        return redirect(url_for('admin_domains', status=status))
 
 @app.route('/admin/domains/<id>', methods=['GET', 'POST'])
 @login_required
