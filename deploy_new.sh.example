@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Deploy script to take care of bringing down changes and restarting app
+# This is assuming you've created a service called 'bcapp' for this flask app
+
+FLASK_PATH=/path/to/bypass-otf_proxy/bcapp/flaskapp/app
+FLASK_VENV=/path/to/flask_venv
+
+git pull origin master
+cd $FLASK_PATH
+$FLASK_VENV/flask db migrate
+$FLASK_VENV/flask db upgrade
+sudo service bcapp restart
+sudo service nginx restart
