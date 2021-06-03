@@ -19,7 +19,7 @@
             <li>
                 URL: <a href="{{ alternative.url }}">{{ alternative.url }}</a>
                 {% if admin %}
-                    <a ref="{{ url_for('edit_alternative', id=alternative.id) }}" class="button is-warning">Edit</a>
+                    <a href="{{ url_for('edit_alternative', url=alternative.url) }}" class="button is-warning">Edit</a>
                 {% endif %}
                 <a href="{{ url_for ('alternatives', url=alternative.url, alternatives=alternatives, domain_choice=domain_choice) }}" class="button is-info">Test</a>
                 {% if url == alternative.url %}

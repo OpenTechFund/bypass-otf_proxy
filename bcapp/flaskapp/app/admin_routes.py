@@ -37,7 +37,6 @@ def admin_domains(status):
         flash('Have to be an admin!')
         return redirect(url_for('profile'))
     else:
-        print(f"status: {status}")
         if status == 'active':
             domains = Domain.query.filter(or_(Domain.inactive==False, Domain.inactive==None)).all()
             

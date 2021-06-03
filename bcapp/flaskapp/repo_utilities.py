@@ -97,7 +97,7 @@ def save_mirrors(mirrors, commit_msg):
                 mirrors_object.sha
                 )
 
-    print(f"Repo Result: {result}")
+    # print(f"Repo Result: {result}")
     if 'commit' in result:
         return True
     else:
@@ -107,6 +107,12 @@ def add(**kwargs):
     """
     function to add mirror to repository
     """
+    quiet = False
+    if 'quiet' in kwargs and kwargs['quiet']:
+        quiet = True
+    if 'mode' in kwargs and kwargs['mode'] != 'console':
+            quiet = True
+
     now = str(datetime.datetime.now())
     mirrors = domain_list()
     new_mirrors = dict(mirrors) # copy mirrors
@@ -114,11 +120,6 @@ def add(**kwargs):
         replace = True
     else:
         replace = False
-
-    if 'quiet' in kwargs and kwargs['quiet']:
-        quiet = True
-    else:
-        quiet = False
 
     if not kwargs['pre']: # site is just a simple add
         site = {
@@ -133,7 +134,8 @@ def add(**kwargs):
             ]
         }
         new_mirrors['sites'].append(site)
-        print(f"New Mirror: {site}")
+        if not quiet:
+            print(f"New Mirror: {site}")
         site_add = site
     else:
         for site in new_mirrors['sites']:
@@ -164,7 +166,9 @@ def add(**kwargs):
                             alternative['updated_at'] = now
                     if not replacing:
                         logger.debug("No replacement found. No changes happened.")
-                    print(f"Revised Site: {site}")
+                    
+                    if not quiet:
+                        print(f"Revised Site: {site}")
                 
                 site_add = site
     if replace and (not replacing):
@@ -369,7 +373,6 @@ def delete_deprecated(domain):
 
     mirrors = domain_list()
     for mirror in mirrors['sites']:
-        print(f"Mirror: {mirror}")
         if domain == mirror['main_domain']:
             mirrors['sites'].remove(mirror)
             mirrors['sites'].append(domain_data)

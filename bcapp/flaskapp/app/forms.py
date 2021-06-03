@@ -30,3 +30,14 @@ class DomainGroupForm(FlaskForm):
     name = StringField('Name')
     notes = TextAreaField('Notes')
     submit = SubmitField('Submit')
+
+class AltForm(FlaskForm):
+    mirror_type = SelectField('Mirror Type', choices=[
+        ('mirror', 'Mirror'),
+        ('proxy', 'Cloudfront, AzureEdge or Fastly'),
+        ('eotk', 'Onion'),
+        ('ipfs', 'IPFS Node')])
+    mirror_url = StringField('Alternative URL')
+    inactive = BooleanField('Inactive?')
+    old_url = HiddenField('Old Url')
+    submit = SubmitField('Submit')

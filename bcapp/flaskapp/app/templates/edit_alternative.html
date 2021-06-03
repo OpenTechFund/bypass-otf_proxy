@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2> {{ title }} </h2>
+<form action="" method="post">
+    <p>
+        {{ form.hidden_tag() }}
+    </p>
+    <p>
+        {{ form.mirror_type.label }}
+        {{ form.mirror_type() }}
+    </p>
+    <p>
+        {{ form.mirror_url.label }}
+        {{ form.mirror_url(size=40) }}
+    </p>
+    <p>
+        {{ form.inactive.label }}
+        {{ form.inactive() }}
+    </p>
+    <p>
+        {{ form.old_url() }}
+    </p>
+    <p>{{ form.submit() }}</p>  
+</form>
+{% endblock %}

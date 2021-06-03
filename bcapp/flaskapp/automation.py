@@ -50,7 +50,7 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
                     print(f"Domain {domain} deleted from github, and {delete}")
         elif replace:
             convert_domain(domain, 'n')
-            replace_mirror(domain=domain, existing=existing, replace=replace, nogithub=nogithub, mirror_type=mirror_type)
+            replace_mirror(domain=domain, existing=existing, replace=replace, nogithub=nogithub, mirror_type=mirror_type, mode=mode)
         elif remove:
             convert_domain(domain, 'n')
             remove_mirror(domain=domain, remove=remove, nogithub=nogithub)
@@ -175,19 +175,24 @@ def replace_mirror(**kwargs):
     :kwarg [existing]
     :kwarg [mirror_type]
     :kwarg [nogithub]
-    :returns nothing
+    :kwarg [mode]
+    :returns True or False
     """
-    print(f"Replacing mirror for: {kwargs['domain']}...")
+    mode = kwargs['mode']
+    if mode == 'console':
+        print(f"Replacing mirror for: {kwargs['domain']}...")
     domain_data = check(kwargs['domain'])
     exists = domain_data['exists'] 
     current_alternatives = domain_data['available_alternatives']
     if not exists:
-        print("Domain doesn't exist!")
-        return
+        if mode == 'console':
+            print("Domain doesn't exist!")
+        return False
 
     if 'mirror_type' not in kwargs:
-        print("Need mirror type here!!")
-        return
+        if mode == 'console':
+            print("Need mirror type here!!")
+        return False
 
     if kwargs['mirror_type'] == 'onion':
         proto = 'tor'
@@ -195,20 +200,25 @@ def replace_mirror(**kwargs):
     elif kwargs['mirror_type'] == 'mirror':
         proto = 'http'
         mtype = 'mirror'
+    elif kwargs['mirror_type'] == 'cloudfront':
+        proto = 'https'
+        mtype = 'proxy'
     else:
         proto = 'https'
         mtype = 'proxy'
 
     if 'existing' in kwargs and kwargs['existing']: # replacing with existing...
-        if kwargs['nogithub']:
-            print("You wanted to replace with existing but didn't want it added to github! Bye!")
-            return
+        if 'nogithub' in kwargs and kwargs['nogithub']:
+            if mode == 'console':
+                print("You wanted to replace with existing but didn't want it added to github! Bye!")
+            return False
         domain_listing = add(domain=kwargs['domain'], 
                              mirror=kwargs['existing'], 
                              pre=exists,
                              replace=kwargs['replace'],
                              proto=proto,
-                             mtype=mtype
+                             mtype=mtype,
+                             mode=mode
                             )
     else: # need to create a new mirror from the old automatically
         if kwargs['mirror_type'] == 'cloudfront':
@@ -218,10 +228,13 @@ def replace_mirror(**kwargs):
                                  pre=exists,
                                  replace=kwargs['replace'],
                                  proto=proto,
-                                 mtype=mtype)
+                                 mtype=mtype,
+                                 mode=mode)
         else:
-            print("Sorry, only cloudfront is automated!!")
-    return
+            if mode == 'console':
+                print("Sorry, only cloudfront is automated!!")
+                return False
+    return True
 
 def new_add(**kwargs):
     """
@@ -238,7 +251,7 @@ def new_add(**kwargs):
         exists = False
     else:
         exists = domain_data['exists']
-    if 'current_alternatives' in domain_data:
+    if 'available_alternatives' in domain_data:
         current_alternatives = domain_data['available_alternatives']
     else:
         current_alternatives = []
