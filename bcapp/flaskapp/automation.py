@@ -53,7 +53,9 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
             replace_mirror(domain=domain, existing=existing, replace=replace, nogithub=nogithub, mirror_type=mirror_type, mode=mode)
         elif remove:
             convert_domain(domain, 'n')
-            remove_mirror(domain=domain, remove=remove, nogithub=nogithub)
+            removed = remove_mirror(domain=domain, remove=remove, nogithub=nogithub)
+            if mode == 'console':
+                print(removed)
         elif log:
             add_logging(domain=domain, mirror_type=mirror_type, mode=mode)
         elif s3:

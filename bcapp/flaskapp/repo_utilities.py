@@ -68,39 +68,45 @@ def remove_mirror(**kwargs):
 
     if not kwargs['nogithub']:
         final_mirrors = json.dumps(mirrors, indent=4)
-        saved = (final_mirrors, commit_msg)
+        saved = save_mirrors(final_mirrors, commit_msg)
         if saved:
             # Add inactive in database
             inactive = set_alternative_inactive(kwargs['remove'])
             if inactive:
-                return "Set to inactive in Database!"
+                return "Removed and set to inactive in Database!"
             else:
                 return "No such alternative in DB!"
         else:
-            return False
+            return "Didn't save in GitHub"
     else:
         print(f"Removed {kwargs['remove']} but didn't save!")
         return False
 
-def save_mirrors(mirrors, commit_msg):
+def save_mirrors(new_mirrors, commit_msg):
     configs = get_configs()
     g = Github(configs['API_key'])
    
     repo = g.get_repo(configs['repo'])
     mirrors_object = repo.get_contents(configs['file'])
-    new_file = base64.b64encode(bytes(mirrors, 'utf-8'))
+    old_mirrors_decoded = mirrors_object.decoded_content
+    old_mirrors = json.loads(str(old_mirrors_decoded, "utf-8"))
+    new_mirrors_encoded = json.loads(new_mirrors)
+    if old_mirrors != new_mirrors_encoded:
 
-    result = repo.update_file(
-                configs['file'],
-                commit_msg,
-                mirrors,
-                mirrors_object.sha
-                )
+        result = repo.update_file(
+                    configs['file'],
+                    commit_msg,
+                    new_mirrors,
+                    mirrors_object.sha
+                    )
 
-    # print(f"Repo Result: {result}")
-    if 'commit' in result:
-        return True
+        print(f"Repo Result: {result}")
+        if 'commit' in result:
+            return True
+        else:
+            return False
     else:
+        print("Nothing saved! Mirrors unchanged!")
         return False
 
 def add(**kwargs):
