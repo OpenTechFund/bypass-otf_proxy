@@ -130,11 +130,17 @@ def edit_domain(id):
             form.s3_storage_bucket.data = domain.s3_storage_bucket
             form.azure_profile_name.data = domain.azure_profile_name
             form.inactive.data = domain.inactive
+
+            alternatives_list = repo_utilities.check(domain.domain)
+            if not alternatives_list['exists']:
+                alternatives = False
+            else:
+                alternatives = alternatives_list['available_alternatives']
             
         return render_template('edit_domain.html',
-                                    title='Edit Domain',
-                                    domain=domain,
-                                    form=form)
+                                domain=domain,
+                                form=form,
+                                alternatives=alternatives)
 
 @app.route('/admin/domains/delete/<id>')
 @login_required
