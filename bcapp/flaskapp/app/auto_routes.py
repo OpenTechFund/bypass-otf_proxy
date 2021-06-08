@@ -22,6 +22,31 @@ def add_alternative():
     """
     pass
 
+@app.route('/alternatives/remove', methods=['GET'])
+@login_required
+def remove_alternative():
+    """
+    Remove alternative 
+    """
+    if not current_user.admin:  
+        flash('Have to be an admin!')
+        return redirect(url_for('profile'))
+    else:
+        url = request.args.get('url')
+        # Get Domain/Alternative info from database and repo
+        mirror = Mirror.query.filter(Mirror.mirror_url==url).first_or_404()
+        print(f"Mirror: {mirror.id} Domain: {mirror.domain_id}")
+        domain = Domain.query.filter(Domain.id==mirror.domain_id).first_or_404()
+        print(f"Domain: {domain.domain}")
+        remove = repo_utilities.remove_mirror(
+            domain=domain.domain,
+            remove=url,
+            nogithub=False
+        )
+        flash(remove)
+        return redirect(url_for('alternatives', url=url))
+
+
 @app.route('/alternatives/edit',  methods=['GET', 'POST'])
 @login_required
 def edit_alternative():
@@ -35,7 +60,6 @@ def edit_alternative():
         url = request.args.get('url')
         # Get Domain/Alternative info from database and repo
         mirror = Mirror.query.filter(Mirror.mirror_url==url).first_or_404()
-        print(f"Mirror: {mirror.id} DOmain: {mirror.domain_id}")
         domain = Domain.query.filter(Domain.id==mirror.domain_id).first_or_404()
         all_mirrors = repo_utilities.domain_list()
         form = AltForm()

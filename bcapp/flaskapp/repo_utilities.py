@@ -97,8 +97,8 @@ def remove_mirror(**kwargs):
         else:
             return "Didn't save in GitHub"
     else:
-        print(f"Removed {kwargs['remove']} but didn't save!")
-        return False
+        return f"Removed {kwargs['remove']} but didn't save!"
+
 
 def save_mirrors(new_mirrors, commit_msg):
     configs = get_configs()

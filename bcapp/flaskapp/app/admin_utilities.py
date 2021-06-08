@@ -229,6 +229,8 @@ def monthly_bad(admin, dg_id):
             continue
         fp = {
             'url': domains[db],
+            'id': db,
+            'domain': True,
             'percent': (domain_bad_count[db]/domain_reports_count[db])*100
         }
         final_report.append(fp)
@@ -240,6 +242,8 @@ def monthly_bad(admin, dg_id):
             continue
         mp = {
             'url': mirrors[mir],
+            'id': mir,
+            'domain': False,
             'percent': (mirror_bad_count[mir]/mirror_reports_count[mir])*100
         }
         final_report.append(mp)

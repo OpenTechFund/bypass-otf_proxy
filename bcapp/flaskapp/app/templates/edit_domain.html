@@ -63,6 +63,7 @@
             <li>
                 URL: <a href="{{ alternative.url }}">{{ alternative.url }}</a>
                 <a href="{{ url_for('edit_alternative', url=alternative.url) }}" class="button is-warning">Edit</a>
+                <a href="{{ url_for('remove_alternative', url=alternative.url) }}" class="button is-danger">Remove</a>
             </li>
         </ul>
         {% endfor %}

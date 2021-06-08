@@ -23,4 +23,5 @@
     </p>
     <p>{{ form.submit() }}</p>  
 </form>
+<a href="{{ url_for('remove_alternative', url=mirror.mirror_url) }}" class="button is-danger">Remove Alternative</a>
 {% endblock %}
