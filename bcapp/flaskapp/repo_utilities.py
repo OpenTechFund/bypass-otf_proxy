@@ -211,6 +211,8 @@ def site_match(main_domain, url):
     """
     Matching domain and URL
     """
+    if (not main_domain) or (not url):
+        return False
     if (main_domain == url):
         return True
     tld_extract = tldextract.extract(url)
