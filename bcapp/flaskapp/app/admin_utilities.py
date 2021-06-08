@@ -194,16 +194,27 @@ def monthly_bad(admin, dg_id):
     if admin:
         dg_id = False
     domains = get_domain_list(dg_id)
+    domain_reports_count = {}
+    mirror_reports_count = {}
     domain_bad_count = {}
-    mirrors = mirror_list(dg_id)
     mirror_bad_count = {}
+    mirrors = mirror_list(dg_id)
+    mirrors_reports_count = {}
     reports_list = Report.query.filter(Report.date_reported > last_month).all()
     for report in reports_list:
+        if report.domain_id in domain_reports_count:
+            domain_reports_count[report.domain_id] +=1
+        else:
+            domain_reports_count[report.domain_id] = 1
         if report.domain_status != 200:
             if report.domain_id in domain_bad_count:
                 domain_bad_count[report.domain_id] += 1
             else:
                 domain_bad_count[report.domain_id] = 1
+        if report.mirror_id in mirror_reports_count:
+            mirror_reports_count[report.mirror_id] += 1
+        else:
+            mirror_reports_count[report.mirror_id] = 1
         if report.mirror_status != 200:
             if report.mirror_id in mirror_bad_count:
                 mirror_bad_count[report.mirror_id] += 1
@@ -216,7 +227,7 @@ def monthly_bad(admin, dg_id):
             continue
         fp = {
             'url': domains[db],
-            'count': domain_bad_count[db]
+            'percent': (domain_bad_count[db]/domain_reports_count[db])*100
         }
         final_report.append(fp)
     for mir in mirror_bad_count:
@@ -224,11 +235,11 @@ def monthly_bad(admin, dg_id):
             continue
         mp = {
             'url': mirrors[mir],
-            'count': mirror_bad_count[mir]
+            'percent': (mirror_bad_count[mir]/mirror_reports_count[mir])*100
         }
         final_report.append(mp)
 
-    sorted_final = sorted(final_report, key=lambda x: x['count'], reverse=True)
+    sorted_final = sorted(final_report, key=lambda x: x['percent'], reverse=True)
 
     return sorted_final
 
