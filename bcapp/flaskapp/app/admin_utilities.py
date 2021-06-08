@@ -4,6 +4,8 @@ from app import app
 from app.models import User, Token, Domain, Mirror, Report, LogReport, DGDomain, DomainGroup
 from sqlalchemy import desc
 from . import db
+import repo_utilities
+import db_utilities
 
 logger = logging.getLogger('logger')
 
@@ -232,6 +234,9 @@ def monthly_bad(admin, dg_id):
         final_report.append(fp)
     for mir in mirror_bad_count:
         if mir not in mirrors:
+            continue
+        check = repo_utilities.check_mirror(db_utilities.get_mirror_url_from_id(mir))
+        if not check:
             continue
         mp = {
             'url': mirrors[mir],

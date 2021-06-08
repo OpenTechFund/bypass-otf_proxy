@@ -46,6 +46,24 @@ def set_alternative_inactive(alternative):
 
     return True
 
+def get_mirror_url_from_id(id):
+    """
+    Get mirror URL from id
+    """
+    load_dotenv()
+    engine = db.create_engine(os.environ['DATABASE_URL'])
+    connection = engine.connect()
+    metadata = db.MetaData()
+
+    mirrors = db.Table('mirrors', metadata, autoload=True, autoload_with=engine)
+    query = db.select([mirrors]).where(mirrors.c.id == id)
+    try:
+        mirror_id, mirror_url, domain_id, mirror_type, protocol, inactive = connection.execute(query).fetchone()
+    except:
+        mirror_url = False
+
+    return mirror_url
+
 def get_domain_data(domain):
     """
     Get domain data

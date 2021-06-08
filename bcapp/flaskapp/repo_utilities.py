@@ -25,6 +25,24 @@ def domain_list():
     
     return mirrors
 
+def check_mirror(mirror_url):
+    """
+    Checks repo to find whether this mirror still exists.
+    """
+    if not mirror_url:
+        return False
+
+    domains = domain_list()
+
+    check = False
+    for domain in domains['sites']:
+        if ('available_alternatives' in domain) and (domain['available_alternatives']):
+            for alt in domain['available_alternatives']:
+                if mirror_url == alt['url']:
+                    check = True
+    
+    return check
+
 def remove_domain(domain):
     """
     Remove a domain from repository
