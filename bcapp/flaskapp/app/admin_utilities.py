@@ -110,6 +110,8 @@ def get_domain_subset(dg_id):
     domain_groups = DGDomain.query.filter_by(domain_group_id=dg_id).all()
     domain_subset = []
     for dom in initial_domain_list:
+        if dom.inactive:
+            continue
         for dg in domain_groups:
             if dg.domain_id == dom.id:
                 domain_subset.append(dom)

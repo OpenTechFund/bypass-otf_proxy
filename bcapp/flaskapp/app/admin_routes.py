@@ -356,6 +356,8 @@ def testing():
 
     domains = []
     for dom in domain_list:
+        if dom.inactive == True:
+            continue
         domains.append(dom.domain)
     if request.args.get('url'):
         url = request.args.get('url')
