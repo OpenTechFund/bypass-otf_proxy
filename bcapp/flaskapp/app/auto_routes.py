@@ -14,13 +14,52 @@ import automation
 Automation Routes - adding automation functions to Web interface
 """
 
-@app.route('/alternatives/add')
+@app.route('/alternatives/add', methods=['GET','POST'])
 @login_required
 def add_alternative():
     """
     Add new alternative
     """
-    pass
+    if not current_user.admin:  
+        flash('Have to be an admin!')
+        return redirect(url_for('profile'))
+    else:
+        form = AltForm()
+        if request.method == 'POST':
+            domain_id = request.form.get('domain_id')
+            domain = Domain.query.filter(Domain.id==domain_id).first_or_404()
+            mirror_type = form.mirror_type.data
+            mirror_url = form.mirror_url.data
+            service = request.form.get('service')
+            if mirror_type == 'mirror':
+                protocol = 'http'
+            elif mirror_type == 'eotk':
+                protocol = 'tor'
+            else:
+                protocol = 'https'
+            alternative = Mirror(mirror_type=mirror_type, mirror_url=mirror_url, domain_id=domain_id, protocol=protocol)
+            # Add to github
+            if mirror_type == 'proxy':
+                gh_mt = service
+            elif mirror_type == 'eotk':
+                gh_mt = 'onion'
+            else:
+                gh_mt = mirror_type
+            added = automation.new_add(
+                domain=domain.domain,
+                mirror_type=gh_mt,
+                existing=mirror_url,
+                nogithub=False,
+                mode='web'
+            )
+            if added:
+                db.session.add(alternative)
+                db.session.commit()
+                flash('Alternative Added')
+            return redirect(url_for('edit_domain', id=domain_id))
+        else:
+            form.domain_id.data = request.args.get('id')
+            return render_template('edit_alternative.html', form=form)
 
 @app.route('/alternatives/remove', methods=['GET'])
 @login_required
@@ -33,18 +72,20 @@ def remove_alternative():
         return redirect(url_for('profile'))
     else:
         url = request.args.get('url')
+        source = request.args.get('source')
         # Get Domain/Alternative info from database and repo
         mirror = Mirror.query.filter(Mirror.mirror_url==url).first_or_404()
-        print(f"Mirror: {mirror.id} Domain: {mirror.domain_id}")
         domain = Domain.query.filter(Domain.id==mirror.domain_id).first_or_404()
-        print(f"Domain: {domain.domain}")
         remove = repo_utilities.remove_mirror(
             domain=domain.domain,
             remove=url,
             nogithub=False
         )
         flash(remove)
-        return redirect(url_for('alternatives', url=url))
+        if source == 'alternatives':
+            return redirect(url_for('alternatives', url=url))
+        else:
+            return redirect(url_for('edit_domain', id=mirror.domain_id))
 
 
 @app.route('/alternatives/edit',  methods=['GET', 'POST'])
@@ -130,4 +171,5 @@ def edit_alternative():
                                    title=f"Edit Alternative for {domain.domain}",
                                    mirror=mirror,
                                    form=form,
-                                   old_url=mirror.mirror_url)
+                                   old_url=mirror.mirror_url,
+                                   existing=True)

@@ -140,7 +140,8 @@ def edit_domain(id):
         return render_template('edit_domain.html',
                                 domain=domain,
                                 form=form,
-                                alternatives=alternatives)
+                                alternatives=alternatives,
+                                domain_id=id)
 
 @app.route('/admin/domains/delete/<id>')
 @login_required

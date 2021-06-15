@@ -11,6 +11,14 @@
         {{ form.mirror_type() }}
     </p>
     <p>
+        <input type='radio' id='cloudfront' name='service' value='cloudfront'>
+        <label for='cloudfront'>Cloudfront</label>
+        <input type='radio' id='azure' name='service' value='azure'>
+        <label for='azure'>Azure</label>
+        <input type='radio' id='fastly' name='service' value='fastly'>
+        <label for='fastly'>Fastly</label>
+    </p>
+    <p>
         {{ form.mirror_url.label }}
         {{ form.mirror_url(size=40) }}
     </p>
@@ -21,7 +29,10 @@
     <p>
         {{ form.old_url() }}
     </p>
+    
     <p>{{ form.submit() }}</p>  
 </form>
-<a href="{{ url_for('remove_alternative', url=mirror.mirror_url) }}" class="button is-danger">Remove Alternative</a>
+{% if existing %}
+    <a href="{{ url_for('remove_alternative', url=mirror.mirror_url) }}" class="button is-danger">Remove Alternative</a>
+{% endif %}
 {% endblock %}

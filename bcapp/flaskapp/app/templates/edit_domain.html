@@ -69,4 +69,5 @@
         {% endfor %}
         <hr>
     {% endif %}
+    <a href="{{ url_for('add_alternative', id=domain_id) }}" class="button is-info">Add New Alternative</a>
 {% endblock %}

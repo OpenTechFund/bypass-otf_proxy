@@ -135,7 +135,7 @@ def add(**kwargs):
     if 'quiet' in kwargs and kwargs['quiet']:
         quiet = True
     if 'mode' in kwargs and kwargs['mode'] != 'console':
-            quiet = True
+        quiet = True
 
     now = str(datetime.datetime.now())
     mirrors = domain_list()

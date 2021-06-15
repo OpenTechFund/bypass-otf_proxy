@@ -39,5 +39,6 @@ class AltForm(FlaskForm):
         ('ipfs', 'IPFS Node')])
     mirror_url = StringField('Alternative URL')
     inactive = BooleanField('Inactive?')
+    domain_id = HiddenField('Domain ID')
     old_url = HiddenField('Old Url')
     submit = SubmitField('Submit')

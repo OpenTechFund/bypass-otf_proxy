@@ -66,7 +66,7 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
         elif mirror_type or existing:
             domain = strip_www(domain)
             convert_domain(domain, 'n')
-            new_add(domain=domain, mirror_type=mirror_type, nogithub=nogithub, existing=existing)
+            new_add(domain=domain, mirror_type=mirror_type, nogithub=nogithub, existing=existing, mode=mode)
             domain_testing(proxy, mode, domain)
         elif report:
             domain_reporting(domain=domain, mode=mode)
@@ -248,7 +248,8 @@ def new_add(**kwargs):
     :kwarg <mirror_type>
     :kwarg [existing]
     :kwarg [nogithub]
-    :returns nothing
+    :kwarg [mode]
+    :returns True or False
     """
     mirror = ""
     domain_data = check(kwargs['domain'])
@@ -260,8 +261,9 @@ def new_add(**kwargs):
         current_alternatives = domain_data['available_alternatives']
     else:
         current_alternatives = []
-    print(f"Preexisting: {exists}, current alternatives {current_alternatives}")
-    print(f"Adding entry to {kwargs['mirror_type']} ...")
+    if 'mode' in kwargs and kwargs['mode'] == 'console':
+        print(f"Preexisting: {exists}, current alternatives {current_alternatives}")
+        print(f"Adding entry to {kwargs['mirror_type']} ...")
     if kwargs['mirror_type'] == 'cloudfront':
         proto = 'https'
         mtype = 'proxy'
@@ -290,6 +292,7 @@ def new_add(**kwargs):
             mirror = kwargs['existing']
         else:
             print("Need to include existing url!")
+            return False
     elif kwargs['mirror_type'] == 'ipfs':
         proto = 'https'
         mtype = 'ipfs'
@@ -302,25 +305,24 @@ def new_add(**kwargs):
         mtype = 'mirror'
         if 'existing' not in kwargs:
             print("You didn't include URL - mirror type needs that!")
-            return
+            return False
         mirror = kwargs['existing']
     else:
         print("Need to define type of mirror. Use --mirror_type=cloudfront/azure/fastly/onion/mirror/ipfs")
-        return
+        return False
 
     if not mirror:
         print(f"Sorry, mirror not created for {kwargs['domain']}!")
-        return
+        return False
 
     replace = False
    
     if kwargs['nogithub']:
         print(f"You added this mirror: {mirror}. But no changes were made to github")
-        return
+        return False
     else:
-        domain_listing = add(domain=kwargs['domain'], mirror=mirror, pre=exists, proto=proto, mtype=mtype)
-        print(f"New Domain listing: {domain_listing}")
-        return
+        domain_listing = add(domain=kwargs['domain'], mirror=mirror, pre=exists, proto=proto, mtype=mtype, mode=kwargs['mode'])
+        return True
 
 if __name__ == '__main__':
     configs = get_configs()
