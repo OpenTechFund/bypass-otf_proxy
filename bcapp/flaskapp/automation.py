@@ -7,7 +7,7 @@ import sys
 import configparser
 import logging
 from aws_utils import cloudfront_add, cloudfront_replace, cloudfront_add_logging, add_s3_storage
-from repo_utilities import add, check, domain_list, remove_domain, remove_mirror, convert_domain, convert_all, strip_www
+from repo_utilities import add, check, domain_list, remove_domain, remove_mirror, strip_www, delete_deprecated
 from report_utilities import domain_reporting, send_report, generate_admin_report, get_ooni_data
 from log_reporting_utilities import domain_log_reports, domain_log_list
 from mirror_tests import mirror_detail
@@ -20,6 +20,7 @@ import click
 @click.command()
 @click.option('--testing', is_flag=True, default=False, help="Domain testing of all available mirrors and onions")
 @click.option('--domain', help="Domain to act on", type=str)
+@click.option('--test', is_flag=True, default=False, help="Test when listing domain")
 @click.option('--num', help="Number of Raw Log files to list", type=int, default=5)
 @click.option('--proxy', type=str, help="Proxy server to use for testing/domain detail.")
 @click.option('--existing', type=str, help="Mirror exists already, just add to github.")
@@ -37,7 +38,7 @@ import click
 @click.option('--mode', type=click.Choice(['daemon', 'web', 'console']), default='console', help="Mode: daemon, web, console")
 @click.option('--ooni', type=int, help="OONI Probe Data set range")
 
-def automation(testing, domain, proxy, existing, delete, domain_list, mirror_list, log,
+def automation(testing, domain, test, proxy, existing, delete, domain_list, mirror_list, log,
     mirror_type, replace, nogithub, remove, report, mode, num, generate_report, s3, ooni):
     configs = get_configs()
     logger.debug(f"Repo: {configs['repo']}")
@@ -50,10 +51,10 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
                 else:
                     print(f"Domain {domain} deleted from github, and {delete}")
         elif replace:
-            convert_domain(domain, 'n')
+            delete_deprecated(domain)
             replace_mirror(domain=domain, existing=existing, replace=replace, nogithub=nogithub, mirror_type=mirror_type, mode=mode)
         elif remove:
-            convert_domain(domain, 'n')
+            delete_deprecated(domain)
             removed = remove_mirror(domain=domain, remove=remove, nogithub=nogithub)
             if mode == 'console':
                 print(removed)
@@ -65,13 +66,13 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
                 print (f"Result: {s3_storage_add}")
         elif mirror_type or existing:
             domain = strip_www(domain)
-            convert_domain(domain, 'n')
+            delete_deprecated(domain,)
             new_add(domain=domain, mirror_type=mirror_type, nogithub=nogithub, existing=existing, mode=mode)
             domain_testing(proxy, mode, domain)
         elif report:
             domain_reporting(domain=domain, mode=mode)
         else:
-            domain_data = mirror_detail(domain=domain, proxy=proxy, mode=mode, testing=False)
+            domain_data = mirror_detail(domain=domain, proxy=proxy, mode=mode, test=test)
             if mode == 'console':
                 if not domain_data:
                     print("No data returned!")
@@ -86,10 +87,6 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
             test = 'y'
         if test.lower() != 'n':
             domain_testing(proxy, mode, '')
-        if mode == 'console':
-            convert = input("Convert all (y/N)?")
-            if convert.lower() == 'y':
-                convert_all()
     elif generate_report:
         generate_admin_report(mode)
             
@@ -132,6 +129,7 @@ def domain_testing(proxy, mode, chosen_domain):
         if ((not chosen_domain) or (chosen_domain == domain['main_domain'])):
             domain_data = mirror_detail(domain=domain['main_domain'], proxy=proxy, mode=mode, test=True)
             reporting = send_report(domain_data, mode)
+            delete_deprecated(domain)
             if mode =='console':
                 print(f"Reported? {reporting}")
         else:
@@ -149,18 +147,8 @@ def delete_domain(domain, nogithub):
     print(f"Deleting {domain}...")
     domain_data = check(domain)
     exists = domain_data['exists']
-    if 'available_alternatives' in domain_data:
-        print(f"Preexisting: {exists}, current Alternatives: {domain_data['available_alternatives']}")
-    else:
-        if 'available_mirrors' in domain_data:
-            current_mirrors = domain_data['available_mirrors']
-        else:
-            current_mirrors = []
-        if 'available_onions' in domain_data:
-            current_onions = domain_data['available_onions']
-        else:
-            current_onions = []
-        print(f"Preexisting: {exists}, current Mirrors: {current_mirrors}, current onions: {current_onions}")
+    print(f"Preexisting: {exists}, current Alternatives: {domain_data['available_alternatives']}")
+    
     if not exists:
         print("Domain doesn't exist!")
         return False

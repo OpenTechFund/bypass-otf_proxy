@@ -256,11 +256,6 @@ def check(url):
     for site in mirrors['sites']:
         if site_match(site['main_domain'], url):
             exists = True
-            if 'available_alternatives' in site:
-                available_alternatives = site['available_alternatives']
-            else:
-                available_alternatives = []
-
             if 'available_mirrors' in site:
                 available_mirrors = site['available_mirrors']
             else:
@@ -276,6 +271,11 @@ def check(url):
             else:
                 available_ipfs_nodes = []
             
+            if 'available_alternatives' in site:
+                available_alternatives = site['available_alternatives']
+            else:
+                available_alternatives = []
+
             return {
                 'main_domain': site['main_domain'],
                 'requested_url': url,
@@ -289,158 +289,38 @@ def check(url):
     # No match       
     return {"exists": False, "alternatives" : 'None'}
 
-def convert_all():
-    """
-    Convert all domains to v2
-    """
-    mirrors = domain_list()
-    mirrors['version'] = '2.0'
-    for domain in mirrors['sites']:
-        converted_domain = convert_process(domain)
-        if not converted_domain: #domain already converted!
-            continue
-        else:
-            domain['available_alternatives'] = converted_domain
-        print(f"New data for {domain['main_domain']}: {domain}")
-    
-    commit_msg = "Updated to convert all domains to v2 - generated from automation script"
-    final_mirrors = json.dumps(mirrors, indent=4)
-    saved = save_mirrors(final_mirrors, commit_msg)
-    if saved:
-        print("Converted!")
-        return True
-    else:
-        print("Not Converted!")
-        return False
-
-def convert_process(domain_data):
-    """
-    The algorithm to convert the domain
-    """
-    configs = get_configs()
-    ipfs_domain = configs['ipfs_domain']
-    now = datetime.datetime.now()
-    logger.debug(f"Old domain data: {domain_data}")
-    ip_match = re.compile('[0-9]{1,3}[\.]{1}[0-9]{1,3}[\.]{1}[0-9]{1,3}[\.]{1}[0-9]{1,3}')
-    proto_match = re.compile(':\/\/')
-    if ('available_alternatives' not in domain_data) or (not domain_data['available_alternatives']):
-        logger.debug("No alternatives.")
-        available_alternatives = []
-        if 'available_mirrors' in domain_data:
-            for mirror in domain_data['available_mirrors']:
-                alternative = {
-                    'created_at': str(now),
-                    'updated_at': str(now)
-                }
-                if ip_match.search(mirror): # it's an IP address, thus a mirror
-                    alternative['type'] = 'mirror'
-                    alternative['proto'] = 'http'
-                    if not proto_match.search(mirror):
-                        alternative['url'] = 'http://' + mirror
-                    else:
-                        alternative['url'] = mirror
-                elif ('fastly' in mirror) or ('cloudfront' in mirror) or ('azureedge' in mirror):
-                    alternative['type'] = 'proxy'
-                    alternative['proto'] = 'https'
-                    if not proto_match.search(mirror):
-                        alternative['url'] = 'https://' + mirror
-                    else:
-                        alternative['url'] = mirror
-                else:
-                    alternative['type'] = 'unknown'
-                    alternative['proto'] = 'https'
-                    if not proto_match.search(mirror):
-                        alternative['url'] = 'https://' + mirror
-                    else:
-                        alternative['url'] = mirror
-                available_alternatives.append(alternative)
-                logger.debug(f"Alternative: {alternative}")
-        if 'available_onions' in domain_data:
-            for onion in domain_data['available_onions']:
-                alternative = {
-                    'created_at': str(now),
-                    'updated_at': str(now),
-                    'proto': 'tor',
-                    'type': 'eotk'
-                }
-                if not proto_match.search(onion):
-                    alternative['url'] = 'https://' + onion
-                else:
-                    alternative['url'] = onion
-                available_alternatives.append(alternative)
-                logger.debug(f"Alternative: {alternative}")
-        if 'available_ipfs_nodes' in domain_data:
-            for ipfs_node in domain_data['available_ipfs_nodes']:
-                alternative = {
-                    'created_at': str(now),
-                    'updated_at': str(now),
-                    'proto': 'https',
-                    'type': 'ipfs_node'
-                }
-                if not proto_match.search(ipfs_node):
-                    alternative['url'] = 'https://' + ipfs_domain + ipfs_node
-                else:
-                    alternative['url'] = ipfs_node
-                available_alternatives.append(alternative)
-                logger.debug(f"Alternative: {alternative}")
-        return available_alternatives
-    else:
-        logger.debug("Domain already converted!")
-        return False # Domain already converted
-
 def delete_deprecated(domain):
     """
     Delete deprecated keys
     """
     domain_data = check(domain)
-    del domain_data['available_mirrors']
-    del domain_data['available_onions']
-    del domain_data['available_ipfs_nodes']
+    changed = False
+    if 'available_mirrors' in domain_data:
+        del domain_data['available_mirrors']
+        changed = True
+    if 'available_onions' in domain_data:
+        del domain_data['available_onions']
+        changed = True
+    if 'available_ipfs_nodes' in domain_data:
+        del domain_data['available_ipfs_nodes']
+        changed = True
 
-    mirrors = domain_list()
-    for mirror in mirrors['sites']:
-        if domain == mirror['main_domain']:
-            mirrors['sites'].remove(mirror)
-            mirrors['sites'].append(domain_data)
-    commit_msg = f"Updated to delete deprecated keys from {domain} - generated from automation script"
-    final_mirrors = json.dumps(mirrors, indent=4)
-    saved = save_mirrors(final_mirrors, commit_msg)
-    if saved:
-        return True
+    print(f"Domain Data {domain_data}, changed: {changed}")
+    if changed:
+        mirrors = domain_list()
+        for mirror in mirrors['sites']:
+            if domain == mirror['main_domain']:
+                mirrors['sites'].remove(mirror)
+                mirrors['sites'].append(domain_data)
+        commit_msg = f"Updated to delete deprecated keys from {domain} - generated from automation script"
+        final_mirrors = json.dumps(mirrors, indent=4)
+        saved = save_mirrors(final_mirrors, commit_msg)
+        if saved:
+            return True
+        else:
+            return False
     else:
-        return False 
-
-
-def convert_domain(domain, delete):
-    """
-    Convert domain from v1 to v2
-    """
-    configs = get_configs()
-    domain_data = check(domain)
-    if 'exists' not in domain_data:
-        return
-    logger.debug("Converting...")
-    available_alternatives = convert_process(domain_data)
-    if not available_alternatives:
-        return
-
-    domain_data['available_alternatives'] = available_alternatives
-    logger.debug(f"New Domain Data: {domain_data}")
-
-    mirrors = domain_list()
-    for mirror in mirrors['sites']:
-        print(f"Mirror: {mirror}")
-        if domain == mirror['main_domain']:
-            mirrors['sites'].remove(mirror)
-            mirrors['sites'].append(domain_data)
-    commit_msg = f"Updated to convert domain {domain} to v2 - generated from automation script"
-    final_mirrors = json.dumps(mirrors, indent=4)
-    saved = save_mirrors(final_mirrors, commit_msg)
-    if saved:
-        return True
-    else:
-        return False 
-
+        return False
 
 def edit_domain_in_repo(old_domain, new_domain):
     """
