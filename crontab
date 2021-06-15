@@ -1,2 +1,18 @@
-## Sample crontab entry to save local logs to S3 for analysis by host
-15 05 * * * cd bypass-otf_proxy/bcapp; /path/to/virtualenv/bin/python log_stats.py --justsave --recursive
+# Move local logs each week
+15 7 * * 2 cd  /path/to/otf_proxy/bcapp/flaskapp ; ~/.local/share/virtualenvs/otf_proxy-5CMfkb2Y/bin/python move_logs.py --daemon --zip
+
+# Run logfile analysis each week
+30 10 * * 2 cd /path/to/otf_proxy/bcapp/flaskapp ; /path/to/venv/bin/python log_stats.py --unzip
+
+# Run analysis of ooni data each week
+15 04 * * 1 cd  /path/to/otf_proxy/bcapp/flaskapp ; ~/.local/share/virtualenvs/otf_proxy-5CMfkb2Y/bin/python automation.py --ooni=7 mode=daemon
+
+# Domain Testing each day
+30 08 * * * cd  /path/to/otf_proxy/bcapp/flaskapp/; ~/.local/share/virtualenvs/otf_proxy-5CMfkb2Y/bin/python automation.py --testing --mode=daemon
+
+# Generate Report
+24 11 * * * /path/to/otf_proxy/bcapp/flaskapp/; ~/.local/share/virtualenvs/otf_proxy-5CMfkb2Y/bin/python automation.py --generate-report --mode=daemon
+
+# Database Backups daily
+15 12 * * * /path/to/otf_proxy/bcapp/flaskapp/pg_backup.sh
+
