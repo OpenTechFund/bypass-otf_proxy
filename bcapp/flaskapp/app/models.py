@@ -66,6 +66,21 @@ class Report(db.Model):
     def __repr__(self):
         return '<id {}>'.format(self.id)
 
+class OONIReport(db.Model):
+    __tablename__ = "ooni_reports"
+    id = db.Column(db.Integer, primary_key=True)
+    date_reported = db.Column(db.DateTime)
+    domain_id = db.Column(db.Integer)
+    mirror_id = db.Column(db.Integer)
+    url_accessed = db.Column(db.String)
+    country = db.Column(db.String(2))
+    blocked = db.Column(db.String)
+    dns_consistency = db.Column(db.String)
+    failure = db.Column(db.String)
+
+    def __repr__(self):
+        return '<id {}>'.format(self.id)
+
 class Token(db.Model):
     __tablename__ = "auth_tokens"
     id = db.Column(db.Integer, primary_key=True)

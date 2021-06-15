@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="title">
+  Bypass Censorship Application - OONI Blocks
+</h1>
+<h2 class="subtitle">
+  Any OONI reports on domains
+</h2>
+<table class="table">
+  <thead>
+      <tr>
+          <th>
+            Date Reported
+          </th>
+          <th>
+            Domain
+          </th>
+          <th>
+            Country Reported
+          </th>
+          <th>
+            Blocked?
+          </th>
+          <th>
+            DNS Consistency
+          </th>
+          <th>
+            Failure?
+          </th>
+      </tr>
+      </thead>
+      <tbody>
+        {% for item in ooni_blocks %}
+        {% if item.blocked != 'false' or item.dns_consistency != 'consistent' %}
+          <tr class="is-selected">
+        {% else %}
+          <tr>
+        {% endif %}
+          <td>
+            {{ item.date_reported }}
+          </td>
+          <td>
+            {{ item.domain }}
+          </td>
+          <td>
+            {{ item.country }}
+          </td>
+          <td>
+            {{ item.blocked }}
+          </td>
+          <td>
+            {{ item.dns_consistency }}
+          </td>
+          <td>
+            {{ item.failure }}
+          </td>
+        </tr>
+      </tbody>
+        {% endfor %}
+{% endblock %}

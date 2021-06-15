@@ -1,13 +1,42 @@
 import datetime
 import logging
 from app import app
-from app.models import User, Token, Domain, Mirror, Report, LogReport, DGDomain, DomainGroup
+from app.models import User, Token, Domain, Mirror, Report, LogReport, DGDomain, DomainGroup, OONIReport
 from sqlalchemy import desc
+import pycountry
 from . import db
 import repo_utilities
 import db_utilities
 
 logger = logging.getLogger('logger')
+
+def ooni_blocks(admin, dg_id):
+    """
+    Get current list of any ooni blocks
+    """
+    if admin:
+        dg_id = False
+    domains = get_domain_list(dg_id)
+    ooni_reports = OONIReport.query.order_by(OONIReport.date_reported.desc()).all()
+    ooni_blocks = []
+    for o_rpt in ooni_reports:
+        include = False
+        for domain in domains:
+            if o_rpt.domain_id == domain:
+                include = True
+        if include:
+            country = pycountry.countries.get(alpha_2=o_rpt.country)
+            ooni_blocks.append({
+                'date_reported': o_rpt.date_reported,
+                'domain': domains[o_rpt.domain_id],
+                'country': country.name,
+                'blocked': o_rpt.blocked,
+                'dns_consistency': o_rpt.dns_consistency,
+                'failure': o_rpt.failure
+            })
+
+    return ooni_blocks
+
 
 def list_log_reports(domain):
     """

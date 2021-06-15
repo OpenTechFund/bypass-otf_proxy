@@ -8,7 +8,7 @@ import configparser
 import logging
 from aws_utils import cloudfront_add, cloudfront_replace, cloudfront_add_logging, add_s3_storage
 from repo_utilities import add, check, domain_list, remove_domain, remove_mirror, convert_domain, convert_all, strip_www
-from report_utilities import domain_reporting, send_report, generate_admin_report
+from report_utilities import domain_reporting, send_report, generate_admin_report, get_ooni_data
 from log_reporting_utilities import domain_log_reports, domain_log_list
 from mirror_tests import mirror_detail
 from fastly_add import fastly_add, fastly_replace
@@ -35,9 +35,10 @@ import click
 @click.option('--report', is_flag=True, default=False, help="Get report from api database")
 @click.option('--generate_report', is_flag=True, default=False, help="Generate report and possibly send email to admins, etc.")
 @click.option('--mode', type=click.Choice(['daemon', 'web', 'console']), default='console', help="Mode: daemon, web, console")
+@click.option('--ooni', type=int, help="OONI Probe Data set range")
 
 def automation(testing, domain, proxy, existing, delete, domain_list, mirror_list, log,
-    mirror_type, replace, nogithub, remove, report, mode, num, generate_report, s3):
+    mirror_type, replace, nogithub, remove, report, mode, num, generate_report, s3, ooni):
     configs = get_configs()
     logger.debug(f"Repo: {configs['repo']}")
     if domain:
@@ -76,6 +77,8 @@ def automation(testing, domain, proxy, existing, delete, domain_list, mirror_lis
                     print("No data returned!")
             return
 
+    elif ooni:
+            get_ooni_data(ooni)
     elif testing:
         if mode == 'console':
             test = input("Test all (Y/n)?")

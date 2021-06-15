@@ -2,12 +2,15 @@ import datetime
 import logging
 import os
 import re
+import gzip
 import socket
 import json
 import datetime
 from dotenv import load_dotenv
 import sqlalchemy as db
 from system_utilities import get_configs, send_email
+from repo_utilities import site_match
+import boto3
 
 logger = logging.getLogger('logger')
 
@@ -255,3 +258,101 @@ def send_report(domain_data, mode):
         result = connection.execute(insert)
 
     return True
+def get_ooni_data(range):
+    """
+    Get data from OONI S3 bucket
+    """
+    configs = get_configs()
+    bucket = 'ooni-data-eu-fra'
+    
+    client = boto3.client('s3')
+    #get date range
+    now = datetime.datetime.now()
+    then = now - datetime.timedelta(days=range)
+    delta = datetime.timedelta(days=1)
+
+    logger.debug(f"Now: {now} Then: {then}")
+
+    engine = db.create_engine(configs['database_url'])
+    connection = engine.connect()
+    metadata = db.MetaData()
+
+    ooni_reports = db.Table('ooni_reports', metadata, autoload=True, autoload_with=engine)
+
+    file_list = []
+    logger.debug("Getting OONI file list from S3...")
+    while then <= now:
+        date_str = then.strftime('%Y%m%d')
+        file_date = 'raw/' + date_str
+        then += delta
+
+        date_report_list = client.list_objects_v2(
+            Bucket=bucket,
+            Prefix=file_date
+        )
+
+        for s3_file in date_report_list['Contents']:
+            if ('webconnectivity' in s3_file['Key']) and ('jsonl' in s3_file['Key']):
+                file_list.append(s3_file['Key'])
+
+
+    # Process Files
+    domain_list, mirror_list = lists()
+
+    matching_domain_data = {}
+    for domain in domain_list:
+        matching_domain_data[domain['name']] = []
+
+    for file in file_list:
+        file_parts = file.split('/')
+        local_name = ('-').join(file_parts)
+        local_file_path = configs['local_tmp'] + '/' + local_name
+
+        logger.debug(f"Downloading to: {local_file_path}")
+        with open(local_file_path, 'wb') as file_data:
+            client.download_fileobj(bucket, file, file_data)
+
+        data = []
+        
+        with gzip.open(local_file_path) as raw_file:
+            line = raw_file.readline()
+            json_data = json.loads(line)
+            data.append(json_data)
+
+        os.remove(local_file_path)      
+       
+        for jdata in data:
+            logger.debug(f"input: {jdata['input']}")
+            domain_name = False
+            for domain in domain_list:
+                match = site_match(domain['name'], jdata['input'])
+                if match:
+                    domain_name = domain['name']
+                    domain_id = domain['id']
+            if not domain_name:
+                logger.debug("No match.")
+                continue
+    
+            date_reported = datetime.datetime.strptime(jdata['measurement_start_time'], '%Y-%m-%d %H:%M:%S')
+            matching_domain_data[domain_name] = {
+                'domain_id': domain_id,
+                'url_accessed': jdata['input'],
+                'country': jdata['probe_cc'],
+                'blocked': jdata['test_keys']['blocking'],
+                'dns_consistency': jdata['test_keys']['dns_consistency'],
+                'date_reported': date_reported
+            }       
+            
+            for key in jdata['test_keys']['requests']:
+                for s_key in key:
+                    if s_key == 'failure':
+                        matching_domain_data[domain_name]['failure'] = key['failure']
+
+            print(f"Matching Domain Data for {domain_name}:{matching_domain_data[domain_name]}")
+            # Make report
+            ooni_report_data = matching_domain_data[domain_name]
+
+            insert = ooni_reports.insert().values(**ooni_report_data)
+            result = connection.execute(insert)
+
+    return

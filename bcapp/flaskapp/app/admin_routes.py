@@ -481,6 +481,10 @@ def reports():
         {
             'name': "Monthly Aggregate Report",
             'report': 'monthly_bad'
+        },
+        {
+            'name': "Blocks reported by OONI",
+            'report': 'ooni_blocks'
         }
     ]
     return render_template('reports.html', name=current_user.name, report_types=report_types, domains=domains)
@@ -523,6 +527,12 @@ def bad_mirrors():
 def monthly_bad():
     monthly_bad = admin_utilities.monthly_bad(current_user.admin, current_user.domain_group_id)
     return render_template('monthly_bad.html', name=current_user.name, monthly_bad=monthly_bad, admin=current_user.admin)
+
+@app.route('/admin/ooni_blocks')
+@login_required
+def ooni_blocks():
+    ooni_blocks = admin_utilities.ooni_blocks(current_user.admin, current_user.domain_group_id)
+    return render_template('ooni_blocks.html', admin=current_user.admin, name=current_user.name, ooni_blocks=ooni_blocks)
 
 ### Domain Group User Admin
 

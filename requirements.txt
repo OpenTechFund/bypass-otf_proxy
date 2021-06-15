@@ -7,4 +7,5 @@ Flask
 Flask-SQLAlchemy
 sh
 simple-AWS
-python-dotenv
+python-
+pycountry
