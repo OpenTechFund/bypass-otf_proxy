@@ -32,7 +32,7 @@
       </thead>
       <tbody>
         {% for item in ooni_blocks %}
-        {% if item.blocked != 'false' or item.dns_consistency != 'consistent' %}
+        {% if item.blocked != 'false' or item.dns_consistency == 'inconsistent' %}
           <tr class="is-selected">
         {% else %}
           <tr>
