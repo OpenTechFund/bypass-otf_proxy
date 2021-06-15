@@ -265,7 +265,9 @@ def get_ooni_data(range):
     configs = get_configs()
     bucket = 'ooni-data-eu-fra'
     
-    client = boto3.client('s3')
+    session = boto3.Session(profile_name=configs['profile'])
+    client = session.client('s3')
+    
     #get date range
     now = datetime.datetime.now()
     then = now - datetime.timedelta(days=range)
