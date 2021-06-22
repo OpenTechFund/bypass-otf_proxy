@@ -1,16 +1,18 @@
 {
-    "auth_token": "authentication token",
     "domain" : "domain report is about",
-    "domain_status" : "status code for domain (is it blocked?)",
-    "domain_content": "Content of status",
+    "url_requested": "requested URL",
+    "domain_status" : "http status code for domain (is it blocked?)",
+    "domain_content": "http content of status",
     "mirror_url" : "url of mirror site",
-    "mirror_status" : "status code for mirror",
-    "mirror_content": "Status content of mirror",
+    "mirror_status" : "http status code for mirror",
+    "mirror_content": "http status content of mirror",
     "user_agent" : "User Agent string from browser",
-    "ext_version" : "Version of extension",
+    "ext_version" : "Version of BC extension",
     "ext_uuid": "UUID of extension install",
-    "ip": "IP address",
+    "ip": "Requesting IP address",
     "latitude" : "Latitude",
     "longitude" : "Longitude",
-    "accuracy": "Accuracy of lat+long"
+    "accuracy": "Accuracy of lat+long",
+    "failure_detail": "Detail of failure, e.g. dns lookup failure, connection failure",
+    "manual_report_notes": "Notes in manual report"
 }

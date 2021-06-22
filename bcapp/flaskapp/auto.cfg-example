@@ -2,6 +2,7 @@
 roleArn = 
 profile = 
 region = 
+ecs_log_group = 
 mirror_docker_image = 
 subnet = 
 security_group = 
@@ -34,6 +35,9 @@ smtp_password =
 log_level = DEBUG
 local_tmp = 
 ipfs_peer = 
+ipfs_domain = 
+from_email = 
+api_requests = public/auth
 
 [DATABASE]
 url = 
