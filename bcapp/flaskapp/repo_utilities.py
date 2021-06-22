@@ -344,5 +344,70 @@ def edit_domain_in_repo(old_domain, new_domain):
         else:
             return False
 
-
+def missing_mirrors(**kwargs):
+    """
+    Find domains without certain alternatives
+    If domain is supplied, return list of types not included
+    If type is supplied, return list of domains without that type
+    args: kwargs
+    kwarg: [type]
+    kwarg: [domain]
+    """
+    logger.debug(f"Finding missing mirrors...")
     
+    domains = domain_list()
+    if 'domain' in kwargs:
+        search = 'domain'
+    elif 'missing' in kwargs:
+        search = 'type'
+    else:
+        return False
+
+    logger.debug(f"Search {search}")
+    missing_list = []
+    for domain in domains['sites']:
+        if 'available_alternatives' not in domain:
+            continue
+        if ((search == 'domain') and (kwargs['domain'] == domain['main_domain'])):
+            missing = domain_missing(domain['available_alternatives'])
+            return missing
+
+        elif search == 'type': #search for missing domains
+            missing = domain_missing(domain['available_alternatives'])
+            if kwargs['missing'] in missing:
+                missing_list.append(domain['main_domain'])
+    print(f"Missing: {missing_list}")
+    logger.debug(f"Missing: {missing_list}")
+    return missing_list
+
+def domain_missing(alternatives):
+    """
+    finding missing alternatives in each domain
+    """
+    alt_types = [
+        'cloudfront',
+        'fastly',
+        'azure',
+        'onion',
+        'mirror',
+        'ipfs'
+    ]
+    found = []
+    for alternative in alternatives:
+        for alt_type in alt_types:
+            if alternative['proto'] == 'tor':
+                found.append('onion')
+            elif alternative['type'] == 'proxy':
+                if 'fastly' in alternative['url']:
+                    found.append('fastly')
+                elif 'cloudfront' in alternative['url']:
+                    found.append('cloudfront')
+                elif 'azureedge' in alternative['url']:
+                    found.append('azure')
+            elif alternative['type'] == 'mirror':
+                found.append('mirror')
+            elif alternative['type'] == 'ipfs':
+                found.append('ipfs')
+
+    missing = list(set(alt_types) - set(found))
+    return missing

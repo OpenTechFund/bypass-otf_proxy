@@ -7,7 +7,7 @@ import sys
 import configparser
 import logging
 from aws_utils import cloudfront_add, cloudfront_replace, cloudfront_add_logging, add_s3_storage
-from repo_utilities import add, check, domain_list, remove_domain, remove_mirror, strip_www, delete_deprecated
+from repo_utilities import add, check, domain_list, missing_mirrors, remove_domain, remove_mirror, strip_www, delete_deprecated
 from report_utilities import domain_reporting, send_report, generate_admin_report, get_ooni_data
 from log_reporting_utilities import domain_log_reports, domain_log_list
 from mirror_tests import mirror_detail
@@ -16,6 +16,8 @@ from azure_utilities import azure_add, azure_replace
 from system_utilities import get_configs
 from ipfs_utils import ipfs_add
 import click
+
+type_choice = ['cloudfront', 'azure', 'fastly', 'onion', 'mirror', 'ipfs']
 
 @click.command()
 @click.option('--testing', is_flag=True, default=False, help="Domain testing of all available mirrors and onions")
@@ -31,15 +33,16 @@ import click
 @click.option('--remove', type=str, help="Mirror or onion to remove")
 @click.option('--domain_list', is_flag=True, default=False, help="List all domains and mirrors/onions")
 @click.option('--mirror_list', is_flag=True, help="List mirrors for domain")
-@click.option('--mirror_type', type=click.Choice(['cloudfront', 'azure', 'fastly', 'onion', 'mirror', 'ipfs']), help="Type of mirror")
+@click.option('--mirror_type', type=click.Choice(type_choice), help="Type of mirror")
 @click.option('--nogithub', is_flag=True, default=False, help="Do not add to github")
 @click.option('--report', is_flag=True, default=False, help="Get report from api database")
 @click.option('--generate_report', is_flag=True, default=False, help="Generate report and possibly send email to admins, etc.")
 @click.option('--mode', type=click.Choice(['daemon', 'web', 'console']), default='console', help="Mode: daemon, web, console")
 @click.option('--ooni', type=int, help="OONI Probe Data set range")
+@click.option('--missing', type=click.Choice(type_choice + ['domain']), help="Get missing for alternative type or domain - use 'domain' or 'cloudfront', '")
 
 def automation(testing, domain, test, proxy, existing, delete, domain_list, mirror_list, log,
-    mirror_type, replace, nogithub, remove, report, mode, num, generate_report, s3, ooni):
+    mirror_type, replace, nogithub, remove, report, mode, num, generate_report, s3, ooni, missing):
     configs = get_configs()
     logger.debug(f"Repo: {configs['repo']}")
     if domain:
@@ -71,6 +74,8 @@ def automation(testing, domain, test, proxy, existing, delete, domain_list, mirr
             domain_testing(proxy, mode, domain)
         elif report:
             domain_reporting(domain=domain, mode=mode)
+        elif missing:
+            missing_mirrors(domain=domain)
         else:
             domain_data = mirror_detail(domain=domain, proxy=proxy, mode=mode, test=test)
             if mode == 'console':
@@ -78,8 +83,10 @@ def automation(testing, domain, test, proxy, existing, delete, domain_list, mirr
                     print("No data returned!")
             return
 
+    elif missing:
+        missing_mirrors(missing=missing)
     elif ooni:
-            get_ooni_data(ooni)
+        get_ooni_data(ooni)
     elif testing:
         if mode == 'console':
             test = input("Test all (Y/n)?")

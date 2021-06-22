@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="title">
+  Bypass Censorship Application - See Missing Mirror Types
+</h1>
+
+<h2>See Missing Types by Domain</h2>
+  <form action="{{ url_for ('see_missing') }}">
+    <select name='domain_choice'>
+      {% for domain in domains %}
+      <option value="{{ domain }}">{{ domain }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit">Submit</button>
+  </form>
+  <hr>
+<h2> See Missing Domains by Type</h2>
+<form action="{{ url_for ('see_missing') }}">
+    <select name='type_choice'>
+        <option value="cloudfront">CloudFront</option>
+        <option value="azure">Azure</option>
+        <option value="fastly">Fastly</option>
+        <option value="mirror">Mirror</option>
+        <option value="onion">Tor Onion</option>
+        <option value="IPFS">IPFS (InterPlanetary File System</option>
+      </select>
+      <button type="submit">Submit</button>
+    </form>
+<hr>
+<p>
+    {% if missing %}
+        {% for missed in missing %}
+            <p>{{ missed }}</p>
+        {% endfor %}
+    {% endif %}
+</p>
+{% endblock %}

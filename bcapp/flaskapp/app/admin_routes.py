@@ -402,6 +402,32 @@ def alternatives():
         alternatives = alternatives_list['available_alternatives']
     return render_template('alternatives.html', domain_choice=domain_choice, alternatives=alternatives, url=url, result=result, admin=current_user.admin)
 
+@app.route('/testing/see_missing')
+@login_required
+def see_missing():
+    """
+    See Missing types of alternatives
+    """
+    if current_user.admin:
+        domain_list = Domain.query.all()
+    else:
+        domain_list = admin_utilities.get_domain_subset(current_user.domain_group_id)
+    
+    domains = []
+    for dom in domain_list:
+        if dom.inactive == True:
+            continue
+        domains.append(dom.domain)
+    
+    missing = False
+    if request.args.get('domain_choice'):
+        missing = repo_utilities.missing_mirrors(domain=request.args.get('domain_choice'))
+    elif request.args.get('type_choice'):
+        missing = repo_utilities.missing_mirrors(missing=request.args.get('type_choice'))
+
+    print(f"Missing: {missing}")
+    return render_template('see_missing.html', domains=domains, missing=missing)
+
 ## Reporting
 
 ## Log Reporting
