@@ -6,6 +6,7 @@ from . import db
 import sys
 sys.path.insert(0, '../../')
 from repo_utilities import check
+from system_utilities import get_configs
 
 ## API
 
@@ -23,13 +24,16 @@ def domains_v2():
     """
     Returns in JSON format all alternatives for a domain/url
     """
-    # Auth token in headers
-    try:
-        auth_token = Token.query.filter_by(auth_token=request.headers.get('Authorization')).first()
-    except:
-        return {"alternatives" : "Database Error with token!"}
-    if not auth_token:
-        return {"alternatives": "Unauthorized!"}
+    # Is this public?
+    configs = get_configs()
+    if configs['api_requests'] == 'auth':
+        # Auth token in headers
+        try:
+            auth_token = Token.query.filter_by(auth_token=request.headers.get('Authorization')).first()
+        except:
+            return {"alternatives" : "Database Error with token!"}
+        if not auth_token:
+            return {"alternatives": "Unauthorized!"}
 
     req_data = request.get_json()
     url = req_data['url']
@@ -37,7 +41,8 @@ def domains_v2():
         return {"alternatives" : 'None'}
     
     domain_data = check(url)
-    return domain_data
+    alternatives = {"alternatives": domain_data['available_alternatives']}
+    return alternatives
 
 
 ## V1 Routes --- To Be Deprecated ---
