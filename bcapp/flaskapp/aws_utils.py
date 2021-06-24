@@ -81,7 +81,7 @@ def cloudfront_add(**kwargs):
     )
     logger.debug(f"Response: {response}")
     distro_id = response['Distribution']['Id']
-    if kwargs['mode'] == 'console':
+    if 'mode' in kwargs and kwargs['mode'] == 'console':
         wait = input("Wait for distribution (y/N)?")
         if wait.lower() == 'y':
             logger.debug("And now we wait...")
