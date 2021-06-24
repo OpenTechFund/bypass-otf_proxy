@@ -8,6 +8,7 @@ from app.models import User, Token, Domain, Mirror, Report, LogReport, DomainGro
 from app.forms import UserForm, DomainForm, DomainGroupForm
 from . import db
 from . import admin_utilities
+import db_utilities
 import repo_utilities
 import mirror_tests
 
@@ -131,7 +132,8 @@ def edit_domain(id):
             form.azure_profile_name.data = domain.azure_profile_name
             form.inactive.data = domain.inactive
 
-            alternatives_list = repo_utilities.check(domain.domain)
+            alternatives_list = db_utilities.cross_check(domain.domain)
+
             if not alternatives_list['exists']:
                 alternatives = False
             else:

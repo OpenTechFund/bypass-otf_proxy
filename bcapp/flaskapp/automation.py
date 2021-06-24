@@ -259,13 +259,16 @@ def new_add(**kwargs):
     if 'mode' in kwargs and kwargs['mode'] == 'console':
         print(f"Preexisting: {exists}, current alternatives {current_alternatives}")
         print(f"Adding entry to {kwargs['mirror_type']} ...")
+    else:
+        kwargs['mode'] = 'web'
+
     if kwargs['mirror_type'] == 'cloudfront':
         proto = 'https'
         mtype = 'proxy'
         if kwargs['existing']:
             mirror = kwargs['existing']
         else:
-            mirror = cloudfront_add(domain=kwargs['domain'])
+            mirror = cloudfront_add(domain=kwargs['domain'], mode=kwargs['mode'])
     elif kwargs['mirror_type'] == 'azure':
         proto = 'https'
         mtype = 'proxy'
@@ -287,7 +290,7 @@ def new_add(**kwargs):
             mirror = kwargs['existing']
         else:
             print("Need to include existing url!")
-            return False
+            return "failed: Need to include existing url!"
     elif kwargs['mirror_type'] == 'ipfs':
         proto = 'https'
         mtype = 'ipfs'
@@ -300,15 +303,15 @@ def new_add(**kwargs):
         mtype = 'mirror'
         if 'existing' not in kwargs:
             print("You didn't include URL - mirror type needs that!")
-            return False
+            return "failed: You didn't include URL - mirror type needs that!"
         mirror = kwargs['existing']
     else:
         print("Need to define type of mirror. Use --mirror_type=cloudfront/azure/fastly/onion/mirror/ipfs")
-        return False
+        return "failed: Need to define type of mirror. Use --mirror_type=cloudfront/azure/fastly/onion/mirror/ipfs"
 
     if not mirror:
         print(f"Sorry, mirror not created for {kwargs['domain']}!")
-        return False
+        return "failed: Sorry, mirror not created!"
 
     replace = False
    
@@ -317,7 +320,7 @@ def new_add(**kwargs):
         return False
     else:
         domain_listing = add(domain=kwargs['domain'], mirror=mirror, pre=exists, proto=proto, mtype=mtype, mode=kwargs['mode'])
-        return True
+        return mirror
 
 if __name__ == '__main__':
     configs = get_configs()

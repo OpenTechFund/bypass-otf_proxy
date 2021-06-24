@@ -376,7 +376,6 @@ def missing_mirrors(**kwargs):
             missing = domain_missing(domain['available_alternatives'])
             if kwargs['missing'] in missing:
                 missing_list.append(domain['main_domain'])
-    print(f"Missing: {missing_list}")
     logger.debug(f"Missing: {missing_list}")
     return missing_list
 

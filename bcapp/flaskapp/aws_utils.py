@@ -16,8 +16,10 @@ logger = logging.getLogger('logger')
 def cloudfront_add(**kwargs):
     """
     creates new cloudfront distribution
-    :params kwargs: <domain>
-    :returns nothing
+    :params kwargs
+    :kwarg <domain>
+    :kwarg [mode]
+    :returns url
     """
     configs = get_configs()
 
@@ -79,17 +81,19 @@ def cloudfront_add(**kwargs):
     )
     logger.debug(f"Response: {response}")
     distro_id = response['Distribution']['Id']
-    wait = input("Wait for distribution (y/N)?")
-    if wait.lower() == 'y':
-        logger.debug("And now we wait...")
-        waiter = client.get_waiter('distribution_deployed')
-        waiter.wait(
-            Id=distro_id,
-            WaiterConfig={
-                'Delay': 60,
-                'MaxAttempts':30
-            }
-        )
+    if kwargs['mode'] == 'console':
+        wait = input("Wait for distribution (y/N)?")
+        if wait.lower() == 'y':
+            logger.debug("And now we wait...")
+            waiter = client.get_waiter('distribution_deployed')
+            waiter.wait(
+                Id=distro_id,
+                WaiterConfig={
+                    'Delay': 60,
+                    'MaxAttempts':30
+                }
+            )
+    
     return response['Distribution']['DomainName']
 
 def cloudfront_replace(domain, replace):

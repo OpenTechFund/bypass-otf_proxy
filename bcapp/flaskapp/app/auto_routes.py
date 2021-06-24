@@ -37,7 +37,7 @@ def add_alternative():
                 protocol = 'tor'
             else:
                 protocol = 'https'
-            alternative = Mirror(mirror_type=mirror_type, mirror_url=mirror_url, domain_id=domain_id, protocol=protocol)
+
             # Add to github
             if mirror_type == 'proxy':
                 gh_mt = service
@@ -52,10 +52,14 @@ def add_alternative():
                 nogithub=False,
                 mode='web'
             )
-            if added:
+            alternative = Mirror(mirror_type=mirror_type, mirror_url=added, domain_id=domain_id, protocol=protocol)
+            if 'failed' in added:
+                flash("No Alternative added!")
+            else:
                 db.session.add(alternative)
                 db.session.commit()
                 flash('Alternative Added')
+ 
             return redirect(url_for('edit_domain', id=domain_id))
         else:
             form.domain_id.data = request.args.get('id')
@@ -144,15 +148,20 @@ def edit_alternative():
             else:
                 mirror.protocol = 'https'
 
+            automated = request.form.get('automated')
             
             # Save in github
             replaced = automation.replace_mirror(mirror_type=mirror_type,
                                                 domain=domain.domain,
                                                 replace=form.old_url.data,
                                                 existing=mirror.mirror_url,
-                                                mode='web'
+                                                mode='web',
+                                                automated=automated
                                             )
-            if replaced: #save in database
+            if replaced: 
+                if automated:
+                    mirror.mirror_url = replaced
+                #save in database
                 db.session.commit()
                 flash('Your changes have been saved.')
             

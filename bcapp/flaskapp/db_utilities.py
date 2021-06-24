@@ -7,6 +7,7 @@ import logging
 from dotenv import load_dotenv
 import sqlalchemy as db
 from system_utilities import get_configs
+import repo_utilities
 
 logger = logging.getLogger('logger')
 
@@ -130,3 +131,40 @@ def report_save(**kwargs):
     #logger.debug(f"Report ID: {report_id}")
 
     return
+
+def cross_check(domain):
+    """
+    Making sure all domain alternatives have database entry
+    """
+    repo_list = repo_utilities.check(domain)
+    load_dotenv()
+    engine = db.create_engine(os.environ['DATABASE_URL'])
+    connection = engine.connect()
+    metadata = db.MetaData()
+
+    domains = db.Table('domains', metadata, autoload=True, autoload_with=engine)
+    mirrors = db.Table('mirrors', metadata, autoload=True, autoload_with=engine)
+
+    for alt in repo_list['available_alternatives']:
+        query = db.select([mirrors]).where(mirrors.c.mirror_url==alt['url'])
+        result = connection.execute(query)
+        domain_row = result.fetchone()
+        if domain_row == None:
+            print("DIDN'T LIKE IT")
+            query = db.select([domains]).where(domains.c.domain == domain)
+
+            result = connection.execute(query)
+            domain_row = result.fetchone()
+
+            alternative = {
+                'mirror_type': alt['type'],
+                'mirror_url': alt['url'], 
+                'domain_id': domain_row.id,
+                'protocol': alt['proto']
+            }
+            insert = mirrors.insert().values(**alternative)
+            result = connection.execute(insert)
+        
+    return repo_list
+
+
