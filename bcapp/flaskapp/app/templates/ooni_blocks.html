@@ -32,11 +32,13 @@
       </thead>
       <tbody>
         {% for item in ooni_blocks %}
-        {% if item.blocked != 'false' or item.dns_consistency == 'inconsistent' %}
-          <tr class="is-selected">
-        {% else %}
-          <tr>
-        {% endif %}
+          {% if item.blocked != 'false' %}
+            <tr class='has-background-danger'>
+          {% elif item.dns_consistency == 'inconsistent' %}
+          <tr class="has-background-warning">
+          {% else %}
+            <tr>
+          {% endif %}
           <td>
             {{ item.date_reported }}
           </td>
