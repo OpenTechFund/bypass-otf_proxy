@@ -140,7 +140,7 @@ def forgot_password():
             return redirect(url_for('home'))
     elif request.method == 'GET':
         if request.args.get('token'): #Got a token
-            user = User.query.filter_by(last_token=request.args.get('token')).all()
+            user = User.query.filter_by(last_token=request.args.get('token')).all()[0]
             if user:
                 return render_template('new_password.html', user=user)
             else:
