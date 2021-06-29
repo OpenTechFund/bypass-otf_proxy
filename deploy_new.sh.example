@@ -10,5 +10,6 @@ git pull origin master
 cd $FLASK_PATH
 $FLASK_VENV/flask db migrate
 $FLASK_VENV/flask db upgrade
+echo "Restarting services..."
 sudo service bcapp restart
 sudo service nginx restart

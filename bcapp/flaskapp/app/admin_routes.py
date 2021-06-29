@@ -38,18 +38,19 @@ def admin_domains(status):
         flash('Have to be an admin!')
         return redirect(url_for('profile'))
     else:
+        page = request.args.get('page', 1, type=int)
         if status == 'active':
-            domains = Domain.query.filter(or_(Domain.inactive==False, Domain.inactive==None)).all()
+            domains = Domain.query.filter(or_(Domain.inactive==False, Domain.inactive==None)).paginate(page=page, per_page=20)
             
         else:
-            domains = Domain.query.filter(Domain.inactive==True).all()
+            domains = Domain.query.filter(Domain.inactive==True).paginate(page=page, per_page=20)
 
         dg_domains = DGDomain.query.all()
         domain_groups = DomainGroup.query.all()
         dg_dict = {}
         for dg in domain_groups:
             dg_dict[dg.id] = dg.name
-        for domain in domains:
+        for domain in domains.items:
             for dgd in dg_domains:
                 if dgd.domain_id == domain.id:
                     domain.coded_dg = dg_dict[dgd.domain_group_id]

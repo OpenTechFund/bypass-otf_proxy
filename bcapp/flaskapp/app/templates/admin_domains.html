@@ -47,7 +47,7 @@
     </tr> 
     </thead>
     <tbody>
-        {% for domain in domains %}
+        {% for domain in domains.items %}
         <tr>
             <td>
                 {{ domain.id }}
@@ -92,4 +92,37 @@
         {% endfor %}
     </tbody>
 </table>
+
+<!-- Pagination Links-->
+<div class="text-right">
+    <a href="{{ url_for('admin_domains', page=domains.prev_num, status=status) }}"
+       class="button is-dark 
+       {% if domains.page == 1 %}disabled{% endif %}">
+        &laquo;
+    </a><!-- Loop through the number of pages to display a link for each-->
+    {% for page_num in domains.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}{% if page_num %}
+<!-- Check for the active page and set the link to "Active"-->
+            {% if domains.page == page_num %}
+            <a href="{{ url_for('admin_domains', page=page_num, status=status) }}"
+               class="button is-dark">
+                {{ page_num }}
+            </a>
+            {% else %}
+            <a href="{{ url_for('admin_domains', page=page_num, status=status) }}"
+               class="button is-light">
+                {{ page_num }}
+            </a>
+            {% endif %}
+        {% else %}
+            ...
+        {% endif %}
+    {% endfor %}    <a href="{{ url_for('admin_domains', page=domains.next_num, status=status) }}"
+       class="button is-dark
+       {% if domains.page == domains.pages %}disabled{% endif %}">
+        &raquo;
+    </a>
+</div>
+<p class="text-right mt-3">
+   Showing page {{ domains.page }} of {{ domains.pages }}
+</p>
 {% endblock %}
