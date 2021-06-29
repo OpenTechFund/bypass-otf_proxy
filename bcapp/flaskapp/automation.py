@@ -34,7 +34,6 @@ type_choice = ['cloudfront', 'azure', 'fastly', 'onion', 'mirror', 'ipfs']
 @click.option('--domain_list', is_flag=True, default=False, help="List all domains and mirrors/onions")
 @click.option('--mirror_list', is_flag=True, help="List mirrors for domain")
 @click.option('--mirror_type', type=click.Choice(type_choice), help="Type of mirror")
-@click.option('--nogithub', is_flag=True, default=False, help="Do not add to github")
 @click.option('--report', is_flag=True, default=False, help="Get report from api database")
 @click.option('--generate_report', is_flag=True, default=False, help="Generate report and possibly send email to admins, etc.")
 @click.option('--mode', type=click.Choice(['daemon', 'web', 'console']), default='console', help="Mode: daemon, web, console")
@@ -42,12 +41,12 @@ type_choice = ['cloudfront', 'azure', 'fastly', 'onion', 'mirror', 'ipfs']
 @click.option('--missing', type=click.Choice(type_choice + ['domain']), help="Get missing for alternative type or domain - use 'domain' or 'cloudfront', '")
 
 def automation(testing, domain, test, proxy, existing, delete, domain_list, mirror_list, log,
-    mirror_type, replace, nogithub, remove, report, mode, num, generate_report, s3, ooni, missing):
+    mirror_type, replace, remove, report, mode, num, generate_report, s3, ooni, missing):
     configs = get_configs()
     logger.debug(f"Repo: {configs['repo']}")
     if domain:
         if delete:
-            delete = delete_domain(domain, nogithub)
+            delete = delete_domain(domain)
             if mode == 'console':
                 if not delete:
                     print(f"Domain {domain} not deleted from github.")
@@ -55,10 +54,10 @@ def automation(testing, domain, test, proxy, existing, delete, domain_list, mirr
                     print(f"Domain {domain} deleted from github, and {delete}")
         elif replace:
             delete_deprecated(domain)
-            replace_mirror(domain=domain, existing=existing, replace=replace, nogithub=nogithub, mirror_type=mirror_type, mode=mode)
+            replace_mirror(domain=domain, existing=existing, replace=replace, mirror_type=mirror_type, mode=mode)
         elif remove:
             delete_deprecated(domain)
-            removed = remove_mirror(domain=domain, remove=remove, nogithub=nogithub)
+            removed = remove_mirror(domain=domain, remove=remove)
             if mode == 'console':
                 print(removed)
         elif log:
@@ -70,7 +69,7 @@ def automation(testing, domain, test, proxy, existing, delete, domain_list, mirr
         elif mirror_type or existing:
             domain = strip_www(domain)
             delete_deprecated(domain,)
-            new_add(domain=domain, mirror_type=mirror_type, nogithub=nogithub, existing=existing, mode=mode)
+            new_add(domain=domain, mirror_type=mirror_type, existing=existing, mode=mode)
             domain_testing(proxy, mode, domain)
         elif report:
             domain_reporting(domain=domain, mode=mode)
@@ -144,11 +143,10 @@ def domain_testing(proxy, mode, chosen_domain):
     return
 
 
-def delete_domain(domain, nogithub):
+def delete_domain(domain):
     """
     Delete domain
     :arg domain
-    :arg nogithub
     :returns nothing
     """
     print(f"Deleting {domain}...")
@@ -158,9 +156,6 @@ def delete_domain(domain, nogithub):
     
     if not exists:
         print("Domain doesn't exist!")
-        return False
-    elif nogithub:
-        print("You said you wanted to delete a domain, but you also said no to github. Bye!")
         return False
     else:
         removed = remove_domain(domain)
@@ -174,7 +169,6 @@ def replace_mirror(**kwargs):
     :kwarg <replace>
     :kwarg [existing]
     :kwarg [mirror_type]
-    :kwarg [nogithub]
     :kwarg [mode]
     :returns True or False
     """
@@ -208,10 +202,6 @@ def replace_mirror(**kwargs):
         mtype = 'proxy'
 
     if 'existing' in kwargs and kwargs['existing']: # replacing with existing...
-        if 'nogithub' in kwargs and kwargs['nogithub']:
-            if mode == 'console':
-                print("You wanted to replace with existing but didn't want it added to github! Bye!")
-            return False
         domain_listing = add(domain=kwargs['domain'], 
                              mirror=kwargs['existing'], 
                              pre=exists,
@@ -242,7 +232,6 @@ def new_add(**kwargs):
     :kwarg <domain>
     :kwarg <mirror_type>
     :kwarg [existing]
-    :kwarg [nogithub]
     :kwarg [mode]
     :returns True or False
     """
@@ -312,15 +301,9 @@ def new_add(**kwargs):
     if not mirror:
         print(f"Sorry, mirror not created for {kwargs['domain']}!")
         return "failed: Sorry, mirror not created!"
-
-    replace = False
    
-    if kwargs['nogithub']:
-        print(f"You added this mirror: {mirror}. But no changes were made to github")
-        return False
-    else:
-        domain_listing = add(domain=kwargs['domain'], mirror=mirror, pre=exists, proto=proto, mtype=mtype, mode=kwargs['mode'])
-        return mirror
+    domain_listing = add(domain=kwargs['domain'], mirror=mirror, pre=exists, proto=proto, mtype=mtype, mode=kwargs['mode'])
+    return mirror
 
 if __name__ == '__main__':
     configs = get_configs()

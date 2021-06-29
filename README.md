@@ -78,7 +78,6 @@ Options:
   --mirror_list                   List mirrors for domain
   --mirror_type [cloudfront|azure|fastly|onion|ipsf]
                                   Type of mirror
-  --nogithub                      Do not add to github
   --report                        Get report from api database
   --mode [daemon|web|console]     Mode: daemon, web, console
   --help                          Show this message and exit.

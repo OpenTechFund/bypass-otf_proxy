@@ -74,7 +74,6 @@ def remove_mirror(**kwargs):
     Removes a mirror or onion from a domain listing
     :arg kwargs:<domain>
     :arg kwargs:<remove>
-    :arg kwargs:<nogithub>
     """
     mirrors = domain_list()
     for domain in mirrors['sites']:
@@ -84,21 +83,17 @@ def remove_mirror(**kwargs):
     
     commit_msg = f"Removing {kwargs['remove']} from listing - generated automatically by script"
 
-    if not kwargs['nogithub']:
-        final_mirrors = json.dumps(mirrors, indent=4)
-        saved = save_mirrors(final_mirrors, commit_msg)
-        if saved:
-            # Add inactive in database
-            inactive = set_alternative_inactive(kwargs['remove'])
-            if inactive:
-                return "Removed and set to inactive in Database!"
-            else:
-                return "No such alternative in DB!"
+    final_mirrors = json.dumps(mirrors, indent=4)
+    saved = save_mirrors(final_mirrors, commit_msg)
+    if saved:
+        # Add inactive in database
+        inactive = set_alternative_inactive(kwargs['remove'])
+        if inactive:
+            return "Removed and set to inactive in Database!"
         else:
-            return "Didn't save in GitHub"
+            return "No such alternative in DB!"
     else:
-        return f"Removed {kwargs['remove']} but didn't save!"
-
+        return "Didn't save in GitHub"
 
 def save_mirrors(new_mirrors, commit_msg):
     configs = get_configs()

@@ -49,7 +49,6 @@ def add_alternative():
                 domain=domain.domain,
                 mirror_type=gh_mt,
                 existing=mirror_url,
-                nogithub=False,
                 mode='web'
             )
             alternative = Mirror(mirror_type=mirror_type, mirror_url=added, domain_id=domain_id, protocol=protocol)
@@ -82,8 +81,7 @@ def remove_alternative():
         domain = Domain.query.filter(Domain.id==mirror.domain_id).first_or_404()
         remove = repo_utilities.remove_mirror(
             domain=domain.domain,
-            remove=url,
-            nogithub=False
+            remove=url
         )
         flash(remove)
         if source == 'alternatives':
