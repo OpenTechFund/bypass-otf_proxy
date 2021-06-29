@@ -100,6 +100,7 @@ class User(UserMixin, db.Model):
     active = db.Column(db.Boolean)
     notifications = db.Column(db.Boolean)
     user_bio = db.Column(db.String)
+    last_token = db.Column(db.String(60))
 
     def __repr__(self):
         return '<id {}>'.format(self.id)

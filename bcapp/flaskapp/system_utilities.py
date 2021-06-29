@@ -45,7 +45,8 @@ def get_configs():
         'smtp_port': config.get('EMAIL', 'smtp_port'),
         'smtp_user': config.get('EMAIL', 'smtp_user'),
         'smtp_password': config.get('EMAIL', 'smtp_password'),
-        'api_requests': config.get('SYSTEM', 'api_requests')
+        'api_requests': config.get('SYSTEM', 'api_requests'),
+        'web_url': config.get('SYSTEM', 'web_url')
     }
 
     return configs

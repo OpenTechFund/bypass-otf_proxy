@@ -38,6 +38,7 @@ ipfs_peer =
 ipfs_domain = 
 from_email = 
 api_requests = public/auth
+web_url = 
 
 [DATABASE]
 url = 

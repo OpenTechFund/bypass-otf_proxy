@@ -2,12 +2,14 @@ import datetime
 from flask import render_template, redirect, url_for, request, flash, abort, jsonify
 from flask_login import login_required, current_user, login_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
+import secrets
 from app import app
 from app.models import User, Domain
 from . import db
 import repo_utilities
 import mirror_tests
 from .admin_utilities import get_domain_group
+from system_utilities import send_email, get_configs
 
 @app.route('/')
 def home():
@@ -116,6 +118,50 @@ def login_post():
     # if the above check passes, then we know the user has the right credentials
     login_user(user, remember=remember)
     return redirect(url_for('profile'))
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    configs = get_configs()
+    if request.method == 'POST': # Got an email address
+        email = request.form.get('email')
+        user = User.query.filter_by(email=email).first()
+        if user:
+            # create token
+            token = secrets.token_hex(20)
+            message = f"You recently requested a password reset. Please visit this url to reset your password: {configs['web_url']}/forgot_password?token={token}"
+            sent = send_email(email, "Password Reset", message)
+            if sent:
+                user.last_token = token
+                db.session.commit()
+                flash('Sent reset information by email')
+            return redirect(url_for('home'))
+        else:
+            flash('No user by that email address!')
+            return redirect(url_for('home'))
+    elif request.method == 'GET':
+        if request.args.get('token'): #Got a token
+            user = User.query.filter_by(last_token=request.args.get('token')).all()
+            if user:
+                return render_template('new_password.html', user=user)
+            else:
+                flash('Unauthorized!')
+                return redirect(url_for('home'))
+        else:
+            return render_template('reset_password.html')   
+            
+
+@app.route('/set_password', methods=['POST'])
+def set_password():
+    user_id = request.form.get('user_id')
+    user = User.query.filter_by(id=user_id).first()
+    if user:
+        user.password = generate_password_hash(request.form.get('password'))
+        db.session.commit()
+        flash('Password Reset. Login Now')
+        return redirect(url_for('login'))
+    else:
+        flash('Invalid user!')
+        return redirect(url_for('home'))
 
 @app.route('/logout')
 @login_required
