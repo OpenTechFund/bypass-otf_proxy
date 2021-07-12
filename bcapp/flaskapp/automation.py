@@ -94,7 +94,7 @@ def automation(testing, domain, test, proxy, existing, delete, domain_list, mirr
         if test.lower() != 'n':
             domain_testing(proxy, mode, '')
     elif generate_report:
-        generate_admin_report(mode)
+        generate_admin_report(mode=mode, user_id=None)
             
     elif domain_list: #assuming console mode
         dlist = domain_list()

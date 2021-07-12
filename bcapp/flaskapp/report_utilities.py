@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 import sqlalchemy as db
 from system_utilities import get_configs, send_email
 from repo_utilities import site_match
+from db_utilities import get_sys_info
 import boto3
 
 logger = logging.getLogger('logger')
@@ -102,24 +103,25 @@ def translate_reports(report):
     mirror_query = db.select([mirrors])
     mirror_list = connection.execute(mirror_query).fetchall()
 
-    translated_report = f"Date Reported: {report['date_reported']} \n"
-    translated_report += f"User Agent: {report['user_agent']} \n"
+    translated_report = f"Date Reported: {report['date_reported']} "
+    translated_report += f"User Agent: {report['user_agent']} "
     for domain in domain_list:
         if report['domain_id'] == domain['id']:
-            translated_report += f"Domain: {domain['domain']} Status: {report['domain_status']} \n"
+            translated_report += f"Domain: {domain['domain']} Status: {report['domain_status']} "
     
     for mirror in mirror_list:
         if report['mirror_id'] == mirror['id']:
-            translated_report += f"Mirror: {mirror['mirror_url']} Status: {report['mirror_status']} \n"
+            translated_report += f"Mirror: {mirror['mirror_url']} Status: {report['mirror_status']} "
+
+    translated_report += '\n'
 
     return(translated_report)
 
-def generate_admin_report(mode):
+def ooni_reports(date):
     """
-    Generate a report with important data for the day - email if mode is daemon
+    Get ooni report details
+    :arg date
     """
-    logger.debug("Sending Admin Report...")
-    yesterday = datetime.datetime.today() - datetime.timedelta(days=1)
     configs = get_configs()
 
     load_dotenv()
@@ -127,46 +129,113 @@ def generate_admin_report(mode):
     connection = engine.connect()
     metadata = db.MetaData()
 
+    ooni_reports = db.Table('ooni_reports', metadata, autoload=True, autoload_with=engine)
+    query = f"select * from ooni_reports where date_reported > '{date}'"
+    ooni_report_list = connection.execute(query).fetchall()
+
+    number_of_ooni_reports = len(ooni_report_list)
+    number_of_ooni_problems = 0
+    ooni_problems = []
+    for orep in ooni_report_list:
+        if (((orep['blocked'] != 'false') and
+            (orep['failure'] != None)) or
+            (orep['dns_consistency'] == 'inconsistent')):
+            oprob = {}
+            number_of_ooni_problems += 1
+            oprob['url_accessed'] = orep['url_accessed']
+            oprob['country'] = orep['country']
+            oprob['failure'] = orep['failure']
+            oprob['dns_consistency'] = orep['dns_consistency']
+            ooni_problems.append(oprob)
+
+    return number_of_ooni_reports, number_of_ooni_problems, ooni_problems
+
+def generate_admin_report(**kwargs):
+    """
+    Generate a report with important data - email if mode is daemon
+    :arg kwargs
+    :kwarg mode 
+    :kwarg user_id (not used at this time)
+    :returns nothing
+    """
+    logger.debug("Creating Admin Report...")
+    configs = get_configs()
+
+    load_dotenv()
+    engine = db.create_engine(os.environ['DATABASE_URL'])
+    connection = engine.connect()
+    metadata = db.MetaData()
+
+    users = db.Table('users', metadata, autoload=True, autoload_with=engine)
+    domains = db.Table('domains', metadata, autoload=True, autoload_with=engine)
+    dgdomains = db.Table('dg_domains', metadata, autoload=True, autoload_with=engine)
+
+    # List admins
+    user_query = db.select([users]).where(users.c.admin == True)
+    admin_list = connection.execute(user_query).fetchall()
+
+    # List Domain Group Owners
+    # TODO: Generate reports for domain group owners
+    dg_query = "select * from users, domain_groups where CAST(users.domain_group_id as integer)=domain_groups.id and domain_groups.name != 'None'"
+    dg_list = connection.execute(dg_query).fetchall()
+
+    # Get last date
+    last_email_report_sent = get_sys_info(request='last_email_report_sent', update=True)
+    
     reports = db.Table('reports', metadata, autoload=True, autoload_with=engine)
-    report_query = db.select([reports]).where(reports.c.date_reported > yesterday)
+    report_query = db.select([reports]).where(reports.c.date_reported > last_email_report_sent)
     report_list = connection.execute(report_query).fetchall()
 
     important_reports = ""
+    number_of_reports = len(report_list)
+    number_of_problems = 0
     for report in report_list:
-        logger.debug(f"Report: {report}")
         if ((report['domain_status'] != 200) or (report['mirror_status'] != 200)):
+            number_of_problems += 1
             translated_report = translate_reports(report)
             important_reports += translated_report
 
-    if mode == 'daemon':
+    number_of_ooni_reports, number_of_ooni_problems, ooni_problems = ooni_reports(last_email_report_sent)
+    for problem in ooni_problems:
+        orept = f"OONI: URL Accessed: {problem['url_accessed']} Kind of Failure: {problem['failure']} DNS Consistency: {problem['dns_consistency']}\n"
+        important_reports += orept
+
+    if kwargs['mode'] == 'daemon':
         if important_reports:
-            message_to_send = f""" Reporting problematic Domains and/or Alternatives for Today: 
+            message_to_send =  f""" Reporting problematic Domains and/or Alternatives since {last_email_report_sent}: 
+            There were {number_of_reports} domain testing reports, and {number_of_problems} problems.
+
+            There were {number_of_ooni_reports} reports from OONI, with {number_of_ooni_problems} of problems.
+
+            All detailed problem reports are below:
 
             {important_reports}
-            """
+        """        
         else:
-            message_to_send = "No Problematic Domains or Alternatives for the day. Check system."
-
-        users = db.Table('users', metadata, autoload=True, autoload_with=engine)
-        user_query = db.select([users]).where(users.c.admin == True)
-        user_list = connection.execute(user_query).fetchall()
-        for user in user_list:
+            message_to_send = f"No Problematic Domains or Alternatives since {last_email_report_sent}. You might want to check the system."
+        
+        for user in admin_list:
             if user['notifications'] and user['active']:
                 email = send_email(
                             user['email'],
-                            "Daily Report From BC APP",
+                            "Report From BC APP",
                             message_to_send
                         )
                 logger.debug(f"Message Sent to {user['email']}: {email}")
 
     else:
         if important_reports:
-            print(f""" Here are the problematic domains and/or alternatives for Today: 
+            print(f""" Reporting problematic Domains and/or Alternatives for Today: 
+            There were {number_of_reports} domain testing reports, and {number_of_problems} problems.
+
+            There were {number_of_ooni_reports} reports from OONI, with {number_of_ooni_problems} of problems.
+
+            All detailed problem reports are below:
 
             {important_reports}
-            """  ) 
+            """) 
         else:
-            print("No problems reported today - check your crontab!")
+            print(f"No problems reported since {last_email_report_sent} - check your crontab!")
 
     return
 

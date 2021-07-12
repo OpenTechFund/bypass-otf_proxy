@@ -119,3 +119,12 @@ class LogReport(db.Model):
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
+
+
+class SystemSettings(db.Model):
+    __tablename__ = "system_settings"
+    id = db.Column(db.Integer, primary_key=True)
+    last_email_report_sent = db.Column(db.DateTime)
+    last_ooni_report_generated = db.Column(db.DateTime)
+    last_logfile_analysis = db.Column(db.DateTime)
+    last_domain_test = db.Column(db.DateTime)
