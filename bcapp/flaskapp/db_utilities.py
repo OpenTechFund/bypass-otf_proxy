@@ -4,6 +4,7 @@ with database
 """
 import os
 import logging
+import datetime
 from dotenv import load_dotenv
 import sqlalchemy as db
 from system_utilities import get_configs
@@ -167,4 +168,48 @@ def cross_check(domain):
         
     return repo_list
 
+def get_sys_info(**kwargs):
+    """
+    Get system info from database
+    :arg kwargs
+    :kwarg request
+    :kwarg update (True/False)
+    """
+    load_dotenv()
+
+    engine = db.create_engine(os.environ['DATABASE_URL'])
+    connection = engine.connect()
+    metadata = db.MetaData()
+
+    now = datetime.datetime.now()
+
+    sys_settings = db.Table('system_settings', metadata, autoload=True, autoload_with=engine)
+    query = db.select([sys_settings])
+    sys_info = connection.execute(query).fetchone()
+
+    if sys_info == None: # no rows have been saved so far
+        system_info = {
+            'last_email_report_sent': now,
+            'last_ooni_report_generated': now,
+            'last_logfile_analysis': now,
+            'last_domain_test': now
+        }
+        insert = sys_settings.insert().values(**system_info)
+        result = connection.execute(insert)
+    else:
+        a, b, c, d, e = sys_info
+        system_info = {
+            'id': a,
+            'last_email_report_sent': b,
+            'last_ooni_report_generated': c,
+            'last_logfile_analysis': d,
+            'last_domain_test': e
+        }
+
+    if kwargs['update']: #update db with new data
+        update_query = f"update system_settings set {kwargs['request']} = '{now}' where id = 1"
+        result = connection.execute(update_query)
+        
+
+    return system_info[kwargs['request']]
 
