@@ -62,6 +62,8 @@ class Report(db.Model):
     latitude = db.Column(db.Numeric)
     longitude = db.Column(db.Numeric)
     accuracy = db.Column(db.Numeric)
+    failure_detail = db.Column(db.String)
+    manual_report_notes = db.Column(db.String)
     
     def __repr__(self):
         return '<id {}>'.format(self.id)
