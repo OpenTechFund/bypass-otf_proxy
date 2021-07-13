@@ -6,7 +6,7 @@ import logging
 from github import Github
 import tldextract
 from system_utilities import get_configs
-from db_utilities import set_domain_inactive, set_alternative_inactive
+import db_utilities 
 
 logger = logging.getLogger('logger')
 
@@ -61,7 +61,7 @@ def remove_domain(domain):
             saved = save_mirrors(final_mirrors, commit_msg)
             if saved:
                 # Add inactive in database
-                inactive = set_domain_inactive(domain)
+                inactive = db_utilities.set_domain_inactive(domain)
                 if inactive:
                     return "Set to inactive in database!"
                 else:
@@ -87,7 +87,7 @@ def remove_mirror(**kwargs):
     saved = save_mirrors(final_mirrors, commit_msg)
     if saved:
         # Add inactive in database
-        inactive = set_alternative_inactive(kwargs['remove'])
+        inactive = db_utilities.set_alternative_inactive(kwargs['remove'])
         if inactive:
             return "Removed and set to inactive in Database!"
         else:
