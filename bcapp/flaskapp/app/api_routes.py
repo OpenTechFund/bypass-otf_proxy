@@ -101,6 +101,21 @@ def report_domain():
             return {"report" : "Database Error with mirror addition!"}
         mirror_id = mirror.id
 
+    # check values for lat/long/accuracy
+    try:
+        float(req_data['latitude'])
+    except ValueError:
+        req_data['latitude'] = None
+    
+    try:
+        float(req_data['longitude'])
+    except ValueError:
+        req_data['longitude'] = None
+    try:
+        int(req_data['accuracy'])
+    except ValueError:
+        req_data['accuracy'] = None
+
     # Make the report
     req_data['auth_token'] = auth_token.auth_token
     req_data['date_reported'] = now
