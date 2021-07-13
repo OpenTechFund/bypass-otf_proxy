@@ -49,6 +49,7 @@ class Report(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     auth_token = db.Column(db.String)
     date_reported = db.Column(db.DateTime)
+    url_requested = db.Column(db.String)
     domain_id = db.Column(db.Integer)
     mirror_id = db.Column(db.Integer)
     domain_status = db.Column(db.Integer)
@@ -62,6 +63,8 @@ class Report(db.Model):
     latitude = db.Column(db.Numeric)
     longitude = db.Column(db.Numeric)
     accuracy = db.Column(db.Numeric)
+    failure_detail = db.Column(db.String)
+    manual_report_notes = db.Column(db.String)
     
     def __repr__(self):
         return '<id {}>'.format(self.id)

@@ -44,32 +44,7 @@ def domains_v2():
     alternatives = {"alternatives": domain_data['available_alternatives']}
     return alternatives
 
-
-## V1 Routes --- To Be Deprecated ---
-
-@app.route('/api/v1/help/', methods=['GET', 'POST'])
-def help():
-    """
-    Return help info in JSON format
-    """
-    return {"commands" : ['report', 'help', 'domains']}
-
-@app.route('/api/v1/domain/', methods=['GET', 'POST'])
-def domains():
-    """
-    Returns in JSON format all alternatives for a domain/url
-    """
-    # is authentication token correct?
-    try:
-        auth_token = Token.query.filter_by(auth_token=request.args['auth_token']).first()
-    except:
-        return {"report" : "Database Error with token!"}
-    if not auth_token:
-        return {"report": "Unauthorized!"}
-
-    return check(request.args['domain'])
-
-@app.route('/api/v1/report/', methods=['POST'])
+@app.route('/api/v2/report/', methods=['POST'])
 def report_domain():
     """
     Add report of domain to database
@@ -79,11 +54,11 @@ def report_domain():
     # is authentication token correct?
 
     try:
-        auth_token = Token.query.filter_by(auth_token=req_data['auth_token']).first()
+        auth_token = Token.query.filter_by(auth_token=request.headers.get('Authorization')).first()
     except:
-        return {"report" : "Database Error with token!"}
+        return {"alternatives" : "Database Error with token!"}
     if not auth_token:
-        return {"report": "Unauthorized!"}
+        return {"alternatives": "Unauthorized!"}
 
     now = datetime.datetime.now()
 
@@ -127,6 +102,7 @@ def report_domain():
         mirror_id = mirror.id
 
     # Make the report
+    req_data['auth_token'] = auth_token.auth_token
     req_data['date_reported'] = now
     req_data['domain_id'] = domain_id
     req_data['mirror_id'] = mirror_id
@@ -141,3 +117,13 @@ def report_domain():
 
 
     return {"report": "Successfully reported."}
+
+
+## V1 Routes --- To Be Deprecated ---
+
+@app.route('/api/v1/<path:text>', methods=['GET', 'POST'])
+def v1(text):
+    """
+    These routes are deprecated
+    """
+    return {'message': 'All v1 routes are deprecated'}
