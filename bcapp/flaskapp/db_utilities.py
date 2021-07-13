@@ -86,13 +86,14 @@ def get_domain_data(domain):
         'id': False
     }
     for entry in result:
-        d_id, domain_fetched, ext_ignore, paths_ignore, s3_bucket, azure_profile = entry
+        d_id, domain_fetched, ext_ignore, paths_ignore, s3_bucket, azure_profile, inactive = entry
         if domain_fetched in domain:
             domain_data['id'] = d_id
             domain_data['ext_ignore'] = ext_ignore
             domain_data['paths_ignore'] = paths_ignore
             domain_data['s3_bucket'] = s3_bucket
             domain_data['azure_profile'] = azure_profile
+            domain_data['inactive'] = inactive
     
     if not domain_data['id']: 
         domain_data = False
