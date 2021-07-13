@@ -49,6 +49,7 @@ class Report(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     auth_token = db.Column(db.String)
     date_reported = db.Column(db.DateTime)
+    url_requested = db.Column(db.String)
     domain_id = db.Column(db.Integer)
     mirror_id = db.Column(db.Integer)
     domain_status = db.Column(db.Integer)
