@@ -101,7 +101,10 @@ def analyze(unzip, percent, num, daemon, range, domain):
                 #download
                 local_path = configs['local_tmp'] + '/' + ifile
                 #logger.debug(f"Downloading ... domain: {dm['name']} to {local_path}")
-                s3simple.download_file(file_name=ifile, output_file=local_path)
+                try:
+                    s3simple.download_file(file_name=ifile, output_file=local_path)
+                except:
+                    continue
                 
                 # Add to aggregate
                 file_parts = ifile.split('.')
