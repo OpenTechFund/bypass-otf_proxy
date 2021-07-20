@@ -21,6 +21,10 @@ from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient, _
 def azure_add(**kwargs):
     configs = get_configs()
 
+    if 'www_redirect' in kwargs and kwargs['www_redirect']:
+        domain = 'www.' + kwargs['domain']
+    else:
+        domain = kwargs['domain']
     # Tenant ID for your Azure subscription
     TENANT_ID = configs['azure_tenant_id']
 
@@ -81,11 +85,11 @@ def azure_add(**kwargs):
                                             endpoint_name,
                                             { 
                                                 "location": region,
-                                                "origin_host_header": kwargs['domain'],
+                                                "origin_host_header": domain,
                                                 "origins": [
                                                     {
                                                         "name": cdn_name, 
-                                                        "host_name": kwargs['domain']
+                                                        "host_name": domain
                                                     }]
                                             })
     endpoint = endpoint_poller.result()
