@@ -19,6 +19,7 @@ def cloudfront_add(**kwargs):
     :params kwargs
     :kwarg <domain>
     :kwarg [mode]
+    :kwarg [www_redirect]
     :returns url
     """
     configs = get_configs()
@@ -27,8 +28,12 @@ def cloudfront_add(**kwargs):
     session = boto3.Session(profile_name=configs['profile'])
     client = session.client('cloudfront', region_name=configs['region'])
 
-    logger.debug(f"For domain: {kwargs['domain']}")
-    cdn_id = "Custom-" + kwargs['domain']
+    if 'www_redirect' in kwargs and kwargs['www_redirect']:
+        domain = 'www.' + kwargs['domain']
+    else:
+        domain = kwargs['domain']
+    logger.debug(f"For domain: {domain}")
+    cdn_id = "Custom-" + domain
     response = client.create_distribution(
         DistributionConfig={
             'CallerReference': now,
@@ -37,7 +42,7 @@ def cloudfront_add(**kwargs):
                 'Items': [ 
                     {
                     'Id': cdn_id,
-                    'DomainName': kwargs['domain'],
+                    'DomainName': domain,
                     'CustomOriginConfig': {
                         'HTTPPort': 80,
                         'HTTPSPort': 443,
@@ -71,7 +76,7 @@ def cloudfront_add(**kwargs):
                 'ViewerProtocolPolicy': 'redirect-to-https',
                 'MinTTL': 0
             },
-            'Comment': 'CDN for ' + kwargs['domain'],
+            'Comment': 'CDN for ' + domain,
             'PriceClass': 'PriceClass_All',
             'Enabled': True,
             'ViewerCertificate': {
@@ -96,11 +101,12 @@ def cloudfront_add(**kwargs):
     
     return response['Distribution']['DomainName']
 
-def cloudfront_replace(domain, replace):
+def cloudfront_replace(domain, replace, www_redirect):
     """
     Replaces cloudfront distribution
     :param <domain>
     :param <replace>
+    :param [www_redirect]
     """
     # Find distribution based on replace domain
     configs = get_configs()
@@ -146,7 +152,7 @@ def cloudfront_replace(domain, replace):
     response = client.delete_distribution(Id=delete_id, IfMatch=d_etag)
 
     # Create a new distribution
-    new_mirror = cloudfront_add(domain=domain)
+    new_mirror = cloudfront_add(domain=domain, www_redirect=www_redirect)
     
     return new_mirror
 

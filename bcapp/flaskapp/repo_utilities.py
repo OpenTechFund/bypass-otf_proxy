@@ -284,11 +284,10 @@ def check(url):
     # No match       
     return {"exists": False, "alternatives" : 'None'}
 
-def delete_deprecated(domain):
+def delete_deprecated(domain_data):
     """
     Delete deprecated keys
     """
-    domain_data = check(domain)
     changed = False
     if 'available_mirrors' in domain_data:
         del domain_data['available_mirrors']
