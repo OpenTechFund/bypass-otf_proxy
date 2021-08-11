@@ -299,7 +299,6 @@ def delete_deprecated(domain_data):
         del domain_data['available_ipfs_nodes']
         changed = True
 
-    print(f"Domain Data {domain_data}, changed: {changed}")
     if changed:
         mirrors = domain_list()
         for mirror in mirrors['sites']:
