@@ -303,10 +303,10 @@ def delete_deprecated(domain_data):
     if changed:
         mirrors = domain_list()
         for mirror in mirrors['sites']:
-            if domain == mirror['main_domain']:
+            if domain_data['main_domain'] == mirror['main_domain']:
                 mirrors['sites'].remove(mirror)
                 mirrors['sites'].append(domain_data)
-        commit_msg = f"Updated to delete deprecated keys from {domain} - generated from automation script"
+        commit_msg = f"Updated to delete deprecated keys from {domain_data['main_domain']} - generated from automation script"
         final_mirrors = json.dumps(mirrors, indent=4)
         saved = save_mirrors(final_mirrors, commit_msg)
         if saved:
