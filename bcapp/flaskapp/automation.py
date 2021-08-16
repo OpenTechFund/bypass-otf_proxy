@@ -3,9 +3,8 @@ Automation of Creation of CDN and...
 
 version 0.4
 """
-import sys
-import configparser
 import logging
+import datetime
 from aws_utils import cloudfront_add, cloudfront_replace, cloudfront_add_logging, add_s3_storage
 from repo_utilities import add, check, domain_list, missing_mirrors, remove_domain, remove_mirror, strip_www, delete_deprecated
 from report_utilities import domain_reporting, send_report, generate_admin_report, get_ooni_data
@@ -15,6 +14,7 @@ from fastly_add import fastly_add, fastly_replace
 from azure_utilities import azure_add, azure_replace
 from system_utilities import get_configs
 from ipfs_utils import ipfs_add
+from db_utilities import get_sys_info
 import click
 
 type_choice = ['cloudfront', 'azure', 'fastly', 'onion', 'mirror', 'ipfs']
@@ -130,6 +130,9 @@ def domain_testing(proxy, mode, chosen_domain):
     """
     Tests domains, mirrors and onions in repo
     """
+    # update sys info with date
+    now = datetime.datetime.now()
+    last_domain_test = get_sys_info(request='last_domain_test', update=True)
     mirror_list = domain_list()
     for domain in mirror_list['sites']:
         if ((not chosen_domain) or (chosen_domain == domain['main_domain'])):

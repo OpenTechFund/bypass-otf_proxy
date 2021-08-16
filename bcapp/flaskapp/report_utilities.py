@@ -172,8 +172,7 @@ def generate_admin_report(**kwargs):
     system_settings = db.Table('system_settings', metadata, autoload=True, autoload_with=engine)
 
     # System settings
-    sys_query = db.select([system_settings])
-    system_raw_dates = connection.execute(sys_query).fetchone()
+    system_raw_dates = get_sys_info(all=True)
     last_logfile_analysis = system_raw_dates['last_logfile_analysis'].strftime('%A %B %d, %Y at %I:%M %p %Z')
     last_ooni_report_generated = system_raw_dates['last_ooni_report_generated'].strftime('%A %B %d, %Y at %I:%M %p %Z')
     last_domain_test = system_raw_dates['last_domain_test'].strftime('%A %B %d, %Y at %I:%M %p %Z')
@@ -360,6 +359,9 @@ def get_ooni_data(range):
     """
     Get data from OONI S3 bucket
     """
+
+    last_ooni_report_generated = get_sys_info(request='last_ooni_report_generated', update=True)
+    
     configs = get_configs()
     bucket = 'ooni-data-eu-fra'
     

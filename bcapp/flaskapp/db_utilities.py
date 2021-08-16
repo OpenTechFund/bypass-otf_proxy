@@ -174,7 +174,8 @@ def get_sys_info(**kwargs):
     Get system info from database
     :arg kwargs
     :kwarg request
-    :kwarg update (True/False)
+    :kwarg [update]
+    :kwarg [all]
     """
     load_dotenv()
 
@@ -196,7 +197,7 @@ def get_sys_info(**kwargs):
             'last_domain_test': now
         }
         insert = sys_settings.insert().values(**system_info)
-        result = connection.execute(insert)
+        connection.execute(insert)
     else:
         a, b, c, d, e = sys_info
         system_info = {
@@ -207,10 +208,12 @@ def get_sys_info(**kwargs):
             'last_domain_test': e
         }
 
-    if kwargs['update']: #update db with new data
+    if ('update' in kwargs) and kwargs['update']: #update db with new data
         update_query = f"update system_settings set {kwargs['request']} = '{now}' where id = 1"
-        result = connection.execute(update_query)
-        
+        connection.execute(update_query)
 
-    return system_info[kwargs['request']]
+    if ('all' in kwargs) and kwargs['all']:
+        return system_info
+    else:
+        return system_info[kwargs['request']]
 

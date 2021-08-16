@@ -3,11 +3,8 @@ Analyze server stats for specific things related to onion services
 
 version 0.2
 """
-import sys
 import os
-import re
 import datetime
-import time
 import click
 import sh
 import logging
@@ -18,6 +15,7 @@ from simple_AWS.s3_functions import *
 from log_reporting_utilities import analyze_file, analyze_data, output, filter_and_get_date
 from db_utilities import report_save
 from azure_utilities import retrieve_logs
+from db_utilities import get_sys_info
 
 logger = logging.getLogger('logger')
 
@@ -32,6 +30,9 @@ logger = logging.getLogger('logger')
 def analyze(unzip, percent, num, daemon, range, domain):
 
     import faulthandler; faulthandler.enable()
+
+    # update system info
+    last_logfile_analysis = get_sys_info(request='last_logfile_analysis', update=True)
 
     configs = get_configs()
     now = datetime.datetime.now()
