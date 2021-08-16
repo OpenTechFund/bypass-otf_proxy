@@ -32,7 +32,6 @@ type_choice = ['cloudfront', 'azure', 'fastly', 'onion', 'mirror', 'ipfs']
 @click.option('--s3', type=str, help="Add this s3 log storage bucket")
 @click.option('--remove', type=str, help="Mirror or onion to remove")
 @click.option('--domain_list', is_flag=True, default=False, help="List all domains and mirrors/onions")
-@click.option('--mirror_list', is_flag=True, help="List mirrors for domain")
 @click.option('--mirror_type', type=click.Choice(type_choice), help="Type of mirror")
 @click.option('--report', is_flag=True, default=False, help="Get report from api database")
 @click.option('--generate_report', is_flag=True, default=False, help="Generate report and possibly send email to admins, etc.")
@@ -41,7 +40,7 @@ type_choice = ['cloudfront', 'azure', 'fastly', 'onion', 'mirror', 'ipfs']
 @click.option('--missing', type=click.Choice(type_choice + ['domain']), help="Get missing for alternative type or domain - use 'domain' or 'cloudfront', '")
 @click.option('--www_redirect', is_flag=True, default=False, help="For proxy, does site redirect to 'www.domain.org'?")
 
-def automation(testing, domain, test, proxy, existing, delete, domain_list, mirror_list, log,
+def automation(testing, domain, test, proxy, existing, delete, domain_list, log,
     mirror_type, replace, remove, report, mode, num, generate_report, s3, ooni, missing, www_redirect):
     configs = get_configs()
     logger.debug(f"Repo: {configs['repo']}")

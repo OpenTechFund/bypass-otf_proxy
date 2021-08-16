@@ -169,6 +169,15 @@ def generate_admin_report(**kwargs):
     users = db.Table('users', metadata, autoload=True, autoload_with=engine)
     domains = db.Table('domains', metadata, autoload=True, autoload_with=engine)
     dgdomains = db.Table('dg_domains', metadata, autoload=True, autoload_with=engine)
+    system_settings = db.Table('system_settings', metadata, autoload=True, autoload_with=engine)
+
+    # System settings
+    sys_query = db.select([system_settings])
+    system_raw_dates = connection.execute(sys_query).fetchone()
+    last_logfile_analysis = system_raw_dates['last_logfile_analysis'].strftime('%A %B %d, %Y at %I:%M %p %Z')
+    last_ooni_report_generated = system_raw_dates['last_ooni_report_generated'].strftime('%A %B %d, %Y at %I:%M %p %Z')
+    last_domain_test = system_raw_dates['last_domain_test'].strftime('%A %B %d, %Y at %I:%M %p %Z')
+
 
     # List admins
     user_query = db.select([users]).where(users.c.admin == True)
@@ -207,12 +216,22 @@ def generate_admin_report(**kwargs):
 
             There were {number_of_ooni_reports} reports from OONI, with {number_of_ooni_problems} of problems.
 
+            The last domain test was {last_domain_test}.
+            The last logfile analysis was done on {last_logfile_analysis}.
+            and the last OONI report was generated on {last_ooni_report_generated}.
+
             All detailed problem reports are below:
 
             {important_reports}
         """        
         else:
-            message_to_send = f"No Problematic Domains or Alternatives since {last_email_report_sent}. You might want to check the system."
+            message_to_send = f"""No Problematic Domains or Alternatives since {last_email_report_sent}. 
+            
+            The last domain test was {last_domain_test}.
+            The last logfile analysis was done on {last_logfile_analysis}.
+            and the last OONI report was generated on {last_ooni_report_generated}.
+            
+            You might want to check the system."""
         
         for user in admin_list:
             if user['notifications'] and user['active']:
@@ -230,12 +249,22 @@ def generate_admin_report(**kwargs):
 
             There were {number_of_ooni_reports} reports from OONI, with {number_of_ooni_problems} of problems.
 
+            The last domain test was {last_domain_test}.
+            The last logfile analysis was done on {last_logfile_analysis}.
+            The last OONI report was generated on {last_ooni_report_generated}.
+
             All detailed problem reports are below:
 
             {important_reports}
             """) 
         else:
-            print(f"No problems reported since {last_email_report_sent} - check your crontab!")
+            print(f"""No problems reported since {last_email_report_sent}.
+            
+            The last domain test was {last_domain_test}.
+            The last logfile analysis was done on {last_logfile_analysis}.
+            and the last OONI report was generated on {last_ooni_report_generated}.
+            
+            You might want to check the system.""")
 
     return
 
