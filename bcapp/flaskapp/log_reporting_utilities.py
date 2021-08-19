@@ -55,7 +55,6 @@ def analyze_file(raw_data, domain):
     logger.debug(F"Log type: {log_type}")
     final_log_data = []
     for line in raw_data_list:
-        logger.debug(f"Line: {line}")
         if not line:
             continue
         if line[0] == '#':
@@ -129,6 +128,7 @@ def analyze_file(raw_data, domain):
                 if ext in log_data['page_visited']:
                     ext_ignore = True
             if ext_ignore:
+                #logger.debug(f"page: {log_data['page_visited']} Ignore: {ext_ignore} ")
                 continue
         if paths_ignore_list:
             should_skip = False
@@ -136,11 +136,10 @@ def analyze_file(raw_data, domain):
                 ig_len = len(ignore)
                 if ignore == log_data['page_visited'][:ig_len]:
                     should_skip = True
-                #logger.debug(f"Ignore: {ignore} - page: {log_data['page_visited'][:ig_len]} - Skip: {should_skip}")
             if should_skip:
+                #logger.debug(f"page: {log_data['page_visited'][:ig_len]} - Skip: {should_skip}")
                 continue
         
-        logger.debug(f"Log Data: {log_data}")
         final_log_data.append(log_data)
         
     return final_log_data, log_type
@@ -149,7 +148,7 @@ def analyze_data(compiled_log_data, log_type):
     """
     Analyze compiled data from different logs
     """
-    logger.debug(f"Compiled data: {compiled_log_data}")
+    # logger.debug(f"Compiled data: {compiled_log_data}")
 
     analyzed_log_data = {
             'visitor_ips': {},

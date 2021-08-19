@@ -355,13 +355,14 @@ def send_report(domain_data, mode):
         result = connection.execute(insert)
 
     return True
+
 def get_ooni_data(range):
     """
     Get data from OONI S3 bucket
     """
 
     last_ooni_report_generated = get_sys_info(request='last_ooni_report_generated', update=True)
-    
+
     configs = get_configs()
     bucket = 'ooni-data-eu-fra'
     

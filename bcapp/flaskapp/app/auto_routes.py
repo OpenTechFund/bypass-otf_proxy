@@ -39,29 +39,55 @@ def add_alternative():
             else:
                 protocol = 'https'
 
+            # is it already there?
+            test_mirror = Mirror.query.filter(Mirror.mirror_url==mirror_url).first()
+            domain_data = repo_utilities.check(domain.domain)
+
+            # github
+            gh_exists = False
+            for alt in domain_data['available_alternatives']:
+                if mirror_url == alt['url']:
+                    gh_exists = True
+            
+            db_exists = False
+            if test_mirror and test_mirror.mirror_url == mirror_url:
+                db_exists = True
+
+            if gh_exists and not test_mirror.inactive:
+                flash("Mirror Already Exists!!")
+                return redirect(url_for('edit_domain', id=domain_id))
+
             # Add to github
-            if mirror_type == 'proxy':
-                gh_mt = service
-            elif mirror_type == 'eotk':
-                gh_mt = 'onion'
-            else:
-                gh_mt = mirror_type
-            added = automation.new_add(
-                domain=domain.domain,
-                mirror_type=gh_mt,
-                existing=mirror_url,
-                mode='web',
-                www_redirect=www_redirect
-            )
-            alternative = Mirror(mirror_type=mirror_type, mirror_url=added, domain_id=domain_id, protocol=protocol)
+            if not gh_exists:
+                if mirror_type == 'proxy':
+                    gh_mt = service
+                elif mirror_type == 'eotk':
+                    gh_mt = 'onion'
+                else:
+                    gh_mt = mirror_type
+                added = automation.new_add(
+                    domain=domain.domain,
+                    mirror_type=gh_mt,
+                    existing=mirror_url,
+                    mode='web',
+                    www_redirect=www_redirect
+                )
+            
             if 'failed' in added:
                 flash("No Alternative added!")
+                return redirect(url_for('edit_domain', id=domain_id))
+            elif test_mirror.inactive:
+                test_mirror.inactive = False
+                db.session.commit()
+                flash("Mirror added back, made active!")
             else:
+                alternative = Mirror(mirror_type=mirror_type, mirror_url=added, domain_id=domain_id, protocol=protocol, inactive=False)
                 db.session.add(alternative)
                 db.session.commit()
                 flash('Alternative Added')
- 
+
             return redirect(url_for('edit_domain', id=domain_id))
+            
         else:
             form.domain_id.data = request.args.get('id')
             return render_template('edit_alternative.html', form=form)
