@@ -14,6 +14,79 @@ import automation
 Automation Routes - adding automation functions to Web interface
 """
 
+@app.route('/admin/domains/delete/<id>')
+@login_required
+def delete_domain(id):
+    """
+    Delete domain
+    """
+    if not current_user.admin:
+        flash('Have to be an admin!')
+        return redirect(url_for('profile'))
+    else:
+        # TODO GH #79 - this has to include Github
+        domain = Domain.query.filter_by(id=id).first_or_404()
+        db.session.delete(domain)
+        db.session.commit()
+        return redirect(url_for('admin_domains', status='active'))
+
+
+@app.route('/admin/domains/add', methods=['GET', 'POST'])
+@login_required
+def new_domain():
+    """
+    Add New Domain
+    """
+    if not current_user.admin:
+        flash('Have to be an admin!')
+        return redirect(url_for('profile'))
+    else:
+        form = DomainForm()
+        if request.method == 'POST':
+            form_domain = form.domain.data
+            paths_ignore = form.paths_ignore.data
+            ext_ignore = form.ext_ignore.data
+            s3_storage_bucket = form.s3_storage_bucket.data
+            azure_profile_name = form.azure_profile_name.data
+            inactive = form.inactive.data
+            # Does this domain exist in the database or github?
+            db_check = Domain.query.filter_by(domain=form_domain).first()
+            gh_check = repo_utilities.check(form_domain)
+            if not gh_check['exists']: # not in GH
+                # Add to Github
+                added = automation.new_add(
+                    domain=form_domain,
+                    mode='web'
+                )
+                if not db_check: # not in db either
+                    domain = Domain(
+                        domain=form_domain,
+                        paths_ignore=paths_ignore,
+                        ext_ignore=ext_ignore,
+                        s3_storage_bucket=s3_storage_bucket,
+                        azure_profile_name=azure_profile_name,
+                        inactive=inactive
+                    )
+                    db.session.add(domain)
+                    db.session.commit()
+                    flash("Domain Added!")
+                else: # in db already
+                    if db_check.inactive: #set to inactive
+                        domain.inactive = False
+                        db.session.commit()
+                    flash("Domain Added, set to active again!")   
+            else: # exists in GH
+                if db_check: #domain exists in db
+                    if db_check.inactive: #set to inactive
+                        domain.inactive = False
+                        db.session.commit()
+                    else:
+                        flash("Domain already exists!")
+                        
+            return redirect(url_for('admin_domains', status='active'))
+        else:
+            return render_template('edit_domain.html', form=form, new=True)
+
 @app.route('/alternatives/add', methods=['GET','POST'])
 @login_required
 def add_alternative():
@@ -40,20 +113,19 @@ def add_alternative():
                 protocol = 'https'
 
             # is it already there?
+            db_exists = False
             test_mirror = Mirror.query.filter(Mirror.mirror_url==mirror_url).first()
-            domain_data = repo_utilities.check(domain.domain)
+            if test_mirror and test_mirror.mirror_url == mirror_url:
+                db_exists = True
 
             # github
+            domain_data = repo_utilities.check(domain.domain)
             gh_exists = False
             for alt in domain_data['available_alternatives']:
                 if mirror_url == alt['url']:
                     gh_exists = True
-            
-            db_exists = False
-            if test_mirror and test_mirror.mirror_url == mirror_url:
-                db_exists = True
 
-            if gh_exists and not test_mirror.inactive:
+            if (gh_exists and db_exists) and not test_mirror.inactive:
                 flash("Mirror Already Exists!!")
                 return redirect(url_for('edit_domain', id=domain_id))
 
@@ -76,7 +148,7 @@ def add_alternative():
             if 'failed' in added:
                 flash("No Alternative added!")
                 return redirect(url_for('edit_domain', id=domain_id))
-            elif test_mirror.inactive:
+            elif db_exists and test_mirror.inactive:
                 test_mirror.inactive = False
                 db.session.commit()
                 flash("Mirror added back, made active!")

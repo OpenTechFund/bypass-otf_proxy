@@ -141,17 +141,23 @@ def add(**kwargs):
         replace = False
 
     if not kwargs['pre']: # site is just a simple add
-        site = {
-            "main_domain": kwargs['domain'],
-            "available_alternatives": [
-                {
-                    "proto": kwargs['proto'],
-                    "type": kwargs['mtype'],
-                    "created_at": now,
-                    "url": kwargs['mirror']
-                }
-            ]
-        }
+        if kwargs['mirror'] == 'no_alternatives': # no alternatives included
+            site = {
+                "main_domain": kwargs['domain'],
+                "available_alternatives": []
+            }
+        else:
+            site = {
+                "main_domain": kwargs['domain'],
+                "available_alternatives": [
+                    {
+                        "proto": kwargs['proto'],
+                        "type": kwargs['mtype'],
+                        "created_at": now,
+                        "url": kwargs['mirror']
+                    }
+                ]
+            }
         new_mirrors['sites'].append(site)
         if not quiet:
             print(f"New Mirror: {site}")

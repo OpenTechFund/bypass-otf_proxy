@@ -24,7 +24,7 @@ class DomainForm(FlaskForm):
     s3_storage_bucket = StringField('S3 Storage Bucket')
     azure_profile_name = StringField('Azure Profile Name')
     inactive = BooleanField('Inactive?')
-    submit = SubmitField('Edit Domain')
+    submit = SubmitField('Add/Edit Domain')
 
 class DomainGroupForm(FlaskForm):
     name = StringField('Name')

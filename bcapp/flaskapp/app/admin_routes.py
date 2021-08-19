@@ -144,22 +144,8 @@ def edit_domain(id):
                                 domain=domain,
                                 form=form,
                                 alternatives=alternatives,
-                                domain_id=id)
-
-@app.route('/admin/domains/delete/<id>')
-@login_required
-def delete_domain(id):
-    """
-    Delete domain
-    """
-    if not current_user.admin:
-        flash('Have to be an admin!')
-        return redirect(url_for('profile'))
-    else:
-        domain = Domain.query.filter_by(id=id).first_or_404()
-        db.session.delete(domain)
-        db.session.commit()
-        return redirect(url_for('admin_domains', status='active'))
+                                domain_id=id,
+                                new=False)
 
 @app.route('/admin/domain_groups')
 @login_required

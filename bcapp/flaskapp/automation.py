@@ -234,7 +234,7 @@ def new_add(**kwargs):
     """
     Add new domain, mirror, onion or ipfs
     :kwarg <domain>
-    :kwarg <mirror_type>
+    :kwarg [mirror_type]
     :kwarg [existing]
     :kwarg [mode]
     :kwarg [www_redirect]
@@ -242,6 +242,11 @@ def new_add(**kwargs):
     """
     mirror = ""
     domain_data = check(kwargs['domain'])
+    if 'mirror_type' not in kwargs:
+        kwargs['mirror_type'] = None
+        proto = None
+        mtype = None
+        
     if 'exists' not in domain_data:
         exists = False
     else:
@@ -300,8 +305,8 @@ def new_add(**kwargs):
             return "failed: You didn't include URL - mirror type needs that!"
         mirror = kwargs['existing']
     else:
-        print("Need to define type of mirror. Use --mirror_type=cloudfront/azure/fastly/onion/mirror/ipfs")
-        return "failed: Need to define type of mirror. Use --mirror_type=cloudfront/azure/fastly/onion/mirror/ipfs"
+        # Just adding domain, not adding any alternative
+        mirror = 'no_alternatives'
 
     if not mirror:
         print(f"Sorry, mirror not created for {kwargs['domain']}!")

@@ -48,26 +48,28 @@
         <p>{{ form.submit() }}</p>
     </form>
 
-    <h2>Domain Alternatives</h2>
-    {% if not alternatives %}
-        <b>No Alternatives Exist!</b>
-    {% else %}
-        <ul>
-        {% for alternative in alternatives %}
-            <li>
-                Type: {{ alternative.type }}
-            </li>
-            <li>
-                Created: {{ alternative.created_at }}
-            </li>
-            <li>
-                URL: <a href="{{ alternative.url }}">{{ alternative.url }}</a>
-                <a href="{{ url_for('edit_alternative', url=alternative.url) }}" class="button is-warning">Edit</a>
-                <a href="{{ url_for('remove_alternative', url=alternative.url) }}" class="button is-danger">Remove</a>
-            </li>
-        </ul>
-        {% endfor %}
-        <hr>
+    {% if not new %}
+        <h2>Domain Alternatives</h2>
+        {% if not alternatives %}
+            <b>No Alternatives Exist!</b>
+        {% else %}
+            <ul>
+            {% for alternative in alternatives %}
+                <li>
+                    Type: {{ alternative.type }}
+                </li>
+                <li>
+                    Created: {{ alternative.created_at }}
+                </li>
+                <li>
+                    URL: <a href="{{ alternative.url }}">{{ alternative.url }}</a>
+                    <a href="{{ url_for('edit_alternative', url=alternative.url) }}" class="button is-warning">Edit</a>
+                    <a href="{{ url_for('remove_alternative', url=alternative.url) }}" class="button is-danger">Remove</a>
+                </li>
+            </ul>
+            {% endfor %}
+            <hr>
+        {% endif %}
+        <a href="{{ url_for('add_alternative', id=domain_id) }}" class="button is-info">Add New Alternative</a>
     {% endif %}
-    <a href="{{ url_for('add_alternative', id=domain_id) }}" class="button is-info">Add New Alternative</a>
 {% endblock %}
