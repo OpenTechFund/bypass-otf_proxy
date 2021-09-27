@@ -121,6 +121,9 @@ def analyze_file(raw_data, domain):
 
         else:
             continue
+
+        if 'page_visited' not in log_data:
+            continue
             
         if exts_ignore_list:
             ext_ignore = False
