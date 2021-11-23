@@ -10,7 +10,7 @@ from repo_utilities import add, check, domain_list, missing_mirrors, remove_doma
 from report_utilities import domain_reporting, send_report, generate_admin_report, get_ooni_data
 from log_reporting_utilities import domain_log_reports, domain_log_list
 from mirror_tests import mirror_detail
-from fastly_add import fastly_add, fastly_replace
+from fastly_utilities import fastly_add, fastly_replace
 from azure_utilities import azure_add, azure_replace
 from system_utilities import get_configs
 from ipfs_utils import ipfs_add

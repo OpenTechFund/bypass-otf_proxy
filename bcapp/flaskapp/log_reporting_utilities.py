@@ -33,7 +33,9 @@ def analyze_file(raw_data, domain):
         exts_ignore_list = domain_data['ext_ignore'].split(',')
     else:
         exts_ignore_list = False
-        
+    
+    #logger.debug(f"Paths: {paths_ignore_list} Ext: {exts_ignore_list}")
+
     raw_data_list = raw_data.split('\n')
     #logger.debug(f"raw length: {len(raw_data_list)} first chars: {raw_data_list[0][0]}")
     fastly_log_match = re.compile('\<\d{3}\>')
