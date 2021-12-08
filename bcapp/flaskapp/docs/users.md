@@ -38,3 +38,7 @@ You choose one domain, and retrieve the log reports on each domain.
 ## Edit Domain Group
 
 Domains are grouped - if you have been given the permissions to manage a domain group, you can also change the name and add any notes to your domain group.
+
+# Administrators
+
+See [administrator documentation](administrator.md)

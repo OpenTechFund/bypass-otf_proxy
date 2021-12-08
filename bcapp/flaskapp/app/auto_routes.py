@@ -204,7 +204,7 @@ def edit_alternative():
         # Get Domain/Alternative info from database and repo
         mirror = Mirror.query.filter(Mirror.mirror_url==url).first_or_404()
         domain = Domain.query.filter(Domain.id==mirror.domain_id).first_or_404()
-        all_mirrors = repo_utilities.domain_list()
+        all_mirrors = repo_utilities.domain_listing()
         form = AltForm()
 
         if '.onion' in mirror.mirror_url:

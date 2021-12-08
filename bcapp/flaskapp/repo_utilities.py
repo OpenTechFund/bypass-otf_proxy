@@ -10,7 +10,7 @@ import db_utilities
 
 logger = logging.getLogger('logger')
 
-def domain_list():
+def domain_listing():
     """
     Lists all domains in mirror
     :returns list of domains from mirror.
@@ -32,7 +32,7 @@ def check_mirror(mirror_url):
     if not mirror_url:
         return False
 
-    domains = domain_list()
+    domains = domain_listingS()
 
     check = False
     for domain in domains['sites']:
@@ -49,7 +49,7 @@ def remove_domain(domain):
     :arg <domain>
     :returns False or True
     """
-    mirrors = domain_list()
+    mirrors = domain_listing()
     for mirror in mirrors['sites']:
         if domain == mirror['main_domain']:
             remove = input(f"Remove {mirror['main_domain']} (y/N)?")
@@ -75,7 +75,7 @@ def remove_mirror(**kwargs):
     :arg kwargs:<domain>
     :arg kwargs:<remove>
     """
-    mirrors = domain_list()
+    mirrors = domain_listing()
     for domain in mirrors['sites']:
         if kwargs['domain'] == domain['main_domain']:
             domain['available_alternatives'] = [x for x in domain['available_alternatives'] if x['url'] != kwargs['remove']]
@@ -133,7 +133,7 @@ def add(**kwargs):
         quiet = True
 
     now = str(datetime.datetime.now())
-    mirrors = domain_list()
+    mirrors = domain_listing()
     new_mirrors = dict(mirrors) # copy mirrors
     if 'replace' in kwargs and kwargs['replace']:
         replace = True
@@ -306,7 +306,7 @@ def delete_deprecated(domain_data):
         changed = True
 
     if changed:
-        mirrors = domain_list()
+        mirrors = domain_listing()
         for mirror in mirrors['sites']:
             if domain_data['main_domain'] == mirror['main_domain']:
                 mirrors['sites'].remove(mirror)
@@ -326,7 +326,7 @@ def edit_domain_in_repo(old_domain, new_domain):
     Edit the repo listing for a domain
     """
     
-    mirrors = domain_list()
+    mirrors = domain_listing()
     print(f"Old {old_domain} New: {new_domain}")
     change = False
     for mirror in mirrors['sites']:
@@ -354,7 +354,7 @@ def missing_mirrors(**kwargs):
     """
     logger.debug(f"Finding missing mirrors...")
     
-    domains = domain_list()
+    domains = domain_listing()
     if 'domain' in kwargs:
         search = 'domain'
     elif 'missing' in kwargs:

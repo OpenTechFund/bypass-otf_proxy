@@ -6,7 +6,7 @@ version 0.4
 import logging
 import datetime
 from aws_utils import cloudfront_add, cloudfront_replace, cloudfront_add_logging, add_s3_storage
-from repo_utilities import add, check, domain_list, missing_mirrors, remove_domain, remove_mirror, strip_www, delete_deprecated
+from repo_utilities import add, check, domain_listing, missing_mirrors, remove_domain, remove_mirror, strip_www, delete_deprecated
 from report_utilities import domain_reporting, send_report, generate_admin_report, get_ooni_data
 from log_reporting_utilities import domain_log_reports, domain_log_list
 from mirror_tests import mirror_detail
@@ -23,7 +23,6 @@ type_choice = ['cloudfront', 'azure', 'fastly', 'onion', 'mirror', 'ipfs']
 @click.option('--testing', is_flag=True, default=False, help="Domain testing of all available mirrors and onions")
 @click.option('--domain', help="Domain to act on", type=str)
 @click.option('--test', is_flag=True, default=False, help="Test when listing domain")
-@click.option('--num', help="Number of Raw Log files to list", type=int, default=5)
 @click.option('--proxy', type=str, help="Proxy server to use for testing/domain detail.")
 @click.option('--existing', type=str, help="Mirror exists already, just add to github.")
 @click.option('--replace', type=str, help="Mirror/onion to replace.")
@@ -41,7 +40,7 @@ type_choice = ['cloudfront', 'azure', 'fastly', 'onion', 'mirror', 'ipfs']
 @click.option('--www_redirect', is_flag=True, default=False, help="For proxy, does site redirect to 'www.domain.org'?")
 
 def automation(testing, domain, test, proxy, existing, delete, domain_list, log,
-    mirror_type, replace, remove, report, mode, num, generate_report, s3, ooni, missing, www_redirect):
+    mirror_type, replace, remove, report, mode, generate_report, s3, ooni, missing, www_redirect):
     configs = get_configs()
     logger.debug(f"Repo: {configs['repo']}")
     if domain:
@@ -97,7 +96,7 @@ def automation(testing, domain, test, proxy, existing, delete, domain_list, log,
         generate_admin_report(mode=mode, user_id=None)
             
     elif domain_list: #assuming console mode
-        dlist = domain_list()
+        dlist = domain_listing()
         print(f""" List of all domains, mirrors and onions
         ___________________________________________________
         {dlist}
@@ -133,7 +132,7 @@ def domain_testing(proxy, mode, chosen_domain):
     # update sys info with date
     now = datetime.datetime.now()
     last_domain_test = get_sys_info(request='last_domain_test', update=True)
-    mirror_list = domain_list()
+    mirror_list = domain_listing()
     for domain in mirror_list['sites']:
         if ((not chosen_domain) or (chosen_domain == domain['main_domain'])):
             domain_data = mirror_detail(domain=domain['main_domain'], proxy=proxy, mode=mode, test=True)
