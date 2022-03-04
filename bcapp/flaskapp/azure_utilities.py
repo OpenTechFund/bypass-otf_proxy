@@ -17,14 +17,12 @@ logger = logging.getLogger('logger')
 from azure.common.credentials import ServicePrincipalCredentials
 from azure.mgmt.cdn import CdnManagementClient
 from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient, __version__
+from repo_utilities import get_final_domain
 
 def azure_add(**kwargs):
     configs = get_configs()
 
-    if 'www_redirect' in kwargs and kwargs['www_redirect']:
-        domain = 'www.' + kwargs['domain']
-    else:
-        domain = kwargs['domain']
+    domain = get_final_domain(f"http://{kwargs['domain']}")
     # Tenant ID for your Azure subscription
     TENANT_ID = configs['azure_tenant_id']
 

@@ -10,6 +10,7 @@ from system_utilities import get_configs
 from dotenv import load_dotenv
 import sqlalchemy as db
 from simple_AWS.s3_functions import *
+from repo_utilities import get_final_domain
 
 logger = logging.getLogger('logger')
 
@@ -19,7 +20,6 @@ def cloudfront_add(**kwargs):
     :params kwargs
     :kwarg <domain>
     :kwarg [mode]
-    :kwarg [www_redirect]
     :returns url
     """
     configs = get_configs()
@@ -28,10 +28,8 @@ def cloudfront_add(**kwargs):
     session = boto3.Session(profile_name=configs['profile'])
     client = session.client('cloudfront', region_name=configs['region'])
 
-    if 'www_redirect' in kwargs and kwargs['www_redirect']:
-        domain = 'www.' + kwargs['domain']
-    else:
-        domain = kwargs['domain']
+    domain = get_final_domain(f"http://{kwargs['domain']}")
+
     logger.debug(f"For domain: {domain}")
     cdn_id = "Custom-" + domain
     response = client.create_distribution(
@@ -101,12 +99,11 @@ def cloudfront_add(**kwargs):
     
     return response['Distribution']['DomainName']
 
-def cloudfront_replace(domain, replace, www_redirect):
+def cloudfront_replace(domain, replace):
     """
     Replaces cloudfront distribution
     :param <domain>
     :param <replace>
-    :param [www_redirect]
     """
     # Find distribution based on replace domain
     configs = get_configs()
@@ -152,7 +149,7 @@ def cloudfront_replace(domain, replace, www_redirect):
     response = client.delete_distribution(Id=delete_id, IfMatch=d_etag)
 
     # Create a new distribution
-    new_mirror = cloudfront_add(domain=domain, www_redirect=www_redirect)
+    new_mirror = cloudfront_add(domain=domain)
     
     return new_mirror
 

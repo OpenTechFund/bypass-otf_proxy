@@ -89,8 +89,6 @@ Options:
   --missing [cloudfront|azure|fastly|onion|mirror|ipfs|domain]
                                   Get missing for alternative type or domain -
                                   use 'domain' or 'cloudfront', '
-  --www_redirect                  For proxy, does site redirect to
-                                  'www.domain.org'?
   --help                          Show this message and exit.
 
 ```
@@ -133,8 +131,6 @@ To add a new mirror automatically for Cloudfront, Fastly, or Azure use:
 If you want a cloudfront distro, it will create that for you, and tell you the domain. For Fastly and Azure, you'll have to specify the Fastly and Azure subdomain (Cloudfront specifies a subdomain for you, Fastly and Azure require you to define it.)
 
 All configurations are in auto.cfg (see auto.cfg-example)
-
-**If the original domain always redirects to 'www.domain.org' use the --www-redirect flag.**
 
 ## Mirror replacement
 

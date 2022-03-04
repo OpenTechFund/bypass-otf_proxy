@@ -7,8 +7,14 @@ from github import Github
 import tldextract
 from system_utilities import get_configs
 import db_utilities 
+import requests
 
 logger = logging.getLogger('logger')
+
+def get_final_domain(url):
+    session = requests.Session()
+    r = session.get(url, allow_redirects=True, timeout=10)
+    return '.'.join(tldextract.extract(r.url))
 
 def domain_listing():
     """
