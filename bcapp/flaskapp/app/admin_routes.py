@@ -40,10 +40,10 @@ def admin_domains(status):
     else:
         page = request.args.get('page', 1, type=int)
         if status == 'active':
-            domains = Domain.query.filter(or_(Domain.inactive==False, Domain.inactive==None)).paginate(page=page, per_page=20)
+            domains = Domain.query.filter(or_(Domain.inactive==False, Domain.inactive==None)).order_by(Domain.domain).paginate(page=page, per_page=100)
             
         else:
-            domains = Domain.query.filter(Domain.inactive==True).paginate(page=page, per_page=20)
+            domains = Domain.query.filter(Domain.inactive==True).order_by(Domain.domain).paginate(page=page, per_page=100)
 
         dg_domains = DGDomain.query.all()
         domain_groups = DomainGroup.query.all()
