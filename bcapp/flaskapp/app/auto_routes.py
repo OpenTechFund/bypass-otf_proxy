@@ -104,7 +104,6 @@ def add_alternative():
             mirror_type = form.mirror_type.data
             mirror_url = form.mirror_url.data
             service = request.form.get('service')
-            www_redirect = request.form.get('www_redirect')
             if mirror_type == 'mirror':
                 protocol = 'http'
             elif mirror_type == 'eotk':
@@ -142,7 +141,6 @@ def add_alternative():
                     mirror_type=gh_mt,
                     existing=mirror_url,
                     mode='web',
-                    www_redirect=www_redirect
                 )
             
             if 'failed' in added:

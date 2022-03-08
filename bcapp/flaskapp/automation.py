@@ -37,10 +37,9 @@ type_choice = ['cloudfront', 'azure', 'fastly', 'onion', 'mirror', 'ipfs']
 @click.option('--mode', type=click.Choice(['daemon', 'web', 'console']), default='console', help="Mode: daemon, web, console")
 @click.option('--ooni', type=int, help="OONI Probe Data set range")
 @click.option('--missing', type=click.Choice(type_choice + ['domain']), help="Get missing for alternative type or domain - use 'domain' or 'cloudfront', '")
-@click.option('--www_redirect', is_flag=True, default=False, help="For proxy, does site redirect to 'www.domain.org'?")
 
 def automation(testing, domain, test, proxy, existing, delete, domain_list, log,
-    mirror_type, replace, remove, report, mode, generate_report, s3, ooni, missing, www_redirect):
+    mirror_type, replace, remove, report, mode, generate_report, s3, ooni, missing):
     configs = get_configs()
     logger.debug(f"Repo: {configs['repo']}")
     if domain:
@@ -53,7 +52,7 @@ def automation(testing, domain, test, proxy, existing, delete, domain_list, log,
                     print(f"Domain {domain} deleted from github, and {delete}")
         elif replace:
             delete_deprecated(domain)
-            replace_mirror(domain=domain, existing=existing, replace=replace, mirror_type=mirror_type, mode=mode, www_redirect=www_redirect)
+            replace_mirror(domain=domain, existing=existing, replace=replace, mirror_type=mirror_type, mode=mode)
         elif remove:
             delete_deprecated(domain)
             removed = remove_mirror(domain=domain, remove=remove)
@@ -68,7 +67,7 @@ def automation(testing, domain, test, proxy, existing, delete, domain_list, log,
         elif mirror_type or existing:
             domain = strip_www(domain)
             delete_deprecated(domain)
-            new_add(domain=domain, mirror_type=mirror_type, existing=existing, mode=mode, www_redirect=www_redirect)
+            new_add(domain=domain, mirror_type=mirror_type, existing=existing, mode=mode)
             domain_testing(proxy, mode, domain)
         elif report:
             domain_reporting(domain=domain, mode=mode)
@@ -172,7 +171,6 @@ def replace_mirror(**kwargs):
     :kwarg [existing]
     :kwarg [mirror_type]
     :kwarg [mode]
-    :kwarg [www_redirect]
     :returns True or False
     """
     mode = kwargs['mode']
@@ -236,7 +234,6 @@ def new_add(**kwargs):
     :kwarg [mirror_type]
     :kwarg [existing]
     :kwarg [mode]
-    :kwarg [www_redirect]
     :returns True or False
     """
     mirror = ""
@@ -266,21 +263,21 @@ def new_add(**kwargs):
         if kwargs['existing']:
             mirror = kwargs['existing']
         else:
-            mirror = cloudfront_add(domain=kwargs['domain'], mode=kwargs['mode'], www_redirect=kwargs['www_redirect'])
+            mirror = cloudfront_add(domain=kwargs['domain'], mode=kwargs['mode'])
     elif kwargs['mirror_type'] == 'azure':
         proto = 'https'
         mtype = 'proxy'
         if kwargs['existing']:
             mirror = kwargs['existing']
         else:
-            mirror = azure_add(domain=kwargs['domain'], www_redirect=kwargs['www_redirect'])
+            mirror = azure_add(domain=kwargs['domain'])
     elif kwargs['mirror_type'] == 'fastly':
         proto = 'https'
         mtype = 'proxy'
         if kwargs['existing']:
             mirror = kwargs['existing']
         else:
-            mirror = fastly_add(domain=kwargs['domain'], www_redirect=kwargs['www_redirect'])
+            mirror = fastly_add(domain=kwargs['domain'])
     elif kwargs['mirror_type'] == 'onion':
         proto = 'tor'
         mtype = 'eotk'
