@@ -162,7 +162,7 @@ def edit_proxy(proxy_id):
 
 @app.route('/proxies')
 def list_proxies():
-    res = Proxy.query.order_by('url').all()
+    res = Proxy.query.order_by('url').filter(Proxy.destroyed == None).all()
     return render_template("proxies.html", proxies=res)
 
 
