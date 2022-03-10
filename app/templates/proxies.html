@@ -19,6 +19,7 @@
         {% for proxy in proxies %}
             <tr{% if proxy.deprecated %} class="bg-warning"{% endif %}>
                 <td><a href="/origin/{{ proxy.origin.id }}">{{ proxy.origin.domain_name }}</a></td>
+                <td>{{ proxy.provider }}</td>
                 <td>{{ proxy.url }}</td>
                 <td><a href="/group/{{ proxy.origin.group.id }}">{{ proxy.origin.group.group_name }}</a></td>
                 <td>{{ proxy.added }}</td>
