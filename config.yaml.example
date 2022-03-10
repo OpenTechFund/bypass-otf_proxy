@@ -1,0 +1,21 @@
+---
+# Supports any backend supported by SQLAlchemy, but you may need additional
+# packages installed if you're not using SQLite.
+SQLALCHEMY_DATABASE_URI: sqlite:///example.db
+SQLALCHEMY_TRACK_MODIFICATIONS: true
+
+# You can just put whatever here, but you should change it!
+SECRET_KEY: iechaj0mun6beih3rooga0mei7eo0iwoal1eeweN
+
+# This directory must exist and be writable by the user running the portal.
+TERRAFORM_DIRECTORY: /home/bc/terraform
+
+# For CloudFront deployments.
+AWS_ACCESS_KEY: accesskeygoeshere
+AWS_SECRET_KEY: accesssecretgoeshere
+
+# For publishing the mirrorSites.json file.
+GITHUB_ORGANIZATION: exampleorg
+GITHUB_REPOSITORY: example-repo
+GITHUB_API_KEY: keygoeshere
+GITHUB_FILE_V2: mirrorSites.json

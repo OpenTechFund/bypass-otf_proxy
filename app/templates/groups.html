@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Origin Groups</h2>
+    <p>Origin groups are logical groupings of origin servers. Usually this would be by news agency, although there may
+       be reasons to create multiple origin groups per agency or to group multiple agencies together. Deployed cloud
+       resources will be "tagged" with group information that may be used for accounting purposes when that facility
+       is available from the cloud provider.</p>
+    <table class="table table-striped">
+        <tr>
+            <th>Group</th>
+            <th>Description</th>
+            <th>Origins</th>
+            <th>Actions</th>
+        </tr>
+    {% for group in groups %}
+        <tr>
+            <td>{{ group.group_name }}</td>
+            <td>{{ group.description }}</td>
+            <td>{{ group.origins | length }}</td>
+            <td><a href="/group/{{ group.id }}" class="btn btn-primary">View/Edit</a></td>
+        </tr>
+    {% endfor %}
+    </table>
+
+{% endblock %}

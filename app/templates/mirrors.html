@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Mirrors</h2>
+    <p>Mirrors are externally managed access points to origins. These include third-party proxies, static mirrors,
+       IPFS/IPNS links and onion services.</p>
+    <table class="table table-striped">
+        <tr>
+            <th>Origin Domain Name</th>
+            <th>URL</th>
+            <th>Group</th>
+            <th>Actions</th>
+        </tr>
+    {% for mirror in mirrors %}
+        <tr>
+            <td><a href="/origin/{{ mirror.origin.id }}">{{ mirror.origin.domain_name }}</a></td>
+            <td>{{ mirror.url }} <a href="{{ mirror.url }}">⎋</a></td>
+            <td><a href="/group/{{ mirror.origin.group.id }}">{{ mirror.origin.group.group_name }}</a></td>
+            <td><a href="/mirror/{{ mirror.id }}" class="btn btn-primary">View/Edit</a></td>
+        </tr>
+    {% endfor %}
+    </table>
+
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Proxies</h2>
+    <p>Proxies are managed resources deployed in cloud environments by the Bypass Censorship Portal. They provide an
+        alternative access point to a news service that forwards the traffic back to the origin server from the cloud
+        environment. If the service is blocked in the user's geography, they will be able to browse the news
+        service by accessing this alternative access point.</p>
+    <p><a href="/proxy/new" class="btn btn-success">Add new proxy</a></p>
+    <table class="table table-striped">
+        <tr>
+            <th>Origin Domain Name</th>
+            <th>Provider</th>
+            <th>URL</th>
+            <th>Group</th>
+            <th>Created</th>
+            <th>Actions</th>
+        </tr>
+        {% for proxy in proxies %}
+            <tr{% if proxy.deprecated %} class="bg-warning"{% endif %}>
+                <td><a href="/origin/{{ proxy.origin.id }}">{{ proxy.origin.domain_name }}</a></td>
+                <td>{{ proxy.url }}</td>
+                <td><a href="/group/{{ proxy.origin.group.id }}">{{ proxy.origin.group.group_name }}</a></td>
+                <td>{{ proxy.added }}</td>
+                <td>
+                    <a href="/proxy/{{ proxy.id }}" class="btn btn-primary">View/Edit</a>
+                    {% if proxy.deprecated %}
+                        <a href="/proxy/restore/{{ proxy.id }}" class="btn btn-success">Restore</a>
+                    {% else %}
+                        <a href="/proxy/deprecate/{{ proxy.id }}" class="btn btn-warning">Deprecate</a>
+                    {% endif %}
+                    <a href="/proxy/destroy/{{ proxy.id }}" class="btn btn-danger">Destroy</a>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+
+{% endblock %}

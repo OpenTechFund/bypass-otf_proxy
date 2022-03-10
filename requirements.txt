@@ -1,0 +1,11 @@
+flask~=2.0.2
+wtforms~=3.0.1
+boto3~=1.21.15
+alembic~=1.7.6
+sqlalchemy~=1.4.32
+yaml~=0.2.5
+pyyaml~=6.0
+jinja2~=3.0.2
+flask-migrate
+flask-wtf
+Bootstrap-flask
