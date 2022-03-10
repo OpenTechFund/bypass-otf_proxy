@@ -104,6 +104,7 @@ def edit_mirror(mirror_id):
         res.url = form.url.data
         res.updated = datetime.utcnow()
         db.session.commit()
+        return redirect(url_for("edit_origin", origin_id=origin.id))
     return render_template("mirror.html", mirror=res, form=form)
 
 
