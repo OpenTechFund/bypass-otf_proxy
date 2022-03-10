@@ -72,16 +72,26 @@ def list_origins():
 
 @app.route('/origin/<origin_id>', methods=['GET', 'POST'])
 def edit_origin(origin_id):
-    res = Origin.query.filter(Origin.id == origin_id).first()
-    form = EditOriginForm(domain_name=res.domain_name, description=res.description, group=res.group.id)
+    if origin_id == "new":
+        new = True
+        origin = Origin()
+        origin.domain_name = "www.example.com"
+        origin.description = "New origin"
+        origin.created = datetime.utcnow()
+        origin.group = Group.query.first()
+        origin.provider = "cloudfront"
+    else:
+        new = False
+        origin = Origin.query.filter(Origin.id == origin_id).first()
+    form = EditOriginForm(domain_name=origin.domain_name, description=origin.description, group=origin.group.id)
     form.group.choices = [(x.id, x.group_name) for x in Group.query.all()]
     if form.validate_on_submit():
-        res.domain_name = form.domain_name.data
-        res.description = form.description.data
-        res.group_id = form.group.data
-        res.updated = datetime.utcnow()
+        origin.domain_name = form.domain_name.data
+        origin.description = form.description.data
+        origin.group_id = form.group.data
+        origin.updated = datetime.utcnow()
         db.session.commit()
-    return render_template("origin.html", origin=res, form=form)
+    return render_template("origin.html", origin=origin, form=form, new=new)
 
 
 @app.route('/mirror/<mirror_id>', methods=['GET', 'POST'])
