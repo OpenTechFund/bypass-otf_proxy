@@ -22,7 +22,7 @@ def mirror_sites():
                                               "updated_at": str(a.updated),
                                               "url": a.url
                                           } for a in x.proxies if
-                                          a.url is not None and not a.deprecated and not a.destroyed
+                                          a.url is not None and not a.deprecated and not a.destroyed and a.provider == "cloudfront"
                                       ]} for x in Origin.query.order_by(Origin.domain_name).all()
         ]
     }
