@@ -44,14 +44,19 @@ module "log_bucket_{{ group.id }}" {
   glacier_transition_days  = 60
   expiration_days          = 90
 }
+
+resource "aws_sns_topic" "alarms_{{ group.id }}" {
+  name = "${label_{{ group.id }}.id}-alarms"
+}
 {% endfor %}
 
 {% for proxy in proxies %}
 module "cloudfront_{{ proxy.id }}" {
   source = "sr2c/bc-proxy/aws"
-  version = "0.0.1"
+  version = "0.0.2"
   origin_domain = "{{ proxy.origin.domain_name }}"
   logging_bucket = module.log_bucket_{{ proxy.origin.group.id }}.bucket_domain_name
+  sns_topic_arn = aws_sns_topic.alarms_{{ group.id }}.arn
   context = module.label_{{ proxy.origin.group.id }}.context
   name = "proxy"
   attributes = ["{{ proxy.origin.domain_name }}"]
