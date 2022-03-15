@@ -26,7 +26,7 @@ data "gitlab_project" "this" {
 }
 
 resource "gitlab_repository_file" "this" {
-  project        = gitlab_project.this.id
+  project        = data.gitlab_project.this.id
   file_path      = "{{ gitlab_file_v2 }}"
   branch         = "main"
   content        = base64encode(file("{{ gitlab_file_v2 }}"))
