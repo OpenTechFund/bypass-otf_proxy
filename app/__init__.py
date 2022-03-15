@@ -204,6 +204,19 @@ def import_cloudfront():
 def json_mirror_sites():
     return jsonify(mirror_sites)
 
+@app.route('/alarms')
+def list_alarms():
+    cloudwatch = boto3.client('cloudwatch',
+                              aws_access_key_id=app.config['AWS_ACCESS_KEY'],
+                              aws_secret_access_key=app.config['AWS_SECRET_KEY'],
+                              region_name='us-east-1')
+    dist_paginator = cloudwatch.get_paginator('describe_alarms')
+    page_iterator = dist_paginator.paginate()
+    alarms = []
+    for page in page_iterator:
+        alarms.extend(page['MetricAlarms'])
+    return render_template("alarms.html", alarms=alarms)
+
 
 if __name__ == '__main__':
     app.run()
