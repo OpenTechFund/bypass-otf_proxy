@@ -53,10 +53,11 @@ resource "aws_sns_topic" "alarms_{{ group.id }}" {
 {% for proxy in proxies %}
 module "cloudfront_{{ proxy.id }}" {
   source = "sr2c/bc-proxy/aws"
-  version = "0.0.2"
+  version = "0.0.3"
   origin_domain = "{{ proxy.origin.domain_name }}"
   logging_bucket = module.log_bucket_{{ proxy.origin.group.id }}.bucket_domain_name
   sns_topic_arn = aws_sns_topic.alarms_{{ proxy.origin.group.id }}.arn
+  low_bandwidth_alarm = false
   context = module.label_{{ proxy.origin.group.id }}.context
   name = "proxy"
   attributes = ["{{ proxy.origin.domain_name }}"]
