@@ -46,7 +46,7 @@ module "log_bucket_{{ group.id }}" {
 }
 
 resource "aws_sns_topic" "alarms_{{ group.id }}" {
-  name = "${label_{{ group.id }}.id}-alarms"
+  name = "${module.label_{{ group.id }}.id}-cloudfront-alarms"
 }
 {% endfor %}
 
@@ -56,7 +56,7 @@ module "cloudfront_{{ proxy.id }}" {
   version = "0.0.2"
   origin_domain = "{{ proxy.origin.domain_name }}"
   logging_bucket = module.log_bucket_{{ proxy.origin.group.id }}.bucket_domain_name
-  sns_topic_arn = aws_sns_topic.alarms_{{ group.id }}.arn
+  sns_topic_arn = aws_sns_topic.alarms_{{ proxy.origin.group.id }}.arn
   context = module.label_{{ proxy.origin.group.id }}.context
   name = "proxy"
   attributes = ["{{ proxy.origin.domain_name }}"]
