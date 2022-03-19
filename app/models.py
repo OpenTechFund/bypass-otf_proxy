@@ -78,15 +78,9 @@ class Proxy(db.Model):
             "updated": self.updated
         }
 
-    def replace(self):
+    def deprecate(self):
         self.deprecated = datetime.utcnow()
         self.updated = datetime.utcnow()
-        replacement = Proxy()
-        replacement.origin_id = self.origin_id
-        replacement.provider = self.provider
-        replacement.added = datetime.utcnow()
-        replacement.updated = datetime.utcnow()
-        db.session.add(replacement)
         db.session.commit()
 
     def __repr__(self):

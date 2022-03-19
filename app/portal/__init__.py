@@ -143,7 +143,7 @@ def blocked_proxy(proxy_id):
                                         message="The requested proxy could not be found."))
     form = LifecycleForm()
     if form.validate_on_submit():
-        proxy.replace()
+        proxy.deprecate()
         flash("Proxy will be shortly replaced.", "success")
         return redirect(url_for("portal.edit_origin", origin_id=proxy.origin.id))
     return render_template("blocked.html.j2",
