@@ -1,0 +1,20 @@
+{% extends "base.html.j2" %}
+{% from 'bootstrap5/form.html' import render_form %}
+{% from "tables.html.j2" import proxies_table %}
+
+{% block content %}
+    <h1 class="h2 mt-3">Origins</h1>
+    <h2 class="h3">
+        {{ origin.group.group_name }}: {{ origin.domain_name }}
+        <a href="{{ origin.domain_name }}" class="btn btn-secondary btn-sm" target="_bypass"
+           rel="noopener noreferer">⎋</a>
+    </h2>
+
+    <div style="border: 1px solid #666;" class="p-3">
+        {{ render_form(form) }}
+    </div>
+
+    <h3>Proxies</h3>
+    {{ proxies_table(origin.proxies) }}
+
+{% endblock %}

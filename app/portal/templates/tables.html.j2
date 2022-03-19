@@ -1,0 +1,76 @@
+{% macro origins_table(origins) %}
+    <div class="table-responsive">
+        <table class="table table-striped table-sm">
+            <thead>
+            <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Description</th>
+                <th scope="col">Mirrors</th>
+                <th scope="col">Proxies</th>
+                <th scope="col">Group</th>
+                <th scope="col">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for origin in origins %}
+                <tr>
+                    <td>
+                        <a href="https://{{ origin.domain_name }}" target="_bypass" rel="noopener noreferer"
+                           class="btn btn-secondary btn-sm">⎋</a>
+                        {{ origin.domain_name }}
+                    </td>
+                    <td>{{ origin.description }}</td>
+                    <td>{{ origin.mirrors | length }}</td>
+                    <td>{{ origin.proxies | length }}</td>
+                    <td>
+                        <a href="{{ url_for("portal.edit_group", group_id=origin.group.id) }}">{{ origin.group.group_name }}</a>
+                    </td>
+                    <td>
+                        <a href="{{ url_for("portal.edit_origin", origin_id=origin.id) }}"
+                           class="btn btn-primary btn-sm">View/Edit</a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endmacro %}
+
+{% macro proxies_table(proxies) %}
+    <div class="table-responsive">
+        <table class="table table-striped table-sm">
+            <thead>
+            <tr>
+                <th scope="col">Origin Domain Name</th>
+                <th scope="col">Group</th>
+                <th scope="col">Provider</th>
+                <th scope="col">URL</th>
+                <th scope="col">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for proxy in proxies %}
+                <tr{% if proxy.deprecated %} class="bg-warning"{% endif %}>
+                    <td>
+                        <a href="https://{{ proxy.origin.domain_name }}" class="btn btn-secondary btn-sm" target="_bypass"
+                           rel="noopener noreferer">⎋</a>
+                        <a href="{{ url_for("portal.edit_origin", origin_id=proxy.origin.id) }}">{{ proxy.origin.domain_name }}</a>
+                    </td>
+                    <td>
+                        <a href="{{ url_for("portal.edit_group", group_id=proxy.origin.group.id) }}">{{ proxy.origin.group.group_name }}</a>
+                    </td>
+                    <td>{{ proxy.provider }}</td>
+                    <td>
+                        <a href="{{ proxy.url }}" class="btn btn-secondary btn-sm" target="_bypass"
+                           rel="noopener noreferer">⎋</a>
+                        <span{% if proxy.deprecated %} class="text-decoration-line-through"{% endif %}>{{ proxy.url }}</span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for("portal.blocked_proxy", proxy_id=proxy.id) }}" class="btn btn-warning btn-sm">Mark blocked</a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endmacro %}

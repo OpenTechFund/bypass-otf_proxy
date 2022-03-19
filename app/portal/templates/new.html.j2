@@ -1,0 +1,12 @@
+{% extends "base.html.j2" %}
+{% from 'bootstrap5/form.html' import render_form %}
+
+{% block content %}
+    <h1 class="h2 mt-3">{{ (resource_p or (section + "s")).title() }}</h1>
+    <h2 class="h3">New {{ section.lower() }}</h2>
+
+    <div style="border: 1px solid #666;" class="p-3">
+        {{ render_form(form) }}
+    </div>
+
+{% endblock %}

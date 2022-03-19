@@ -7,6 +7,7 @@ class Group(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     group_name = db.Column(db.String(80), unique=True, nullable=False)
     description = db.Column(db.String(255), nullable=False)
+    eotk = db.Column(db.Boolean())
     added = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
     updated = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
 
@@ -76,6 +77,17 @@ class Proxy(db.Model):
             "added": self.added,
             "updated": self.updated
         }
+
+    def replace(self):
+        self.deprecated = datetime.utcnow()
+        self.updated = datetime.utcnow()
+        replacement = Proxy()
+        replacement.origin_id = self.origin_id
+        replacement.provider = self.provider
+        replacement.added = datetime.utcnow()
+        replacement.updated = datetime.utcnow()
+        db.session.add(replacement)
+        db.session.commit()
 
     def __repr__(self):
         return '<Proxy %r_%r>' % (self.origin.domain_name, self.id)

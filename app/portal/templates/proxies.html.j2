@@ -1,0 +1,7 @@
+{% extends "base.html.j2" %}
+{% from "tables.html.j2" import proxies_table %}
+
+{% block content %}
+    <h1 class="h2 mt-3">Proxies</h1>
+    {{ proxies_table(proxies) }}
+{% endblock %}

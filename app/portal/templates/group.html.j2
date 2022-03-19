@@ -1,0 +1,18 @@
+{% extends "base.html.j2" %}
+{% from 'bootstrap5/form.html' import render_form %}
+{% from "tables.html.j2" import origins_table %}
+
+{% block content %}
+    <h1 class="h2 mt-3">Groups</h1>
+    <h2 class="h3">{{ group.group_name }}</h2>
+
+    <div style="border: 1px solid #666;" class="p-3">
+        {{ render_form(form) }}
+    </div>
+
+    <h3 class="mt-3">Origins</h3>
+    <a href="{{ url_for("portal.new_origin", group_id=group.id) }}" class="btn btn-success btn-sm">Create new origin</a>
+    {% if group.origins %}
+        {{ origins_table(group.origins) }}
+    {% endif %}
+{% endblock %}

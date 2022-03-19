@@ -10,12 +10,16 @@ from app.extensions import migrate
 from app.extensions import bootstrap
 from app.mirror_sites import mirror_sites
 from app.models import Group, Origin, Proxy, Mirror
+from app.portal import portal
 
 app = Flask(__name__)
 app.config.from_file("../config.yaml", load=yaml.safe_load)
 db.init_app(app)
 migrate.init_app(app, db)
 bootstrap.init_app(app)
+
+
+app.register_blueprint(portal, url_prefix="/portal")
 
 
 @app.route('/a/groups')
