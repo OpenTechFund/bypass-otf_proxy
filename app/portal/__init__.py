@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import boto3
 from flask import Blueprint, render_template, Response, flash, redirect, url_for, request, current_app
@@ -9,6 +9,15 @@ from app.models import Group, Origin, Proxy
 from app.portal.forms import EditGroupForm, NewGroupForm, NewOriginForm, EditOriginForm, LifecycleForm
 
 portal = Blueprint("portal", __name__, template_folder="templates", static_folder="static")
+
+
+@portal.app_template_filter("mirror_expiry")
+def calculate_mirror_expiry(s):
+    expiry = s + timedelta(days=3)
+    countdown = expiry - datetime.utcnow()
+    if countdown.days == 0:
+        return f"{countdown.seconds // 3600} hours"
+    return f"{countdown.days} days"
 
 
 @portal.route("/")
