@@ -7,7 +7,7 @@ import jinja2
 
 from app import app
 from app.extensions import db
-from app.models import Proxy, Group
+from app.models import Proxy, Group, Origin
 from app.terraform import terraform_init, terraform_apply
 
 TEMPLATE = """
@@ -67,6 +67,38 @@ module "cloudfront_{{ proxy.id }}" {
 """
 
 
+def create_missing_proxies():
+    with app.app_context():
+        origins = Origin.query.all()
+        for origin in origins:
+            cloudfront_proxies = [
+                x for x in origin.proxies
+                if x.provider == "cloudfront" and x.deprecated is None and x.destroyed is None
+            ]
+            if not cloudfront_proxies:
+                proxy = Proxy()
+                proxy.origin_id = origin.id
+                proxy.provider = "cloudfront"
+                proxy.added = datetime.datetime.utcnow()
+                proxy.updated = datetime.datetime.utcnow()
+                db.session.add(proxy)
+                db.session.commit()
+
+
+def destroy_expired_proxies():
+    with app.app_context():
+        cutoff = datetime.datetime.utcnow() - datetime.timedelta(days=3)
+        proxies = Proxy.query.filter(
+            Proxy.destroyed == None,
+            Proxy.deprecated < cutoff
+        ).all()
+        for proxy in proxies:
+            print("Past cutoff " + proxy.url)
+            proxy.destroyed = datetime.datetime.utcnow()
+            proxy.updated = datetime.datetime.utcnow()
+        db.session.commit()
+
+
 def generate_terraform():
     filename = os.path.join(
         app.config['TERRAFORM_DIRECTORY'],
@@ -110,6 +142,8 @@ def import_cloudfront_values():
 if __name__ == "__main__":
     db.init_app(app)
     with app.app_context():
+        destroy_expired_proxies()
+        create_missing_proxies()
         generate_terraform()
         terraform_init("cloudfront")
         terraform_apply("cloudfront")
