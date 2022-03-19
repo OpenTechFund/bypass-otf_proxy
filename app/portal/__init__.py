@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from flask import Blueprint, render_template, Response, flash, redirect, url_for
-from sqlalchemy import exc, desc
+from flask import Blueprint, render_template, Response, flash, redirect, url_for, request
+from sqlalchemy import exc, desc, or_
 
 from app.extensions import db
 from app.models import Group, Origin, Proxy
@@ -130,13 +130,13 @@ def view_origins():
 
 @portal.route("/proxies")
 def view_proxies():
-    proxies = Proxy.query.order_by(desc(Proxy.updated)).all()
+    proxies = Proxy.query.filter(Proxy.destroyed == None).order_by(desc(Proxy.updated)).all()
     return render_template("proxies.html.j2", section="proxy", proxies=proxies)
 
 
 @portal.route("/proxy/block/<proxy_id>", methods=['GET', 'POST'])
 def blocked_proxy(proxy_id):
-    proxy = Proxy.query.filter(Proxy.id == proxy_id).first()
+    proxy = Proxy.query.filter(Proxy.id == proxy_id, Proxy.destroyed == None).first()
     if proxy is None:
         return Response(render_template("error.html.j2",
                                         header="404 Proxy Not Found",
@@ -151,3 +151,11 @@ def blocked_proxy(proxy_id):
                            message=proxy.url,
                            section="proxy",
                            form=form)
+
+
+@portal.route("/search")
+def search():
+    query = request.args.get("query")
+    proxies = Proxy.query.filter(or_(Proxy.url.contains(query)), Proxy.destroyed == None).all()
+    origins = Origin.query.filter(or_(Origin.description.contains(query), Origin.domain_name.contains(query))).all()
+    return render_template("search.html.j2", section="home", proxies=proxies, origins=origins)

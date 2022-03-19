@@ -1,0 +1,14 @@
+{% extends "base.html.j2" %}
+{% from "tables.html.j2" import origins_table %}
+{% from "tables.html.j2" import proxies_table %}
+
+{% block content %}
+    <h1 class="h2 mt-3">Search Results</h1>
+    {% if origins %}
+    <h2 class="h3">Origins</h2>
+    {{ origins_table(origins) }}
+    {% endif %}{% if proxies %}
+    <h2 class="h3">Proxies</h2>
+    {{ proxies_table(proxies) }}
+    {% endif %}
+{% endblock %}
