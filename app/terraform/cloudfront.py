@@ -93,7 +93,6 @@ def destroy_expired_proxies():
             Proxy.deprecated < cutoff
         ).all()
         for proxy in proxies:
-            print("Past cutoff " + proxy.url)
             proxy.destroyed = datetime.datetime.utcnow()
             proxy.updated = datetime.datetime.utcnow()
         db.session.commit()

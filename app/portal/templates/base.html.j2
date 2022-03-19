@@ -44,11 +44,12 @@
         <span class="navbar-toggler-icon"></span>
     </button>
     <form class="w-100" action="{{ url_for("portal.search") }}">
-    <input class="form-control form-control-dark w-100" type="text" name="query" placeholder="Search" aria-label="Search">
+        <input class="form-control form-control-dark w-100" type="text" name="query" placeholder="Search"
+               aria-label="Search">
     </form>
     <div class="navbar-nav">
         <div class="nav-item text-nowrap">
-            <a class="nav-link px-3" href="#">User</a>
+            <a class="nav-link px-3" href="#">{{ request.headers.get('X-User-Name', 'Default User') }}</a>
         </div>
     </div>
 </header>
@@ -59,23 +60,60 @@
             <div class="position-sticky pt-3">
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link{% if section == "home" %} active{% endif %}" href="{{ url_for("portal.portal_home") }}">
+                        <a class="nav-link{% if section == "home" %} active{% endif %}"
+                           href="{{ url_for("portal.portal_home") }}">
                             Home
                         </a>
                     </li>
+                </ul>
+                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                    <span>Configuration</span>
+                </h6>
+                <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link{% if section == "group" %} active{% endif %}" href="{{ url_for("portal.view_groups") }}">
+                        <a class="nav-link{% if section == "group" %} active{% endif %}"
+                           href="{{ url_for("portal.view_groups") }}">
                             Groups
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link{% if section == "origin" %} active{% endif %}" href="{{ url_for("portal.view_origins") }}">
+                        <a class="nav-link{% if section == "origin" %} active{% endif %}"
+                           href="{{ url_for("portal.view_origins") }}">
                             Origins
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link{% if section == "proxy" %} active{% endif %}" href="{{ url_for("portal.view_proxies") }}">
+                        <a class="nav-link{% if section == "list" %} active{% endif %}"
+                           href="{{ url_for("portal.view_mirror_lists") }}">
+                            Mirror Lists
+                        </a>
+                    </li>
+                </ul>
+                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                    <span>Infrastructure</span>
+                </h6>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="disabled nav-link{% if section == "eotk" %} active{% endif %}"
+                           href="#">
+                            EOTK Instances
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link{% if section == "proxy" %} active{% endif %}"
+                           href="{{ url_for("portal.view_proxies") }}">
                             Proxies
+                        </a>
+                    </li>
+                </ul>
+                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                    <span>Monitoring</span>
+                </h6>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link{% if section == "alarm" %} active{% endif %}"
+                           href="{{ url_for("portal.view_alarms") }}">
+                            Alarms
                         </a>
                     </li>
                 </ul>
@@ -84,13 +122,13 @@
 
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} mt-2">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endwith %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} mt-2">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endwith %}
 
             {% block content %}
 

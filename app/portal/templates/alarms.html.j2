@@ -1,0 +1,23 @@
+{% extends "base.html.j2" %}
+{% from 'bootstrap5/form.html' import render_form %}
+
+{% block content %}
+    <h1 class="h2 mt-3">Alarms</h1>
+    <div class="table-responsive">
+        <table class="table table-sm">
+            <thead>
+            <tr>
+                <th scope="col">Alarm Name</th>
+                <th scope="col">State</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for alarm in alarms %}
+                <tr class="bg-{% if alarm["StateValue"] == "OK" %}success{% elif alarm["StateValue"] == "INSUFFICIENT_DATA" %}dark{% else %}danger{% endif %} text-light">
+                    <td>{{ alarm["AlarmName"] }}</td>
+                    <td>{{ alarm["StateValue"] }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+{% endblock %}

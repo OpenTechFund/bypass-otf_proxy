@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from flask import Blueprint, render_template, Response, flash, redirect, url_for, request
+import boto3
+from flask import Blueprint, render_template, Response, flash, redirect, url_for, request, current_app
 from sqlalchemy import exc, desc, or_
 
 from app.extensions import db
@@ -159,3 +160,22 @@ def search():
     proxies = Proxy.query.filter(or_(Proxy.url.contains(query)), Proxy.destroyed == None).all()
     origins = Origin.query.filter(or_(Origin.description.contains(query), Origin.domain_name.contains(query))).all()
     return render_template("search.html.j2", section="home", proxies=proxies, origins=origins)
+
+
+@portal.route('/alarms')
+def view_alarms():
+    cloudwatch = boto3.client('cloudwatch',
+                              aws_access_key_id=current_app.config['AWS_ACCESS_KEY'],
+                              aws_secret_access_key=current_app.config['AWS_SECRET_KEY'],
+                              region_name='us-east-1')
+    dist_paginator = cloudwatch.get_paginator('describe_alarms')
+    page_iterator = dist_paginator.paginate()
+    alarms = []
+    for page in page_iterator:
+        alarms.extend(page['MetricAlarms'])
+    return render_template("alarms.html.j2", section="alarm", alarms=alarms)
+
+
+@portal.route('/lists')
+def view_mirror_lists():
+    return "not implemented"
