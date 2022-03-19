@@ -77,7 +77,7 @@ def edit_origin(origin_id):
         origin = Origin()
         origin.domain_name = "www.example.com"
         origin.description = "New origin"
-        origin.created = datetime.utcnow()
+        origin.added = datetime.utcnow()
         origin.group = Group.query.first()
         origin.provider = "cloudfront"
     else:
@@ -155,7 +155,7 @@ def edit_proxy(proxy_id):
     if proxy_id == "new":
         new = True
         proxy = Proxy()
-        proxy.created = datetime.utcnow()
+        proxy.added = datetime.utcnow()
         proxy.origin = Origin.query.first()
         proxy.provider = "cloudfront"
     else:

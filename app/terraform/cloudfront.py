@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 import subprocess
@@ -53,7 +54,7 @@ resource "aws_sns_topic" "alarms_{{ group.id }}" {
 {% for proxy in proxies %}
 module "cloudfront_{{ proxy.id }}" {
   source = "sr2c/bc-proxy/aws"
-  version = "0.0.3"
+  version = "0.0.5"
   origin_domain = "{{ proxy.origin.domain_name }}"
   logging_bucket = module.log_bucket_{{ proxy.origin.group.id }}.bucket_domain_name
   sns_topic_arn = aws_sns_topic.alarms_{{ proxy.origin.group.id }}.arn
@@ -101,6 +102,7 @@ def import_cloudfront_values():
                 if res['address'].endswith('aws_cloudfront_distribution.this'):
                     proxy = Proxy.query.filter(Proxy.id == mod['address'][len('module.cloudfront_'):]).first()
                     proxy.url = "https://" + res['values']['domain_name']
+                    proxy.terraform_updated = datetime.datetime.utcnow()
                     db.session.commit()
                     break
 
