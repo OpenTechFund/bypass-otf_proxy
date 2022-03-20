@@ -6,6 +6,5 @@ sqlalchemy~=1.4.32
 yaml~=0.2.5
 pyyaml~=6.0
 jinja2~=3.0.2
-flask-migrate
-flask-wtf
-Bootstrap-flask
+tldextract~=3.2.0
+requests~=2.27.1

@@ -91,6 +91,7 @@ def destroy_expired_proxies():
         cutoff = datetime.datetime.utcnow() - datetime.timedelta(days=3)
         proxies = Proxy.query.filter(
             Proxy.destroyed == None,
+            Proxy.provider == "cloudfront",
             Proxy.deprecated < cutoff
         ).all()
         for proxy in proxies:
