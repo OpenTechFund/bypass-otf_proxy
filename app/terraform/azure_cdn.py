@@ -151,7 +151,7 @@ def set_urls():
                 r = requests.get(proxy_url, timeout=5)
                 r.raise_for_status()
                 proxy.url = proxy_url
-            except ConnectionError:
+            except requests.ConnectionError:
                 # Not deployed yet
                 pass
             except requests.HTTPError:
