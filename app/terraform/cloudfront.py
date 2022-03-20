@@ -3,11 +3,12 @@ import json
 import os
 import subprocess
 
+import boto3
 import jinja2
 
 from app import app
 from app.extensions import db
-from app.models import Proxy, Group, Origin
+from app.models import Proxy, Group, Origin, ProxyAlarm, ProxyAlarmState
 from app.terraform import terraform_init, terraform_apply
 
 TEMPLATE = """
@@ -133,9 +134,47 @@ def import_cloudfront_values():
                 if res['address'].endswith('aws_cloudfront_distribution.this'):
                     proxy = Proxy.query.filter(Proxy.id == mod['address'][len('module.cloudfront_'):]).first()
                     proxy.url = "https://" + res['values']['domain_name']
+                    proxy.slug = res['values']['id']
                     proxy.terraform_updated = datetime.datetime.utcnow()
                     db.session.commit()
                     break
+
+
+def import_cloudwatch_alarms():
+    cloudwatch = boto3.client('cloudwatch',
+                              aws_access_key_id=app.config['AWS_ACCESS_KEY'],
+                              aws_secret_access_key=app.config['AWS_SECRET_KEY'],
+                              region_name='us-east-1')
+    dist_paginator = cloudwatch.get_paginator('describe_alarms')
+    page_iterator = dist_paginator.paginate(AlarmNamePrefix="bandwidth-out-high-")
+    for page in page_iterator:
+        for alarm in page['MetricAlarms']:
+            dist_id = alarm["AlarmName"][len("bandwidth-out-high-"):]
+            proxy = Proxy.query.filter(Proxy.slug == dist_id).first()
+            if proxy is None:
+                print("Skipping unknown proxy " + dist_id)
+                continue
+            proxy_alarm = ProxyAlarm.query.filter(
+                ProxyAlarm.proxy_id == proxy.id,
+                ProxyAlarm.alarm_type == "bandwidth-out-high"
+            ).first()
+            if proxy_alarm is None:
+                proxy_alarm = ProxyAlarm()
+                proxy_alarm.proxy_id = proxy.id
+                proxy_alarm.alarm_type = "bandwidth-out-high"
+                proxy_alarm.state_changed = datetime.datetime.utcnow()
+                db.session.add(proxy_alarm)
+            proxy_alarm.last_updated = datetime.datetime.utcnow()
+            old_state = proxy_alarm.alarm_state
+            if alarm['StateValue'] == "OK":
+                proxy_alarm.alarm_state = ProxyAlarmState.OK
+            elif alarm['StateValue'] == "ALARM":
+                proxy_alarm.alarm_state = ProxyAlarmState.CRITICAL
+            else:
+                proxy_alarm.alarm_state = ProxyAlarmState.UNKNOWN
+            if proxy_alarm.alarm_state != old_state:
+                proxy_alarm.state_changed = datetime.datetime.utcnow()
+        db.session.commit()
 
 
 if __name__ == "__main__":
@@ -147,3 +186,4 @@ if __name__ == "__main__":
         terraform_init("cloudfront")
         terraform_apply("cloudfront")
         import_cloudfront_values()
+        import_cloudwatch_alarms()

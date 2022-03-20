@@ -1,3 +1,4 @@
+import enum
 from datetime import datetime
 
 from app.extensions import db
@@ -66,6 +67,7 @@ class Proxy(db.Model):
     url = db.Column(db.String(255), nullable=True)
 
     origin = db.relationship("Origin", back_populates="proxies")
+    alarms = db.relationship("ProxyAlarm", back_populates="proxy")
 
     def as_dict(self):
         return {
@@ -110,3 +112,21 @@ class Mirror(db.Model):
 
     def __repr__(self):
         return '<Mirror %r_%r>' % (self.origin.domain_name, self.id)
+
+
+class ProxyAlarmState(enum.Enum):
+    UNKNOWN = 0
+    OK = 1
+    WARNING = 2
+    CRITICAL = 3
+
+
+class ProxyAlarm(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    proxy_id = db.Column(db.Integer, db.ForeignKey("proxy.id"), nullable=False)
+    alarm_type = db.Column(db.String(255), nullable=False)
+    alarm_state = db.Column(db.Enum(ProxyAlarmState), default=ProxyAlarmState.UNKNOWN, nullable=False)
+    state_changed = db.Column(db.DateTime(), nullable=False)
+    last_updated = db.Column(db.DateTime())
+
+    proxy = db.relationship("Proxy", back_populates="alarms")
