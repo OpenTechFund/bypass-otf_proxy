@@ -20,9 +20,9 @@ def terraform_plan(provider):
             provider))
 
 
-def terraform_apply(provider):
+def terraform_apply(provider: str, refresh: bool = True, parallelism: int = 10):
     subprocess.run(
-        ['terraform', 'apply', '-auto-approve'],
+        ['terraform', 'apply', f'-refresh={str(refresh).lower()}', '-auto-approve', f'-parallelism={str(parallelism)}'],
         cwd=os.path.join(
             app.config['TERRAFORM_DIRECTORY'],
             provider))

@@ -166,5 +166,5 @@ if __name__ == "__main__":
         destroy_expired_proxies()
         generate_terraform()
         terraform_init("azure_cdn")
-        terraform_apply("azure_cdn")
+        terraform_apply("azure_cdn", refresh=False, parallelism=1)  # Rate limits are problem
         set_urls()
