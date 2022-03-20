@@ -23,7 +23,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('proxy_id', sa.Integer(), nullable=False),
     sa.Column('alarm_type', sa.String(length=255), nullable=False),
-    sa.Column('alarm_state', app.models.ProxyAlarmState(), nullable=False),
+    sa.Column('alarm_state', sa.Enum(app.models.ProxyAlarmState), nullable=False),
     sa.Column('state_changed', sa.DateTime(), nullable=False),
     sa.Column('last_updated', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['proxy_id'], ['proxy.id'], ),
