@@ -5,7 +5,7 @@ from flask import Blueprint, render_template, Response, flash, redirect, url_for
 from sqlalchemy import exc, desc, or_
 
 from app.extensions import db
-from app.models import Group, Origin, Proxy
+from app.models import Group, Origin, Proxy, ProxyAlarm
 from app.portal.forms import EditGroupForm, NewGroupForm, NewOriginForm, EditOriginForm, LifecycleForm
 
 portal = Blueprint("portal", __name__, template_folder="templates", static_folder="static")
@@ -173,16 +173,8 @@ def search():
 
 @portal.route('/alarms')
 def view_alarms():
-    cloudwatch = boto3.client('cloudwatch',
-                              aws_access_key_id=current_app.config['AWS_ACCESS_KEY'],
-                              aws_secret_access_key=current_app.config['AWS_SECRET_KEY'],
-                              region_name='us-east-1')
-    dist_paginator = cloudwatch.get_paginator('describe_alarms')
-    page_iterator = dist_paginator.paginate()
-    alarms = []
-    for page in page_iterator:
-        alarms.extend(page['MetricAlarms'])
-    return render_template("alarms.html.j2", section="alarm", alarms=alarms)
+    proxy_alarms = ProxyAlarm.query.order_by(ProxyAlarm.alarm_state, desc(ProxyAlarm.state_changed)).all()
+    return render_template("alarms.html.j2", section="alarm", proxy_alarms=proxy_alarms)
 
 
 @portal.route('/lists')
