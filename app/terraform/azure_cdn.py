@@ -103,6 +103,8 @@ resource "azurerm_monitor_metric_alert" "response_alert_{{ group.id }}" {
     operator         = "GreaterThan"
     threshold        = 21474836480
   }
+  
+  window_size = PT1H
 }
 {% endfor %}
 
@@ -249,7 +251,7 @@ def import_monitor_alerts():
     )
     firing = [x.name[len("bandwidth-out-high-bc-"):]
               for x in client.alerts.get_all()
-              if x.startswith("bandwidth-out-high-bc-")]
+              if x.name.startswith("bandwidth-out-high-bc-")]
     for proxy in Proxy.query.filter(
         Proxy.provider == "azure_cdn",
         Proxy.destroyed == None
@@ -267,7 +269,7 @@ def import_monitor_alerts():
         proxy_alarm.last_updated = datetime.datetime.utcnow()
         old_state = proxy_alarm.alarm_state
         proxy_alarm.alarm_state = (ProxyAlarmState.OK
-                                   if proxy.group.group_name.lower() not in firing else
+                                   if proxy.origin.group.group_name.lower() not in firing else
                                    ProxyAlarmState.CRITICAL)
         if proxy_alarm.alarm_state != old_state:
             proxy_alarm.state_changed = datetime.datetime.utcnow()
