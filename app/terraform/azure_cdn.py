@@ -87,8 +87,15 @@ resource "azurerm_cdn_endpoint" "endpoint_{{ proxy.id }}" {
 
 def create_missing_proxies():
     with app.app_context():
-        origins = Origin.query.all()
-        for origin in origins:
+        groups = Group.query.all()
+        for group in groups:
+            active_proxies = len([p for p in Proxy.query.filter(
+                Proxy.provider == 'azure_cdn',
+                Proxy.destroyed == None
+            ).all() if p.origin.group_id == group.id])
+        for origin in group.origins:
+            if active_proxies == 25:
+                break
             azure_cdn_proxies = [
                 x for x in origin.proxies
                 if x.provider == "azure_cdn" and x.deprecated is None and x.destroyed is None
