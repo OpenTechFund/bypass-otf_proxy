@@ -89,7 +89,7 @@ resource "azurerm_monitor_diagnostic_setting" "profile_diagnostic_{{ group.id }}
 }
 
 resource "azurerm_monitor_metric_alert" "response_alert_{{ group.id }}" {
-  name                = "bandwidth-out-high-${module.label_{{ group.id }}}"
+  name                = "bandwidth-out-high-${module.label_{{ group.id }}.id}"
   resource_group_name = data.azurerm_resource_group.this.name
   scopes              = [azurerm_cdn_profile.profile_{{ group.id }}.id]
   description         = "Action will be triggered when response size is too high."
