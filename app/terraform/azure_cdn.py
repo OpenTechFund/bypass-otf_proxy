@@ -61,6 +61,32 @@ resource "azurerm_cdn_profile" "profile_{{ group.id }}" {
 
   tags = module.label_{{ group.id }}.tags
 }
+
+resource "azurerm_monitor_diagnostic_setting" "profile_diagnostic_{{ proxy.id }}" {
+  name               = "cdn-diagnostics"
+  target_resource_id = azurerm_cdn_endpoint.endpoint_{{ proxy.id }}.id
+  storage_account_id = azurerm_storage_account.this.id
+
+  log {
+    category = "AzureCDNAccessLog"
+    enabled  = true
+
+    retention_policy {
+      enabled = true
+      days = 90
+    }
+  }
+  
+  metric {
+    category = "AllMetrics"
+    enabled  = true
+
+    retention_policy {
+      enabled = true
+      days = 90
+    }
+  }
+}
 {% endfor %}
 
 {% for proxy in proxies %}
