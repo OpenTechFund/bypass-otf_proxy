@@ -93,23 +93,24 @@ def create_missing_proxies():
                 Proxy.provider == 'azure_cdn',
                 Proxy.destroyed == None
             ).all() if p.origin.group_id == group.id])
-        for origin in group.origins:
-            if active_proxies == 25:
-                break
-            azure_cdn_proxies = [
-                x for x in origin.proxies
-                if x.provider == "azure_cdn" and x.deprecated is None and x.destroyed is None
-            ]
-            if not azure_cdn_proxies:
-                proxy = Proxy()
-                proxy.origin_id = origin.id
-                proxy.provider = "azure_cdn"
-                proxy.slug = tldextract.extract(origin.domain_name).domain[:5] + ''.join(
-                    random.choices(string.ascii_lowercase, k=random.randint(10, 15)))
-                proxy.added = datetime.datetime.utcnow()
-                proxy.updated = datetime.datetime.utcnow()
-                db.session.add(proxy)
-        db.session.commit()
+            for origin in group.origins:
+                if active_proxies == 25:
+                    break
+                active_proxies += 1
+                azure_cdn_proxies = [
+                    x for x in origin.proxies
+                    if x.provider == "azure_cdn" and x.deprecated is None and x.destroyed is None
+                ]
+                if not azure_cdn_proxies:
+                    proxy = Proxy()
+                    proxy.origin_id = origin.id
+                    proxy.provider = "azure_cdn"
+                    proxy.slug = tldextract.extract(origin.domain_name).domain[:5] + ''.join(
+                        random.choices(string.ascii_lowercase, k=random.randint(10, 15)))
+                    proxy.added = datetime.datetime.utcnow()
+                    proxy.updated = datetime.datetime.utcnow()
+                    db.session.add(proxy)
+            db.session.commit()
 
 
 def destroy_expired_proxies():
