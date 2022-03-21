@@ -25,6 +25,8 @@ terraform {
 provider "azurerm" {
   features {}
   
+  client_id = "{{ azure_client_id }}"
+  client_secret = "{{ azure_client_secret }}"
   subscription_id = "{{ azure_subscription_id }}"
   tenant_id = "{{ azure_tenant_id }}"
   skip_provider_registration = true
@@ -127,6 +129,8 @@ def generate_terraform():
         azure_resource_group_name=app.config['AZURE_RESOURCE_GROUP_NAME'],
         azure_storage_account_name=app.config['AZURE_STORAGE_ACCOUNT_NAME'],
         azure_location=app.config['AZURE_LOCATION'],
+        azure_client_id=app.config['AZURE_CLIENT_ID'],
+        azure_client_secret=app.config['AZURE_CLIENT_SECRET'],
         azure_subscription_id=app.config['AZURE_SUBSCRIPTION_ID'],
         azure_tenant_id=app.config['AZURE_TENANT_ID'],
         groups=Group.query.all(),
