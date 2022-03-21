@@ -282,3 +282,4 @@ if __name__ == "__main__":
         terraform_init("azure_cdn")
         terraform_apply("azure_cdn", refresh=False, parallelism=1)  # Rate limits are problem
         set_urls()
+        import_monitor_alerts()
