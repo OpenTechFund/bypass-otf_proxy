@@ -62,9 +62,9 @@ resource "azurerm_cdn_profile" "profile_{{ group.id }}" {
   tags = module.label_{{ group.id }}.tags
 }
 
-resource "azurerm_monitor_diagnostic_setting" "profile_diagnostic_{{ proxy.id }}" {
+resource "azurerm_monitor_diagnostic_setting" "profile_diagnostic_{{ group.id }}" {
   name               = "cdn-diagnostics"
-  target_resource_id = azurerm_cdn_endpoint.endpoint_{{ proxy.id }}.id
+  target_resource_id = azurerm_cdn_profile.profile_{{ group.id }}.id
   storage_account_id = azurerm_storage_account.this.id
 
   log {
@@ -85,6 +85,21 @@ resource "azurerm_monitor_diagnostic_setting" "profile_diagnostic_{{ proxy.id }}
       enabled = true
       days = 90
     }
+  }
+}
+
+resource "azurerm_monitor_metric_alert" "response_alert_{{ group.id }}" {
+  name                = "bandwidth-out-high-${module.label_{{ group.id }}}"
+  resource_group_name = azurerm_resource_group.this.name
+  scopes              = [azurerm_cdn_profile.profile_{{ group.id }}.id]
+  description         = "Action will be triggered when response size is too high."
+
+  criteria {
+    metric_namespace = "Microsoft.Cdn/profiles"
+    metric_name      = "ResponseSize"
+    aggregation      = "Total"
+    operator         = "GreaterThan"
+    threshold        = 21474836480
   }
 }
 {% endfor %}
