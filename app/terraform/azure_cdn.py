@@ -101,10 +101,10 @@ resource "azurerm_monitor_metric_alert" "response_alert_{{ group.id }}" {
     metric_name      = "ResponseSize"
     aggregation      = "Total"
     operator         = "GreaterThan"
-    threshold        = 21474836480
+    threshold        = 21474836481
   }
   
-  window_size = PT1H
+  window_size = "PT1H"
 }
 {% endfor %}
 
