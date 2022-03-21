@@ -3,13 +3,15 @@ import os
 import string
 import random
 
+from azure.identity import ClientSecretCredential
+from azure.mgmt.alertsmanagement import AlertsManagementClient
 import jinja2
 import requests
 import tldextract
 
 from app import app
 from app.extensions import db
-from app.models import Group, Proxy, Origin
+from app.models import Group, Proxy, Origin, ProxyAlarm, ProxyAlarmState
 from app.terraform import terraform_init, terraform_apply
 
 TEMPLATE = """
@@ -233,6 +235,42 @@ def set_urls():
             except requests.HTTPError:
                 # TODO: Add an alarm
                 print(f"HTTP failure {proxy.slug}")
+    db.session.commit()
+
+
+def import_monitor_alerts():
+    credential = ClientSecretCredential(
+        tenant_id=app.config['AZURE_TENANT_ID'],
+        client_id=app.config['AZURE_CLIENT_ID'],
+        client_secret=app.config['AZURE_CLIENT_SECRET'])
+    client = AlertsManagementClient(
+        credential,
+        app.config['AZURE_SUBSCRIPTION_ID']
+    )
+    firing = [x.name[len("bandwidth-out-high-bc-"):]
+              for x in client.alerts.get_all()
+              if x.startswith("bandwidth-out-high-bc-")]
+    for proxy in Proxy.query.filter(
+        Proxy.provider == "azure_cdn",
+        Proxy.destroyed == None
+    ):
+        proxy_alarm = ProxyAlarm.query.filter(
+            ProxyAlarm.proxy_id == proxy.id,
+            ProxyAlarm.alarm_type == "bandwidth-out-high"
+        ).first()
+        if proxy_alarm is None:
+            proxy_alarm = ProxyAlarm()
+            proxy_alarm.proxy_id = proxy.id
+            proxy_alarm.alarm_type = "bandwidth-out-high"
+            proxy_alarm.state_changed = datetime.datetime.utcnow()
+            db.session.add(proxy_alarm)
+        proxy_alarm.last_updated = datetime.datetime.utcnow()
+        old_state = proxy_alarm.alarm_state
+        proxy_alarm.alarm_state = (ProxyAlarmState.OK
+                                   if proxy.group.group_name.lower() not in firing else
+                                   ProxyAlarmState.CRITICAL)
+        if proxy_alarm.alarm_state != old_state:
+            proxy_alarm.state_changed = datetime.datetime.utcnow()
     db.session.commit()
 
 
