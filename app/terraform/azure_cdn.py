@@ -53,12 +53,6 @@ module "label_{{ group.id }}" {
   label_order = ["namespace", "tenant", "name", "attributes"]
 }
 
-resource "azurerm_storage_container" "cdn_logs_{{ group.id }}" {
-  name                  = module.label_{{ group.id }}.id
-  storage_account_name  = azurerm_storage_account.this.name
-  container_access_type = "private"
-}
-
 resource "azurerm_cdn_profile" "profile_{{ group.id }}" {
   name                = module.label_{{ group.id }}.id
   location            = "{{ azure_location }}"
@@ -79,6 +73,35 @@ resource "azurerm_cdn_endpoint" "endpoint_{{ proxy.id }}" {
   origin {
     name      = "upstream"
     host_name = "{{ proxy.origin.domain_name }}"
+  }
+
+  global_delivery_rule {
+    modify_request_header_action {
+      action = "Overwrite"
+      name = "User-Agent"
+      value = "Amazon CloudFront"
+    }
+    modify_request_header_action {
+      action = "Append"
+      name = "X-Amz-Cf-Id"
+      value = "dummystring"
+    }
+  }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "diagnostic_{{ proxy.id }}" {
+  name               = "cdn-diagnostics"
+  target_resource_id = azurerm_cdn_endpoint.endpoint_{{ proxy.id }}.id
+  storage_account_id = azurerm_storage_account.this.id
+
+  log {
+    category = "CoreAnalytics"
+    enabled  = true
+
+    retention_policy {
+      enabled = true
+      days = 90
+    }
   }
 }
 {% endfor %}
@@ -163,12 +186,12 @@ def set_urls():
                 r = requests.get(proxy_url, timeout=5)
                 r.raise_for_status()
                 proxy.url = proxy_url
-            except requests.ConnectionError:
+            except (requests.ConnectionError, requests.Timeout):
                 # Not deployed yet
-                pass
+                print(f"Connection failure {proxy.slug}")
             except requests.HTTPError:
                 # TODO: Add an alarm
-                pass
+                print(f"HTTP failure {proxy.slug}")
     db.session.commit()
 
 
