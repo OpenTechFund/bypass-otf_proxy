@@ -251,7 +251,7 @@ def import_monitor_alerts():
     )
     firing = [x.name[len("bandwidth-out-high-bc-"):]
               for x in client.alerts.get_all()
-              if x.name.startswith("bandwidth-out-high-bc-")]
+              if x.name.startswith("bandwidth-out-high-bc-") and x.properties.essentials.monitor_condition == "Fired"]
     for proxy in Proxy.query.filter(
         Proxy.provider == "azure_cdn",
         Proxy.destroyed == None
