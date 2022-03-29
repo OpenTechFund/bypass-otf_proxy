@@ -176,6 +176,28 @@ def import_cloudwatch_alarms():
             if proxy_alarm.alarm_state != old_state:
                 proxy_alarm.state_changed = datetime.datetime.utcnow()
         db.session.commit()
+    quota_alarm = ProxyAlarm.query.filter(
+        ProxyAlarm.proxy_id == None,
+        ProxyAlarm.alarm_type == "cloudfront-quota"
+    ).first()
+    if quota_alarm is None:
+        quota_alarm = ProxyAlarm()
+        quota_alarm.alarm_type = "cloudfront-quota"
+        quota_alarm.state_changed = datetime.datetime.utcnow()
+        db.session.add(proxy_alarm)
+    quota_alarm.last_updated = datetime.datetime.utcnow()
+    deployed_count = len(Proxy.query.filter(
+        Proxy.destroyed == None).all())
+    old_state = quota_alarm.alarm_state
+    if deployed_count > 370:
+        quota_alarm.alarm_state = ProxyAlarmState.CRITICAL
+    elif deployed_count > 320:
+        quota_alarm.alarm_state = ProxyAlarmState.WARNING
+    else:
+        quota_alarm.alarm_state = ProxyAlarmState.OK
+    if quota_alarm.alarm_state != old_state:
+        quota_alarm.state_changed = datetime.datetime.utcnow()
+    db.session.commit()
 
 
 if __name__ == "__main__":

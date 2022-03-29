@@ -123,7 +123,7 @@ class ProxyAlarmState(enum.Enum):
 
 class ProxyAlarm(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    proxy_id = db.Column(db.Integer, db.ForeignKey("proxy.id"), nullable=False)
+    proxy_id = db.Column(db.Integer, db.ForeignKey("proxy.id"), nullable=True)
     alarm_type = db.Column(db.String(255), nullable=False)
     alarm_state = db.Column(db.Enum(ProxyAlarmState), default=ProxyAlarmState.UNKNOWN, nullable=False)
     state_changed = db.Column(db.DateTime(), nullable=False)
