@@ -149,8 +149,8 @@ def import_cloudwatch_alarms():
     dist_paginator = cloudwatch.get_paginator('describe_alarms')
     page_iterator = dist_paginator.paginate(AlarmNamePrefix="bandwidth-out-high-")
     for page in page_iterator:
-        for alarm in page['MetricAlarms']:
-            dist_id = alarm["AlarmName"][len("bandwidth-out-high-"):]
+        for cw_alarm in page['MetricAlarms']:
+            dist_id = cw_alarm["AlarmName"][len("bandwidth-out-high-"):]
             proxy = Proxy.query.filter(Proxy.slug == dist_id).first()
             if proxy is None:
                 print("Skipping unknown proxy " + dist_id)
@@ -168,9 +168,9 @@ def import_cloudwatch_alarms():
                 db.session.add(alarm)
             alarm.last_updated = datetime.datetime.utcnow()
             old_state = alarm.alarm_state
-            if alarm['StateValue'] == "OK":
+            if cw_alarm['StateValue'] == "OK":
                 alarm.alarm_state = AlarmState.OK
-            elif alarm['StateValue'] == "ALARM":
+            elif cw_alarm['StateValue'] == "ALARM":
                 alarm.alarm_state = AlarmState.CRITICAL
             else:
                 alarm.alarm_state = AlarmState.UNKNOWN
