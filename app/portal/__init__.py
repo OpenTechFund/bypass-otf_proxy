@@ -5,7 +5,7 @@ from flask import Blueprint, render_template, Response, flash, redirect, url_for
 from sqlalchemy import exc, desc, or_
 
 from app.extensions import db
-from app.models import Group, Origin, Proxy, ProxyAlarm
+from app.models import Group, Origin, Proxy, Alarm
 from app.portal.forms import EditGroupForm, NewGroupForm, NewOriginForm, EditOriginForm, LifecycleForm
 
 portal = Blueprint("portal", __name__, template_folder="templates", static_folder="static")
@@ -173,8 +173,8 @@ def search():
 
 @portal.route('/alarms')
 def view_alarms():
-    proxy_alarms = ProxyAlarm.query.order_by(ProxyAlarm.alarm_state, desc(ProxyAlarm.state_changed)).all()
-    return render_template("alarms.html.j2", section="alarm", proxy_alarms=proxy_alarms)
+    alarms = Alarm.query.order_by(Alarm.alarm_state, desc(Alarm.state_changed)).all()
+    return render_template("alarms.html.j2", section="alarm", alarms=alarms)
 
 
 @portal.route('/lists')

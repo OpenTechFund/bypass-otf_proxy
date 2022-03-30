@@ -13,6 +13,7 @@ class Group(db.Model):
     updated = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
 
     origins = db.relationship("Origin", back_populates="group")
+    alarms = db.relationship("Alarm", back_populates="group")
 
     def as_dict(self):
         return {
@@ -38,6 +39,7 @@ class Origin(db.Model):
     group = db.relationship("Group", back_populates="origins")
     mirrors = db.relationship("Mirror", back_populates="origin")
     proxies = db.relationship("Proxy", back_populates="origin")
+    alarms = db.relationship("Alarm", back_populates="origin")
 
     def as_dict(self):
         return {
@@ -67,7 +69,7 @@ class Proxy(db.Model):
     url = db.Column(db.String(255), nullable=True)
 
     origin = db.relationship("Origin", back_populates="proxies")
-    alarms = db.relationship("ProxyAlarm", back_populates="proxy")
+    alarms = db.relationship("Alarm", back_populates="proxy")
 
     def as_dict(self):
         return {
@@ -114,19 +116,24 @@ class Mirror(db.Model):
         return '<Mirror %r_%r>' % (self.origin.domain_name, self.id)
 
 
-class ProxyAlarmState(enum.Enum):
+class AlarmState(enum.Enum):
     UNKNOWN = 0
     OK = 1
     WARNING = 2
     CRITICAL = 3
 
 
-class ProxyAlarm(db.Model):
+class Alarm(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    proxy_id = db.Column(db.Integer, db.ForeignKey("proxy.id"), nullable=True)
+    target = db.Column(db.String(60), nullable=False)
+    group_id = db.Column(db.Integer, db.ForeignKey("group.id"))
+    origin_id = db.Column(db.Integer, db.ForeignKey("origin.id"))
+    proxy_id = db.Column(db.Integer, db.ForeignKey("proxy.id"))
     alarm_type = db.Column(db.String(255), nullable=False)
-    alarm_state = db.Column(db.Enum(ProxyAlarmState), default=ProxyAlarmState.UNKNOWN, nullable=False)
+    alarm_state = db.Column(db.Enum(AlarmState), default=AlarmState.UNKNOWN, nullable=False)
     state_changed = db.Column(db.DateTime(), nullable=False)
     last_updated = db.Column(db.DateTime())
 
+    group = db.relationship("Group", back_populates="alarms")
+    origin = db.relationship("Origin", back_populates="alarms")
     proxy = db.relationship("Proxy", back_populates="alarms")

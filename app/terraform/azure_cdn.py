@@ -11,7 +11,7 @@ import tldextract
 
 from app import app
 from app.extensions import db
-from app.models import Group, Proxy, Origin, ProxyAlarm, ProxyAlarmState
+from app.models import Group, Proxy, Origin, Alarm, AlarmState
 from app.terraform import terraform_init, terraform_apply
 
 TEMPLATE = """
@@ -256,23 +256,24 @@ def import_monitor_alerts():
         Proxy.provider == "azure_cdn",
         Proxy.destroyed == None
     ):
-        proxy_alarm = ProxyAlarm.query.filter(
-            ProxyAlarm.proxy_id == proxy.id,
-            ProxyAlarm.alarm_type == "bandwidth-out-high"
+        alarm = Alarm.query.filter(
+            Alarm.proxy_id == proxy.id,
+            Alarm.alarm_type == "bandwidth-out-high"
         ).first()
-        if proxy_alarm is None:
-            proxy_alarm = ProxyAlarm()
-            proxy_alarm.proxy_id = proxy.id
-            proxy_alarm.alarm_type = "bandwidth-out-high"
-            proxy_alarm.state_changed = datetime.datetime.utcnow()
-            db.session.add(proxy_alarm)
-        proxy_alarm.last_updated = datetime.datetime.utcnow()
-        old_state = proxy_alarm.alarm_state
-        proxy_alarm.alarm_state = (ProxyAlarmState.OK
+        if alarm is None:
+            alarm = Alarm()
+            alarm.target = "proxy"
+            alarm.proxy_id = proxy.id
+            alarm.alarm_type = "bandwidth-out-high"
+            alarm.state_changed = datetime.datetime.utcnow()
+            db.session.add(alarm)
+        alarm.last_updated = datetime.datetime.utcnow()
+        old_state = alarm.alarm_state
+        alarm.alarm_state = (AlarmState.OK
                                    if proxy.origin.group.group_name.lower() not in firing else
-                                   ProxyAlarmState.CRITICAL)
-        if proxy_alarm.alarm_state != old_state:
-            proxy_alarm.state_changed = datetime.datetime.utcnow()
+                                   AlarmState.CRITICAL)
+        if alarm.alarm_state != old_state:
+            alarm.state_changed = datetime.datetime.utcnow()
     db.session.commit()
 
 

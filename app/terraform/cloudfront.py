@@ -8,7 +8,7 @@ import jinja2
 
 from app import app
 from app.extensions import db
-from app.models import Proxy, Group, Origin, ProxyAlarm, ProxyAlarmState
+from app.models import Proxy, Group, Origin, Alarm, AlarmState
 from app.terraform import terraform_init, terraform_apply
 
 TEMPLATE = """
@@ -155,48 +155,50 @@ def import_cloudwatch_alarms():
             if proxy is None:
                 print("Skipping unknown proxy " + dist_id)
                 continue
-            proxy_alarm = ProxyAlarm.query.filter(
-                ProxyAlarm.proxy_id == proxy.id,
-                ProxyAlarm.alarm_type == "bandwidth-out-high"
+            alarm = Alarm.query.filter(
+                Alarm.proxy_id == proxy.id,
+                Alarm.alarm_type == "bandwidth-out-high"
             ).first()
-            if proxy_alarm is None:
-                proxy_alarm = ProxyAlarm()
-                proxy_alarm.proxy_id = proxy.id
-                proxy_alarm.alarm_type = "bandwidth-out-high"
-                proxy_alarm.state_changed = datetime.datetime.utcnow()
-                db.session.add(proxy_alarm)
-            proxy_alarm.last_updated = datetime.datetime.utcnow()
-            old_state = proxy_alarm.alarm_state
+            if alarm is None:
+                alarm = Alarm()
+                alarm.target = "proxy"
+                alarm.proxy_id = proxy.id
+                alarm.alarm_type = "bandwidth-out-high"
+                alarm.state_changed = datetime.datetime.utcnow()
+                db.session.add(alarm)
+            alarm.last_updated = datetime.datetime.utcnow()
+            old_state = alarm.alarm_state
             if alarm['StateValue'] == "OK":
-                proxy_alarm.alarm_state = ProxyAlarmState.OK
+                alarm.alarm_state = AlarmState.OK
             elif alarm['StateValue'] == "ALARM":
-                proxy_alarm.alarm_state = ProxyAlarmState.CRITICAL
+                alarm.alarm_state = AlarmState.CRITICAL
             else:
-                proxy_alarm.alarm_state = ProxyAlarmState.UNKNOWN
-            if proxy_alarm.alarm_state != old_state:
-                proxy_alarm.state_changed = datetime.datetime.utcnow()
+                alarm.alarm_state = AlarmState.UNKNOWN
+            if alarm.alarm_state != old_state:
+                alarm.state_changed = datetime.datetime.utcnow()
         db.session.commit()
-    quota_alarm = ProxyAlarm.query.filter(
-        ProxyAlarm.proxy_id == None,
-        ProxyAlarm.alarm_type == "cloudfront-quota"
+    alarm = Alarm.query.filter(
+        Alarm.proxy_id == None,
+        Alarm.alarm_type == "cloudfront-quota"
     ).first()
-    if quota_alarm is None:
-        quota_alarm = ProxyAlarm()
-        quota_alarm.alarm_type = "cloudfront-quota"
-        quota_alarm.state_changed = datetime.datetime.utcnow()
-        db.session.add(proxy_alarm)
-    quota_alarm.last_updated = datetime.datetime.utcnow()
+    if alarm is None:
+        alarm = Alarm()
+        alarm.target = "service/cloudfront"
+        alarm.alarm_type = "cloudfront-quota"
+        alarm.state_changed = datetime.datetime.utcnow()
+        db.session.add(alarm)
+    alarm.last_updated = datetime.datetime.utcnow()
     deployed_count = len(Proxy.query.filter(
         Proxy.destroyed == None).all())
-    old_state = quota_alarm.alarm_state
+    old_state = alarm.alarm_state
     if deployed_count > 370:
-        quota_alarm.alarm_state = ProxyAlarmState.CRITICAL
+        alarm.alarm_state = AlarmState.CRITICAL
     elif deployed_count > 320:
-        quota_alarm.alarm_state = ProxyAlarmState.WARNING
+        alarm.alarm_state = AlarmState.WARNING
     else:
-        quota_alarm.alarm_state = ProxyAlarmState.OK
-    if quota_alarm.alarm_state != old_state:
-        quota_alarm.state_changed = datetime.datetime.utcnow()
+        alarm.alarm_state = AlarmState.OK
+    if alarm.alarm_state != old_state:
+        alarm.state_changed = datetime.datetime.utcnow()
     db.session.commit()
 
 

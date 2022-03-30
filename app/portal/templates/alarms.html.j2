@@ -8,17 +8,20 @@
         <table class="table table-sm">
             <thead>
             <tr>
-                <th scope="col">Proxy</th>
-                <th scope="col">Origin Domain Name</th>
+                <th scope="col">Resource</th>
                 <th scope="col">Type</th>
                 <th scope="col">State</th>
             </tr>
             </thead>
             <tbody>
-            {% for alarm in proxy_alarms %}
+            {% for alarm in alarms %}
                 <tr class="bg-{% if alarm.alarm_state.name == "OK" %}success{% elif alarm.alarm_state.name == "UNKNOWN" %}dark{% else %}danger{% endif %} text-light">
-                    <td>{{ alarm.proxy.url }}</td>
-                    <td>{{ alarm.proxy.origin.domain_name }}</td>
+                    <td></td>
+                    {% if alarm.target = "proxy" %}
+                    <td>Proxy: {{ alarm.proxy.url }} ({{ alarm.proxy.origin.domain_name }})</td>
+                    {% elif alarm.target = "service/cloudfront" %}
+                    <td>AWS CloudFront</td>
+                    {% endif %}
                     <td>{{ alarm.alarm_type }}</td>
                     <td>{{ alarm.alarm_state.name }}</td>
                 </tr>
