@@ -1,8 +1,0 @@
-{% extends "base.html" %}
-{% from 'bootstrap5/form.html' import render_form %}
-
-{% block content %}
-    <h2>{{ action.title() }} {{ type.title() }} #{{ resource.id }}: {{ resource.url }}</h2>
-    Please confirm that you'd like to {{ action }} this resource:
-    {{ render_form(form) }}
-{% endblock %}
