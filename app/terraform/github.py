@@ -5,6 +5,7 @@ import jinja2
 
 from app import app, mirror_sites
 from app.extensions import db
+from app.models import MirrorList
 from app.terraform import terraform_init, terraform_apply
 
 TEMPLATE = """
@@ -17,35 +18,42 @@ terraform {
   }
 }
 
+{% for list in lists %}
 provider "github" {
-  owner = "{{ github_organization }}"
-  token = "{{ github_api_key }}"
+  alias               = "list_{{ list.id }}"
+  owner               = "{{ list.container.split("/")[0] }}"
+  token               = "{{ github_api_key }}"
 }
 
-data "github_repository" "this" {
-  name = "{{ github_repository }}"
+data "github_repository" "repository_{{ list.id }}" {
+  provider            = github.list_{{ list.id }}
+  name                = "{{ list.container.split("/")[1] }}"
 }
 
-resource "github_repository_file" "this" {
-  repository          = data.github_repository.this.name
+resource "github_repository_file" "file_{{ list.id }}" {
+  provider            = github.list_{{ list.id }}
+  repository          = data.github_repository.repository_{{ list.id }}.name
   branch              = "master"
-  file                = "{{ github_file_v2 }}"
-  content             = file("{{ github_file_v2 }}")
+  file                = "{{ list.filename }}"
+  content             = file("v2.json")
   commit_message      = "Managed by Terraform"
   commit_author       = "Terraform User"
   commit_email        = "terraform@api.otf.is"
   overwrite_on_create = true
 }
+{% endfor %}
 """
 
 
 def generate_terraform():
+    lists = MirrorList.query.filter(
+        MirrorList.destroyed == None,
+        MirrorList.provider == "github"
+    ).all()
     tmpl = jinja2.Template(TEMPLATE)
     rendered = tmpl.render(
         github_api_key=app.config['GITHUB_API_KEY'],
-        github_organization=app.config['GITHUB_ORGANIZATION'],
-        github_repository=app.config['GITHUB_REPOSITORY'],
-        github_file_v2=app.config['GITHUB_FILE_V2']
+        lists = lists
     )
     with open(os.path.join(
             app.config['TERRAFORM_DIRECTORY'],
@@ -56,9 +64,9 @@ def generate_terraform():
     with open(os.path.join(
             app.config['TERRAFORM_DIRECTORY'],
             'github',
-            app.config['GITHUB_FILE_V2']
+            'v2.json'
     ), 'w') as out:
-        json.dump(mirror_sites(), out, indent=4, sort_keys=True)
+        json.dump(mirror_sites(), out, indent=2, sort_keys=True)
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ import jinja2
 
 from app import app, mirror_sites
 from app.extensions import db
+from app.models import MirrorList
 from app.terraform import terraform_init, terraform_apply
 
 TEMPLATE = """
@@ -21,31 +22,37 @@ provider "gitlab" {
   token = "{{ gitlab_token }}"
 }
 
-data "gitlab_project" "this" {
-  id = "{{ gitlab_project }}"
+{% for list in lists %}
+data "gitlab_project" "project_{{ list.id }}" {
+  id = "{{ list.container }}"
 }
 
-resource "gitlab_repository_file" "this" {
-  project        = data.gitlab_project.this.id
-  file_path      = "{{ gitlab_file_v2 }}"
-  branch         = "main"
-  content        = base64encode(file("{{ gitlab_file_v2 }}"))
+resource "gitlab_repository_file" "file_{{ list.id }}" {
+  project        = data.gitlab_project.project_{{ list.id }}.id
+  file_path      = "{{ list.filename }}"
+  branch         = "{{ list.branch }}"
+  content        = base64encode(file("v2.json"))
   author_email   = "{{ gitlab_author_email }}"
   author_name    = "{{ gitlab_author_name }}"
   commit_message = "{{ gitlab_commit_message }}"
 }
+
+{% endfor %}
 """
 
 
 def generate_terraform():
+    lists = MirrorList.query.filter(
+        MirrorList.destroyed == None,
+        MirrorList.provider == "gitlab"
+    ).all()
     tmpl = jinja2.Template(TEMPLATE)
     rendered = tmpl.render(
         gitlab_token=app.config['GITLAB_TOKEN'],
-        gitlab_project=app.config['GITLAB_PROJECT'],
-        gitlab_file_v2=app.config['GITLAB_FILE_V2'],
         gitlab_author_email=app.config['GITLAB_AUTHOR_EMAIL'],
         gitlab_author_name=app.config['GITLAB_AUTHOR_NAME'],
-        gitlab_commit_message=app.config['GITLAB_COMMIT_MESSAGE']
+        gitlab_commit_message=app.config['GITLAB_COMMIT_MESSAGE'],
+        lists=lists
     )
     with open(os.path.join(
             app.config['TERRAFORM_DIRECTORY'],
@@ -56,7 +63,7 @@ def generate_terraform():
     with open(os.path.join(
             app.config['TERRAFORM_DIRECTORY'],
             'gitlab',
-            app.config['GITLAB_FILE_V2']
+            'v2.json'
     ), 'w') as out:
         json.dump(mirror_sites(), out, indent=4, sort_keys=True)
 

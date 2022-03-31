@@ -1,0 +1,8 @@
+{% extends "base.html.j2" %}
+{% from "tables.html.j2" import mirrorlists_table %}
+
+{% block content %}
+    <h1 class="h2 mt-3">Mirror Lists</h1>
+    <a href="{{ url_for("portal.new_mirror_list") }}" class="btn btn-success">Create new mirror list</a>
+    {{ mirrorlists_table(mirrorlists) }}
+{% endblock %}

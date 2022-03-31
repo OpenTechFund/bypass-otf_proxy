@@ -57,3 +57,13 @@ class EditBridgeConfForm(FlaskForm):
     description = StringField('Description')
     number = IntegerField('Number', validators=[NumberRange(1, message="One or more bridges must be created")])
     submit = SubmitField('Save Changes')
+
+
+class NewMirrorListForm(FlaskForm):
+    provider = SelectField('Provider', validators=[DataRequired()])
+    format = SelectField('Distribution Method', validators=[DataRequired()])
+    description = StringField('Description', validators=[DataRequired()])
+    container = StringField('Container', validators=[DataRequired()])
+    branch = StringField('Branch')
+    filename = StringField('Filename', validators=[DataRequired()])
+    submit = SubmitField('Save Changes')

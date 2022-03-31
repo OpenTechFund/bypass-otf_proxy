@@ -185,3 +185,30 @@ class Bridge(db.Model):
         self.deprecated = datetime.utcnow()
         self.updated = datetime.utcnow()
         db.session.commit()
+
+
+class MirrorList(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    provider = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.String(255), nullable=False)
+    format = db.Column(db.String(20), nullable=False)
+    container = db.Column(db.String(255), nullable=False)
+    branch = db.Column(db.String(255), nullable=False)
+    filename = db.Column(db.String(255), nullable=False)
+    added = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
+    updated = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
+    deprecated = db.Column(db.DateTime(), nullable=True)
+    destroyed = db.Column(db.DateTime(), nullable=True)
+
+    def destroy(self):
+        self.destroyed = datetime.utcnow()
+        self.updated = datetime.utcnow()
+        db.session.commit()
+
+    def url(self):
+        if self.provider == "gitlab":
+            return f"https://gitlab.com/{self.container}/-/raw/{self.branch}/{self.filename}"
+        if self.provider == "github":
+            return f"https://raw.githubusercontent.com/{self.container}/{self.branch}/{self.filename}"
+        if self.provider == "s3":
+            return f"s3://{self.container}/{self.filename}"

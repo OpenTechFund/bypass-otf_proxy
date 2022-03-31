@@ -5,9 +5,9 @@ from flask import Blueprint, render_template, Response, flash, redirect, url_for
 from sqlalchemy import exc, desc, or_
 
 from app.extensions import db
-from app.models import Group, Origin, Proxy, Alarm, BridgeConf, Bridge
+from app.models import Group, Origin, Proxy, Alarm, BridgeConf, Bridge, MirrorList
 from app.portal.forms import EditGroupForm, NewGroupForm, NewOriginForm, EditOriginForm, LifecycleForm, \
-    NewBridgeConfForm, EditBridgeConfForm
+    NewBridgeConfForm, EditBridgeConfForm, NewMirrorListForm
 
 portal = Blueprint("portal", __name__, template_folder="templates", static_folder="static")
 
@@ -180,7 +180,52 @@ def view_alarms():
 
 @portal.route('/lists')
 def view_mirror_lists():
+    mirrorlists = MirrorList.query.filter(MirrorList.destroyed == None).all()
+    return render_template("mirrorlists.html.j2", section="list", mirrorlists=mirrorlists)
+
+
+@portal.route("/list/destroy/<list_id>")
+def destroy_mirror_list(list_id):
     return "not implemented"
+
+@portal.route("/list/new", methods=['GET', 'POST'])
+@portal.route("/list/new/<group_id>", methods=['GET', 'POST'])
+def new_mirror_list(group_id=None):
+    form = NewMirrorListForm()
+    form.provider.choices = [
+        ("github", "GitHub"),
+        ("gitlab", "GitLab"),
+        ("s3", "AWS S3"),
+    ]
+    form.format.choices = [
+        ("bc2", "Bypass Censorship v2"),
+        ("bc3", "Bypass Censorship v3"),
+        ("bca", "Bypass Censorship Analytics"),
+    ]
+    form.container.description = "GitHub Project, GitLab Project or AWS S3 bucket name."
+    form.branch.description = "Ignored for AWS S3."
+    if form.validate_on_submit():
+        mirror_list = MirrorList()
+        mirror_list.provider = form.provider.data
+        mirror_list.format = form.format.data
+        mirror_list.description = form.description.data
+        mirror_list.container = form.container.data
+        mirror_list.branch = form.branch.data
+        mirror_list.filename = form.filename.data
+        mirror_list.created = datetime.utcnow()
+        mirror_list.updated = datetime.utcnow()
+        try:
+            db.session.add(mirror_list)
+            db.session.commit()
+            flash(f"Created new mirror list.", "success")
+            return redirect(url_for("portal.view_mirror_lists"))
+        except exc.SQLAlchemyError as e:
+            print(e)
+            flash("Failed to create new mirror list.", "danger")
+            return redirect(url_for("portal.view_mirror_lists"))
+    if group_id:
+        form.group.data = group_id
+    return render_template("new.html.j2", section="list", form=form)
 
 
 @portal.route("/bridgeconfs")
@@ -294,3 +339,4 @@ def destroy_bridgeconf(bridgeconf_id):
                            message=bridgeconf.description,
                            section="bridgeconf",
                            form=form)
+

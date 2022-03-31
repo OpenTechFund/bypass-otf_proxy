@@ -211,3 +211,35 @@
         </table>
     </div>
 {% endmacro %}
+
+{% macro mirrorlists_table(mirrorlists) %}
+    <div class="table-responsive">
+        <table class="table table-striped table-sm">
+            <thead>
+            <tr>
+                <th scope="col">Provider</th>
+                <th scope="col">Format</th>
+                <th scope="col">URI</th>
+                <th scope="col">Description</th>
+                <th scope="col">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for list in mirrorlists %}
+                {% if not list.destroyed %}
+                    <tr class="align-middle">
+                        <td>{{ list.provider }}</td>
+                        <td>{{ list.format }}</td>
+                        <td>{{ list.url() }}</td>
+                        <td>{{ list.description }}</td>
+                        <td>
+                            <a href="{{ url_for("portal.destroy_mirror_list", list_id=list.id) }}"
+                               class="btn btn-danger btn-sm">Destroy</a>
+                        </td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endmacro %}
