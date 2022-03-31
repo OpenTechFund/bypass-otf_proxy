@@ -14,9 +14,8 @@ from app.portal import portal
 app = Flask(__name__)
 app.config.from_file("../config.yaml", load=yaml.safe_load)
 db.init_app(app)
-migrate.init_app(app, db)
+migrate.init_app(app, db, render_as_batch=True)
 bootstrap.init_app(app)
-
 
 app.register_blueprint(portal, url_prefix="/portal")
 

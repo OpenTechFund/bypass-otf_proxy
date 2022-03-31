@@ -110,3 +110,104 @@
         </table>
     </div>
 {% endmacro %}
+
+{% macro bridgeconfs_table(bridgeconfs) %}
+    <div class="table-responsive">
+        <table class="table table-striped table-sm">
+            <thead>
+            <tr>
+                <th scope="col">Group</th>
+                <th scope="col">Provider</th>
+                <th scope="col">Distribution Method</th>
+                <th scope="col">Number</th>
+                <th scope="col">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for bridgeconf in bridgeconfs %}
+                {% if not bridgeconf.destroyed %}
+                    <tr class="align-middle">
+                        <td>
+                            <a href="{{ url_for("portal.edit_group", group_id=bridgeconf.group.id) }}">{{ bridgeconf.group.group_name }}</a>
+                        </td>
+                        <td>{{ bridgeconf.provider }}</td>
+                        <td>{{ bridgeconf.method }}</td>
+                        <td>{{ bridgeconf.number }}</td>
+                        <td>
+                            <a href="{{ url_for("portal.edit_bridgeconf", bridgeconf_id=bridgeconf.id) }}"
+                               class="btn btn-primary btn-sm">View/Edit</a>
+                            <a href="{{ url_for("portal.destroy_bridgeconf", bridgeconf_id=bridgeconf.id) }}"
+                               class="btn btn-danger btn-sm">Destroy</a>
+                        </td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endmacro %}
+
+{% macro bridges_table(bridges) %}
+    <div class="table-responsive">
+        <table class="table table-striped table-sm">
+            <thead>
+            <tr>
+                <th scope="col">Group</th>
+                <th scope="col">Configuration</th>
+                <th scope="col">Hashed Fingerprint</th>
+                <th scope="col">Alarms</th>
+                <th scope="col">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for bridge in bridges %}
+                {% if not bridge.destroyed %}
+                    <tr class="align-middle{% if bridge.deprecated %} bg-warning{% endif %}">
+                        <td>
+                            <a href="{{ url_for("portal.edit_group", group_id=bridge.conf.group.id) }}">{{ bridge.conf.group.group_name }}</a>
+                        </td>
+                        <td>{{ bridge.conf.description }} ({{ bridge.conf.provider }}/{{ bridge.conf.method }})</td>
+                        <td>
+                            <code>{{ bridge.hashed_fingerprint }}</code>
+                        </td>
+                        <td>
+                            {% for alarm in bridge.alarms %}
+                                <span title="{{ alarm.alarm_type }}">
+                            {% if alarm.alarm_state.name == "OK" %}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                     class="bi bi-check-circle text-success" viewBox="0 0 16 16">
+                                  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                  <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+                                </svg>
+                            {% elif alarm.alarm_state.name == "UNKNOWN" %}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                     class="bi bi-question-circle text-muted" viewBox="0 0 16 16">
+                                  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                  <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
+                                </svg>
+                            {% else %}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                     class="bi bi-exclamation-circle text-danger" viewBox="0 0 16 16">
+                                  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                  <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+                                </svg>
+                            {% endif %}
+                            </span>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            {% if bridge.deprecated %}
+                                <a href="#" class="disabled btn btn-sm btn-outline-dark">Expiring
+                                    in {{ bridge.deprecated | mirror_expiry }}</a>
+                            {% else %}
+                                <a href="{{ url_for("portal.blocked_bridge", bridge_id=bridge.id) }}"
+                                   class="btn btn-warning btn-sm">Mark blocked</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endmacro %}

@@ -13,6 +13,7 @@ class Group(db.Model):
     updated = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
 
     origins = db.relationship("Origin", back_populates="group")
+    bridgeconfs = db.relationship("BridgeConf", back_populates="group")
     alarms = db.relationship("Alarm", back_populates="group")
 
     def as_dict(self):
@@ -129,6 +130,7 @@ class Alarm(db.Model):
     group_id = db.Column(db.Integer, db.ForeignKey("group.id"))
     origin_id = db.Column(db.Integer, db.ForeignKey("origin.id"))
     proxy_id = db.Column(db.Integer, db.ForeignKey("proxy.id"))
+    bridge_id = db.Column(db.Integer, db.ForeignKey("bridge.id"))
     alarm_type = db.Column(db.String(255), nullable=False)
     alarm_state = db.Column(db.Enum(AlarmState), default=AlarmState.UNKNOWN, nullable=False)
     state_changed = db.Column(db.DateTime(), nullable=False)
@@ -137,3 +139,49 @@ class Alarm(db.Model):
     group = db.relationship("Group", back_populates="alarms")
     origin = db.relationship("Origin", back_populates="alarms")
     proxy = db.relationship("Proxy", back_populates="alarms")
+    bridge = db.relationship("Bridge", back_populates="alarms")
+
+
+class BridgeConf(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(db.Integer, db.ForeignKey("group.id"), nullable=False)
+    provider = db.Column(db.String(20), nullable=False)
+    method = db.Column(db.String(20), nullable=False)
+    description = db.Column(db.String(255))
+    number = db.Column(db.Integer())
+    added = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
+    updated = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
+    destroyed = db.Column(db.DateTime(), nullable=True)
+
+    group = db.relationship("Group", back_populates="bridgeconfs")
+    bridges = db.relationship("Bridge", back_populates="conf")
+
+    def destroy(self):
+        self.destroyed = datetime.utcnow()
+        self.updated = datetime.utcnow()
+        for bridge in self.bridges:
+            if bridge.destroyed is None:
+                bridge.destroyed = datetime.utcnow()
+                bridge.updated = datetime.utcnow()
+        db.session.commit()
+
+
+class Bridge(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    conf_id = db.Column(db.Integer, db.ForeignKey("bridge_conf.id"), nullable=False)
+    added = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
+    updated = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
+    deprecated = db.Column(db.DateTime(), nullable=True)
+    destroyed = db.Column(db.DateTime(), nullable=True)
+    terraform_updated = db.Column(db.DateTime(), nullable=True)
+    fingerprint = db.Column(db.String(255), nullable=True)
+    hashed_fingerprint = db.Column(db.String(255), nullable=True)
+    bridgeline = db.Column(db.String(255), nullable=True)
+
+    conf = db.relationship("BridgeConf", back_populates="bridges")
+    alarms = db.relationship("Alarm", back_populates="bridge")
+
+    def deprecate(self):
+        self.deprecated = datetime.utcnow()
+        self.updated = datetime.utcnow()
+        db.session.commit()

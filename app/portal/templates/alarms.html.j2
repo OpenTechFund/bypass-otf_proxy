@@ -17,9 +17,9 @@
             {% for alarm in alarms %}
                 <tr class="bg-{% if alarm.alarm_state.name == "OK" %}success{% elif alarm.alarm_state.name == "UNKNOWN" %}dark{% else %}danger{% endif %} text-light">
                     {% if alarm.target == "proxy" %}
-                    <td>Proxy: {{ alarm.proxy.url }} ({{ alarm.proxy.origin.domain_name }})</td>
+                        <td>Proxy: {{ alarm.proxy.url }} ({{ alarm.proxy.origin.domain_name }})</td>
                     {% elif alarm.target == "service/cloudfront" %}
-                    <td>AWS CloudFront</td>
+                        <td>AWS CloudFront</td>
                     {% endif %}
                     <td>{{ alarm.alarm_type }}</td>
                     <td>{{ alarm.alarm_state.name }}</td>
@@ -27,4 +27,5 @@
             {% endfor %}
             </tbody>
         </table>
+    </div>
 {% endblock %}

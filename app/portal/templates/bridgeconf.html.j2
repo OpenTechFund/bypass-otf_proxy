@@ -1,0 +1,16 @@
+{% extends "base.html.j2" %}
+{% from 'bootstrap5/form.html' import render_form %}
+{% from "tables.html.j2" import bridges_table %}
+
+{% block content %}
+    <h1 class="h2 mt-3">Tor Bridge Configuration</h1>
+    <h2 class="h3">{{ bridgeconf.group.group_name }}: {{ bridgeconf.provider }}/{{ bridgeconf.method }}</h2>
+
+    <div style="border: 1px solid #666;" class="p-3">
+        {{ render_form(form) }}
+    </div>
+
+    <h3>Bridges</h3>
+    {{ bridges_table(bridgeconf.bridges) }}
+
+{% endblock %}

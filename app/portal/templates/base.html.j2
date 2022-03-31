@@ -88,6 +88,12 @@
                             Mirror Lists
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link{% if section == "bridgeconf" %} active{% endif %}"
+                           href="{{ url_for("portal.view_bridgeconfs") }}">
+                            Tor Bridges
+                        </a>
+                    </li>
                 </ul>
                 <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
                     <span>Infrastructure</span>
@@ -103,6 +109,12 @@
                         <a class="nav-link{% if section == "proxy" %} active{% endif %}"
                            href="{{ url_for("portal.view_proxies") }}">
                             Proxies
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link{% if section == "bridge" %} active{% endif %}"
+                           href="{{ url_for("portal.view_bridges") }}">
+                            Tor Bridges
                         </a>
                     </li>
                 </ul>

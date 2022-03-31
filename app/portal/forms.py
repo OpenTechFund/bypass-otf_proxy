@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, SelectField, BooleanField
-from wtforms.validators import DataRequired
+from wtforms import StringField, SubmitField, SelectField, BooleanField, IntegerField
+from wtforms.validators import DataRequired, NumberRange
 
 
 class NewGroupForm(FlaskForm):
@@ -42,3 +42,18 @@ class EditProxyForm(FlaskForm):
 
 class LifecycleForm(FlaskForm):
     submit = SubmitField('Confirm')
+
+
+class NewBridgeConfForm(FlaskForm):
+    provider = SelectField('Provider', validators=[DataRequired()])
+    method = SelectField('Distribution Method', validators=[DataRequired()])
+    description = StringField('Description')
+    group = SelectField('Group', validators=[DataRequired()])
+    number = IntegerField('Number', validators=[NumberRange(1, message="One or more bridges must be created")])
+    submit = SubmitField('Save Changes')
+
+
+class EditBridgeConfForm(FlaskForm):
+    description = StringField('Description')
+    number = IntegerField('Number', validators=[NumberRange(1, message="One or more bridges must be created")])
+    submit = SubmitField('Save Changes')

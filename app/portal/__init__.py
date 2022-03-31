@@ -5,8 +5,9 @@ from flask import Blueprint, render_template, Response, flash, redirect, url_for
 from sqlalchemy import exc, desc, or_
 
 from app.extensions import db
-from app.models import Group, Origin, Proxy, Alarm
-from app.portal.forms import EditGroupForm, NewGroupForm, NewOriginForm, EditOriginForm, LifecycleForm
+from app.models import Group, Origin, Proxy, Alarm, BridgeConf, Bridge
+from app.portal.forms import EditGroupForm, NewGroupForm, NewOriginForm, EditOriginForm, LifecycleForm, \
+    NewBridgeConfForm, EditBridgeConfForm
 
 portal = Blueprint("portal", __name__, template_folder="templates", static_folder="static")
 
@@ -180,3 +181,116 @@ def view_alarms():
 @portal.route('/lists')
 def view_mirror_lists():
     return "not implemented"
+
+
+@portal.route("/bridgeconfs")
+def view_bridgeconfs():
+    bridgeconfs = BridgeConf.query.filter(BridgeConf.destroyed == None).all()
+    return render_template("bridgeconfs.html.j2", section="bridgeconf", bridgeconfs=bridgeconfs)
+
+
+@portal.route("/bridgeconf/new", methods=['GET', 'POST'])
+@portal.route("/bridgeconf/new/<group_id>", methods=['GET', 'POST'])
+def new_bridgeconf(group_id=None):
+    form = NewBridgeConfForm()
+    form.group.choices = [(x.id, x.group_name) for x in Group.query.all()]
+    form.provider.choices = [
+        ("aws", "AWS Lightsail")
+    ]
+    form.method.choices = [
+        ("any", "Any (BridgeDB)"),
+        ("email", "E-Mail (BridgeDB)"),
+        ("moat", "Moat (BridgeDB)"),
+        ("https", "HTTPS (BridgeDB)"),
+        ("none", "None (Private)")
+    ]
+    if form.validate_on_submit():
+        bridge_conf = BridgeConf()
+        bridge_conf.group_id = form.group.data
+        bridge_conf.provider = form.provider.data
+        bridge_conf.method = form.method.data
+        bridge_conf.description = form.description.data
+        bridge_conf.number = form.number.data
+        bridge_conf.created = datetime.utcnow()
+        bridge_conf.updated = datetime.utcnow()
+        try:
+            db.session.add(bridge_conf)
+            db.session.commit()
+            flash(f"Created new bridge configuration {bridge_conf.id}.", "success")
+            return redirect(url_for("portal.view_bridgeconfs"))
+        except exc.SQLAlchemyError as e:
+            print(e)
+            flash("Failed to create new bridge configuration.", "danger")
+            return redirect(url_for("portal.view_bridgeconfs"))
+    if group_id:
+        form.group.data = group_id
+    return render_template("new.html.j2", section="bridgeconf", form=form)
+
+
+@portal.route("/bridges")
+def view_bridges():
+    bridges = Bridge.query.filter(Bridge.destroyed == None).all()
+    return render_template("bridges.html.j2", section="bridge", bridges=bridges)
+
+
+@portal.route('/bridgeconf/edit/<bridgeconf_id>', methods=['GET', 'POST'])
+def edit_bridgeconf(bridgeconf_id):
+    bridgeconf = BridgeConf.query.filter(BridgeConf.id == bridgeconf_id).first()
+    if bridgeconf is None:
+        return Response(render_template("error.html.j2",
+                                        section="origin",
+                                        header="404 Origin Not Found",
+                                        message="The requested origin could not be found."),
+                        status=404)
+    form = EditBridgeConfForm(description=bridgeconf.description,
+                              number=bridgeconf.number)
+    if form.validate_on_submit():
+        bridgeconf.description = form.description.data
+        bridgeconf.number = form.number.data
+        bridgeconf.updated = datetime.utcnow()
+        try:
+            db.session.commit()
+            flash("Saved changes to bridge configuration.", "success")
+        except exc.SQLAlchemyError:
+            flash("An error occurred saving the changes to the bridge configuration.", "danger")
+    return render_template("bridgeconf.html.j2",
+                           section="bridgeconf",
+                           bridgeconf=bridgeconf, form=form)
+
+
+@portal.route("/bridge/block/<bridge_id>", methods=['GET', 'POST'])
+def blocked_bridge(bridge_id):
+    bridge = Bridge.query.filter(Bridge.id == bridge_id, Bridge.destroyed == None).first()
+    if bridge is None:
+        return Response(render_template("error.html.j2",
+                                        header="404 Proxy Not Found",
+                                        message="The requested bridge could not be found."))
+    form = LifecycleForm()
+    if form.validate_on_submit():
+        bridge.deprecate()
+        flash("Bridge will be shortly replaced.", "success")
+        return redirect(url_for("portal.edit_bridgeconf", bridgeconf_id=bridge.conf_id))
+    return render_template("blocked.html.j2",
+                           header=f"Mark bridge {bridge.hashed_fingerprint} as blocked?",
+                           message=bridge.hashed_fingerprint,
+                           section="bridge",
+                           form=form)
+
+
+@portal.route("/bridgeconf/destroy/<bridgeconf_id>", methods=['GET', 'POST'])
+def destroy_bridgeconf(bridgeconf_id):
+    bridgeconf = BridgeConf.query.filter(BridgeConf.id == bridgeconf_id, BridgeConf.destroyed == None).first()
+    if bridgeconf is None:
+        return Response(render_template("error.html.j2",
+                                        header="404 Proxy Not Found",
+                                        message="The requested bridge configuration could not be found."))
+    form = LifecycleForm()
+    if form.validate_on_submit():
+        bridgeconf.destroy()
+        flash("All bridges from the destroyed configuration will shortly be destroyed at their providers.", "success")
+        return redirect(url_for("portal.view_bridgeconfs"))
+    return render_template("blocked.html.j2",
+                           header=f"Destroy?",
+                           message=bridgeconf.description,
+                           section="bridgeconf",
+                           form=form)
