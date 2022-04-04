@@ -12,3 +12,4 @@ azure-mgmt-alertsmanagement
 flask-migrate
 flask-sqlalchemy
 bootstrap-flask
+flask-wtf
