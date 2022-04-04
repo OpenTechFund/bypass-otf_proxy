@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 
-import boto3
-from flask import Blueprint, render_template, Response, flash, redirect, url_for, request, current_app
+from flask import Blueprint, render_template, Response, flash, redirect, url_for, request
 from sqlalchemy import exc, desc, or_
 
 from app.extensions import db

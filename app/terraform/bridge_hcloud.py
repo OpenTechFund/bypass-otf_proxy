@@ -72,7 +72,7 @@ output "bridge_hashed_fingerprint_{{ bridge.id }}" {
 
 
 class BridgeHcloudAutomation(BaseAutomation):
-    short_name = "bridge_aws"
+    short_name = "bridge_hcloud"
 
     def create_missing(self):
         bridgeconfs = BridgeConf.query.filter(
