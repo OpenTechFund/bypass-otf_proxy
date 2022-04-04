@@ -54,6 +54,7 @@ resource "random_shuffle" "datacenter_{{ bridge.id }}" {
 
 module "bridge_{{ bridge.id }}" {
   source = "sr2c/tor-bridge/hcloud"
+  version = "0.0.2"
   datacenter = one(random_shuffle.datacenter_{{ bridge.id }}.result)
   name = "bridge"
   attributes = ["{{ bridge.id }}"]
