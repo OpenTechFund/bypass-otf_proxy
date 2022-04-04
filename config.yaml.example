@@ -10,12 +10,24 @@ SECRET_KEY: iechaj0mun6beih3rooga0mei7eo0iwoal1eeweN
 # This directory must exist and be writable by the user running the portal.
 TERRAFORM_DIRECTORY: /home/bc/terraform
 
-# For CloudFront deployments.
+# AWS (CloudFront)
 AWS_ACCESS_KEY: accesskeygoeshere
 AWS_SECRET_KEY: accesssecretgoeshere
 
-# For publishing the mirrorSites.json file.
+# Azure
+AZURE_RESOURCE_GROUP_NAME: namegoeshere
+AZURE_STORAGE_ACCOUNT_NAME: namegoeshere
+AZURE_LOCATION: westcentralus
+AZURE_SUBSCRIPTION_ID: subscriptionuuid
+AZURE_TENANT_ID: tenantuuid
+AZURE_CLIENT_ID: clientuuid
+AZURE_CLIENT_SECRET: clientsecretgoeshere
+
+# GitHub
 GITHUB_ORGANIZATION: exampleorg
 GITHUB_REPOSITORY: example-repo
 GITHUB_API_KEY: keygoeshere
 GITHUB_FILE_V2: mirrorSites.json
+
+# Hetzner Cloud
+HCLOUD_TOKEN: tokengoeshere

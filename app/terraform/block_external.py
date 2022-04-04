@@ -1,10 +1,7 @@
-import datetime
-
 from bs4 import BeautifulSoup
 import requests
 
 from app import app
-from app.extensions import db
 from app.models import Proxy
 
 
@@ -48,8 +45,7 @@ def check_blocks():
                 if proxy.deprecated:
                     print("Proxy already marked blocked")
                     continue
-                proxy.deprecated = datetime.datetime.utcnow()
-                proxy.updated = datetime.datetime.utcnow()
+                proxy.deprecate()
             if "azureedge.net" in url:
                 slug = url[len('https://'):][:-len('.azureedge.net')]
                 print(f"Found {slug} blocked")
@@ -63,9 +59,7 @@ def check_blocks():
                 if proxy.deprecated:
                     print("Proxy already marked blocked")
                     continue
-                proxy.deprecated = datetime.datetime.utcnow()
-                proxy.updated = datetime.datetime.utcnow()
-        db.session.commit()
+                proxy.deprecate()
 
 
 if __name__ == "__main__":

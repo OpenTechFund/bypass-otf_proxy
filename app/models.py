@@ -4,6 +4,31 @@ from datetime import datetime
 from app.extensions import db
 
 
+class AbstractResource(db.Model):
+    __abstract__ = True
+
+    id = db.Column(db.Integer, primary_key=True)
+    added = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
+    updated = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
+    deprecated = db.Column(db.DateTime(), nullable=True)
+    destroyed = db.Column(db.DateTime(), nullable=True)
+
+    def deprecate(self):
+        self.deprecated = datetime.utcnow()
+        self.updated = datetime.utcnow()
+        db.session.commit()
+
+    def destroy(self):
+        if self.deprecated is None:
+            self.deprecated = datetime.utcnow()
+        self.destroyed = datetime.utcnow()
+        self.updated = datetime.utcnow()
+        db.session.commit()
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} #{self.id}>"
+
+
 class Group(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     group_name = db.Column(db.String(80), unique=True, nullable=False)
@@ -57,15 +82,11 @@ class Origin(db.Model):
         return '<Origin %r>' % self.domain_name
 
 
-class Proxy(db.Model):
+class Proxy(AbstractResource):
     id = db.Column(db.Integer, primary_key=True)
     origin_id = db.Column(db.Integer, db.ForeignKey("origin.id"), nullable=False)
     provider = db.Column(db.String(20), nullable=False)
     slug = db.Column(db.String(20), nullable=True)
-    added = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
-    updated = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
-    deprecated = db.Column(db.DateTime(), nullable=True)
-    destroyed = db.Column(db.DateTime(), nullable=True)
     terraform_updated = db.Column(db.DateTime(), nullable=True)
     url = db.Column(db.String(255), nullable=True)
 
@@ -82,14 +103,6 @@ class Proxy(db.Model):
             "added": self.added,
             "updated": self.updated
         }
-
-    def deprecate(self):
-        self.deprecated = datetime.utcnow()
-        self.updated = datetime.utcnow()
-        db.session.commit()
-
-    def __repr__(self):
-        return '<Proxy %r_%r>' % (self.origin.domain_name, self.id)
 
 
 class Mirror(db.Model):
@@ -166,13 +179,8 @@ class BridgeConf(db.Model):
         db.session.commit()
 
 
-class Bridge(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+class Bridge(AbstractResource):
     conf_id = db.Column(db.Integer, db.ForeignKey("bridge_conf.id"), nullable=False)
-    added = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
-    updated = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
-    deprecated = db.Column(db.DateTime(), nullable=True)
-    destroyed = db.Column(db.DateTime(), nullable=True)
     terraform_updated = db.Column(db.DateTime(), nullable=True)
     fingerprint = db.Column(db.String(255), nullable=True)
     hashed_fingerprint = db.Column(db.String(255), nullable=True)
@@ -180,11 +188,6 @@ class Bridge(db.Model):
 
     conf = db.relationship("BridgeConf", back_populates="bridges")
     alarms = db.relationship("Alarm", back_populates="bridge")
-
-    def deprecate(self):
-        self.deprecated = datetime.utcnow()
-        self.updated = datetime.utcnow()
-        db.session.commit()
 
 
 class MirrorList(db.Model):

@@ -1,7 +1,5 @@
-from datetime import datetime
-
 import boto3 as boto3
-from flask import Flask, jsonify, render_template, Response, redirect, url_for
+from flask import Flask, jsonify, Response, redirect, url_for
 import yaml
 
 from app.extensions import db
@@ -23,12 +21,6 @@ app.register_blueprint(portal, url_prefix="/portal")
 @app.route('/')
 def index():
     return redirect(url_for("portal.portal_home"))
-
-
-@app.route('/mirrors')
-def list_mirrors():
-    res = Mirror.query.all()
-    return render_template("mirrors.html", mirrors=res)
 
 
 @app.route('/import/cloudfront')
