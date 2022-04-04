@@ -9,3 +9,6 @@ tldextract~=3.2.0
 requests~=2.27.1
 azure-identity
 azure-mgmt-alertsmanagement
+flask-migrate
+flask-sqlalchemy
+bootstrap-flask
