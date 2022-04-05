@@ -242,7 +242,8 @@ def new_bridgeconf(group_id=None):
     form.provider.choices = [
         ("aws", "AWS Lightsail"),
         ("hcloud", "Hetzner Cloud"),
-        ("ovh", "OVH Public Cloud")
+        ("ovh", "OVH Public Cloud"),
+        ("gandi", "GandiCloud VPS")
     ]
     form.method.choices = [
         ("any", "Any (BridgeDB)"),
