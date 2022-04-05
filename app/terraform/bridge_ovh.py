@@ -38,6 +38,10 @@ provider "ovh" {
   consumer_key       = "{{ ovh_cloud_consumer_key }}"
 }
 
+locals {
+  ssh_key = file("{{ ssh_public_key_path }}")
+}
+
 data "ovh_cloud_project_regions" "regions" {
   service_name = "{{ ovh_cloud_project_service }}"
   has_services_up = ["instance"]
@@ -71,7 +75,7 @@ module "bridge_{{ bridge.id }}" {
   region = one(random_shuffle.region_{{ bridge.id }}.result)
   name = "bridge"
   attributes = ["{{ bridge.id }}"]
-  ssh_key_name = "bc"
+  ssh_key = local.ssh_key
   contact_info = "hi"
   distribution_method = "{{ bridge.conf.method }}"
 }
