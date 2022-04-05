@@ -154,6 +154,7 @@
             <tr>
                 <th scope="col">Group</th>
                 <th scope="col">Configuration</th>
+                <th scope="col">Nickname</th>
                 <th scope="col">Hashed Fingerprint</th>
                 <th scope="col">Alarms</th>
                 <th scope="col">Actions</th>
@@ -167,6 +168,11 @@
                             <a href="{{ url_for("portal.edit_group", group_id=bridge.conf.group.id) }}">{{ bridge.conf.group.group_name }}</a>
                         </td>
                         <td>{{ bridge.conf.description }} ({{ bridge.conf.provider }}/{{ bridge.conf.method }})</td>
+                        <td>
+                            <a href="https://metrics.torproject.org/rs.html#details/{{ bridge.hashed_fingerprint }}">
+                                {{ bridge.nickname }}
+                            </a>
+                        </td>
                         <td>
                             <code>{{ bridge.hashed_fingerprint }}</code>
                         </td>
