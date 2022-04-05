@@ -84,7 +84,7 @@ class BridgeHcloudAutomation(BridgeAutomation):
             groups=Group.query.all(),
             bridgeconfs=BridgeConf.query.filter(
                 BridgeConf.destroyed == None,
-                BridgeConf.provider == "hcloud"
+                BridgeConf.provider == self.provider
             ).all()
         )
 

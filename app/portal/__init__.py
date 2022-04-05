@@ -200,6 +200,7 @@ def new_mirror_list(group_id=None):
         ("bc2", "Bypass Censorship v2"),
         ("bc3", "Bypass Censorship v3"),
         ("bca", "Bypass Censorship Analytics"),
+        ("bridgelines", "Tor Bridge Lines")
     ]
     form.container.description = "GitHub Project, GitLab Project or AWS S3 bucket name."
     form.branch.description = "Ignored for AWS S3."

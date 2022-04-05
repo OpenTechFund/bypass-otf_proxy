@@ -5,6 +5,7 @@ import jinja2
 
 from app import app, mirror_sites
 from app.extensions import db
+from app.mirror_sites import bridgelines
 from app.models import MirrorList
 from app.terraform import terraform_init, terraform_apply
 
@@ -35,7 +36,7 @@ resource "github_repository_file" "file_{{ list.id }}" {
   repository          = data.github_repository.repository_{{ list.id }}.name
   branch              = "master"
   file                = "{{ list.filename }}"
-  content             = file("v2.json")
+  content             = file("{{ list.format }}.json")
   commit_message      = "Managed by Terraform"
   commit_author       = "Terraform User"
   commit_email        = "terraform@api.otf.is"
@@ -53,7 +54,7 @@ def generate_terraform():
     tmpl = jinja2.Template(TEMPLATE)
     rendered = tmpl.render(
         github_api_key=app.config['GITHUB_API_KEY'],
-        lists = lists
+        lists=lists
     )
     with open(os.path.join(
             app.config['TERRAFORM_DIRECTORY'],
@@ -64,9 +65,15 @@ def generate_terraform():
     with open(os.path.join(
             app.config['TERRAFORM_DIRECTORY'],
             'github',
-            'v2.json'
+            'bc2.json'
     ), 'w') as out:
         json.dump(mirror_sites(), out, indent=2, sort_keys=True)
+    with open(os.path.join(
+            app.config['TERRAFORM_DIRECTORY'],
+            'github',
+            'bridgelines.json'
+    ), 'w') as out:
+        json.dump(bridgelines(), out, indent=2, sort_keys=True)
 
 
 if __name__ == "__main__":

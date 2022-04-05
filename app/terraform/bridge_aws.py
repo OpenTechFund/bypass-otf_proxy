@@ -71,7 +71,7 @@ class BridgeAWSAutomation(BridgeAutomation):
             groups=Group.query.all(),
             bridgeconfs=BridgeConf.query.filter(
                 BridgeConf.destroyed == None,
-                BridgeConf.provider == "aws"
+                BridgeConf.provider == self.provider
             ).all()
         )
 

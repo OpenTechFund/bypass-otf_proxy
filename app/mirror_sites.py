@@ -1,4 +1,4 @@
-from app.models import Origin
+from app.models import Origin, Bridge
 
 
 def mirror_sites():
@@ -24,5 +24,17 @@ def mirror_sites():
                                           } for a in x.proxies if
                                           a.url is not None and not a.deprecated and not a.destroyed and a.provider == "cloudfront"
                                       ]} for x in Origin.query.order_by(Origin.domain_name).all()
+        ]
+    }
+
+
+def bridgelines():
+    return {
+        "version": "1.0",
+        "bridgelines": [
+            b.bridgeline for b in Bridge.query.filter(
+                Bridge.destroyed == None,
+                Bridge.bridgeline != None
+            )
         ]
     }

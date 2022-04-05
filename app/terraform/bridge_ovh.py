@@ -108,7 +108,7 @@ class BridgeOvhAutomation(BridgeAutomation):
             groups=Group.query.all(),
             bridgeconfs=BridgeConf.query.filter(
                 BridgeConf.destroyed == None,
-                BridgeConf.provider == "ovh"
+                BridgeConf.provider == self.provider
             ).all()
         )
 
