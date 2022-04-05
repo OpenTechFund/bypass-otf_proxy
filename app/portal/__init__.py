@@ -240,7 +240,8 @@ def new_bridgeconf(group_id=None):
     form.group.choices = [(x.id, x.group_name) for x in Group.query.all()]
     form.provider.choices = [
         ("aws", "AWS Lightsail"),
-        ("hcloud", "Hetzner Cloud")
+        ("hcloud", "Hetzner Cloud"),
+        ("ovh", "OVH Public Cloud")
     ]
     form.method.choices = [
         ("any", "Any (BridgeDB)"),
