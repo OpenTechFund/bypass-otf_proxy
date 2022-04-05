@@ -31,7 +31,7 @@ resource "gitlab_repository_file" "file_{{ list.id }}" {
   project        = data.gitlab_project.project_{{ list.id }}.id
   file_path      = "{{ list.filename }}"
   branch         = "{{ list.branch }}"
-  content        = base64encode(file("v2.json"))
+  content        = base64encode(file("{{ list.format }}.json"))
   author_email   = "{{ gitlab_author_email }}"
   author_name    = "{{ gitlab_author_name }}"
   commit_message = "{{ gitlab_commit_message }}"

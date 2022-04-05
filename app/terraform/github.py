@@ -34,7 +34,7 @@ data "github_repository" "repository_{{ list.id }}" {
 resource "github_repository_file" "file_{{ list.id }}" {
   provider            = github.list_{{ list.id }}
   repository          = data.github_repository.repository_{{ list.id }}.name
-  branch              = "master"
+  branch              = "{{ list.branch }}"
   file                = "{{ list.filename }}"
   content             = file("{{ list.format }}.json")
   commit_message      = "Managed by Terraform"
