@@ -13,7 +13,7 @@ class BridgeGandiAutomation(BridgeAutomation):
         "ssh_public_key_path"
     ]
 
-    TEMPLATE = """
+    template = """
     terraform {
       required_providers {
         openstack = {
