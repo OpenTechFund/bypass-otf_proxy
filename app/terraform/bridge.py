@@ -44,6 +44,7 @@ class BridgeAutomation(BaseAutomation):
         for output in outputs:
             if output.startswith('bridge_hashed_fingerprint_'):
                 bridge = Bridge.query.filter(Bridge.id == output[len('bridge_hashed_fingerprint_'):]).first()
+                bridge.nickname = outputs[output]['value'].split(" ")[0]
                 bridge.hashed_fingerprint = outputs[output]['value'].split(" ")[1]
                 bridge.terraform_updated = datetime.datetime.utcnow()
             if output.startswith('bridge_bridgeline_'):

@@ -182,6 +182,7 @@ class BridgeConf(db.Model):
 class Bridge(AbstractResource):
     conf_id = db.Column(db.Integer, db.ForeignKey("bridge_conf.id"), nullable=False)
     terraform_updated = db.Column(db.DateTime(), nullable=True)
+    nickname = db.Column(db.String(255), nullable=True)
     fingerprint = db.Column(db.String(255), nullable=True)
     hashed_fingerprint = db.Column(db.String(255), nullable=True)
     bridgeline = db.Column(db.String(255), nullable=True)
