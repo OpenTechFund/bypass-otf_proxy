@@ -1,5 +1,4 @@
 import datetime
-from time import timezone
 
 from dateutil.parser import isoparse
 from github import Github
@@ -15,13 +14,14 @@ def check_blocks():
         results = repo.get_contents(f"recentResult_{vp}").decoded_content.decode('utf-8').splitlines()
         for result in results:
             parts = result.split("\t")
-            if isoparse(parts[2]) < (datetime.datetime.now(timezone.utc) - datetime.timedelta(days=3)):
+            if isoparse(parts[2]) < (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=3)):
                 continue
             if int(parts[1]) < 40:
                 bridge = Bridge.query.filter(
                     Bridge.nickname == parts[0]
                 ).first()
-                bridge.deprecate()
+                if bridge is not None:
+                    bridge.deprecate()
 
 
 if __name__ == "__main__":
