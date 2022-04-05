@@ -62,7 +62,7 @@ class BridgeHcloudAutomation(BridgeAutomation):
       version = "0.0.2"
       datacenter = one(random_shuffle.datacenter_{{ bridge.id }}.result)
       context = module.label_{{ bridgeconf.group.id }}.context
-      name = "bridge"
+      name = "br"
       attributes = ["{{ bridge.id }}"]
       ssh_key_name = "bc"
       contact_info = "hi"

@@ -66,6 +66,8 @@ class BridgeAutomation(BaseAutomation):
             if output.startswith('bridge_bridgeline_'):
                 bridge = Bridge.query.filter(Bridge.id == output[len('bridge_bridgeline_'):]).first()
                 parts = outputs[output]['value'].split(" ")
+                if len(parts) < 4:
+                    continue
                 del(parts[3])
                 bridge.bridgeline = " ".join(parts)
                 bridge.terraform_updated = datetime.datetime.utcnow()

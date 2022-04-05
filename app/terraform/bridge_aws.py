@@ -50,7 +50,7 @@ class BridgeAWSAutomation(BridgeAutomation):
       ssh_key = local.ssh_key
       contact_info = "hi"
       context = module.label_{{ bridgeconf.group.id }}.context
-      name = "bridge"
+      name = "br"
       attributes = ["{{ bridge.id }}"]
       distribution_method = "{{ bridge.conf.method }}"
     }
