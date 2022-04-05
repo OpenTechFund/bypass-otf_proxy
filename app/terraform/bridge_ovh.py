@@ -83,6 +83,7 @@ output "bridge_hashed_fingerprint_{{ bridge.id }}" {
 
 output "bridge_bridgeline_{{ bridge.id }}" {
   value = module.bridge_{{ bridge.id }}.bridgeline
+  sensitive = true
 }
 {% endif %}
 {% endfor %}
