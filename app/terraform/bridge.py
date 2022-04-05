@@ -1,7 +1,8 @@
 import datetime
 
+from app import app
 from app.extensions import db
-from app.models import BridgeConf, Bridge
+from app.models import BridgeConf, Bridge, Group
 from app.terraform import BaseAutomation
 
 
@@ -38,6 +39,20 @@ class BridgeAutomation(BaseAutomation):
         ).all() if b.conf.provider == self.provider]
         for bridge in bridges:
             bridge.destroy()
+
+    def generate_terraform(self):
+        self.write_terraform_config(
+            self.template,
+            groups=Group.query.all(),
+            bridgeconfs=BridgeConf.query.filter(
+                BridgeConf.destroyed == None,
+                BridgeConf.provider == self.provider
+            ).all(),
+            **{
+                k: app.config[k.upper()]
+                for k in self.template_parameters
+            }
+        )
 
     def import_terraform(self):
         outputs = self.terraform_output()
