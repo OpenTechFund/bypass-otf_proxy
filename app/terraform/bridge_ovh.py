@@ -85,7 +85,7 @@ class BridgeOvhAutomation(BridgeAutomation):
       source = "sr2c/tor-bridge/openstack"
       version = "0.0.4"
       region = one(random_shuffle.region_{{ bridge.id }}.result)
-      context = module.label_{{ group.id }}.context
+      context = module.label_{{ bridgeconf.group.id }}.context
       name = "bridge"
       attributes = ["{{ bridge.id }}"]
       ssh_key = local.ssh_key

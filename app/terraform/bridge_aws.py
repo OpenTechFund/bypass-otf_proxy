@@ -49,7 +49,7 @@ class BridgeAWSAutomation(BridgeAutomation):
       version = "0.0.1"
       ssh_key = local.ssh_key
       contact_info = "hi"
-      context = module.label_{{ bridge.conf.group.id }}.context
+      context = module.label_{{ bridgeconf.group.id }}.context
       name = "bridge"
       attributes = ["{{ bridge.id }}"]
       distribution_method = "{{ bridge.conf.method }}"

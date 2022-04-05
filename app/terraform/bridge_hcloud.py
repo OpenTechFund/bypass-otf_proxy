@@ -61,7 +61,7 @@ class BridgeHcloudAutomation(BridgeAutomation):
       source = "sr2c/tor-bridge/hcloud"
       version = "0.0.2"
       datacenter = one(random_shuffle.datacenter_{{ bridge.id }}.result)
-      context = module.label_{{ group.id }}.context
+      context = module.label_{{ bridgeconf.group.id }}.context
       name = "bridge"
       attributes = ["{{ bridge.id }}"]
       ssh_key_name = "bc"

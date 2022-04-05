@@ -53,7 +53,7 @@ class BridgeGandiAutomation(BridgeAutomation):
     module "bridge_{{ bridge.id }}" {
       source = "sr2c/tor-bridge/openstack"
       version = "0.0.4"
-      context = module.label_{{ group.id }}.context
+      context = module.label_{{ bridgeconf.group.id }}.context
       name = "bridge"
       attributes = ["{{ bridge.id }}"]
       ssh_key = local.ssh_key
