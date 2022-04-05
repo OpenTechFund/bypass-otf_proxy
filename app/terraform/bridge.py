@@ -48,6 +48,7 @@ class BridgeAutomation(BaseAutomation):
                 BridgeConf.destroyed == None,
                 BridgeConf.provider == self.provider
             ).all(),
+            global_namespace=app.config['GLOBAL_NAMESPACE'],
             **{
                 k: app.config[k.upper()]
                 for k in self.template_parameters
