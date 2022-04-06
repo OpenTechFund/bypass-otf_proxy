@@ -44,7 +44,7 @@ def bridgelines():
 
 def mirror_mapping():
     return {
-        d: {
+        d.url.lstrip("https://"): {
             "origin_domain": d.origin.domain_name,
             "origin_domain_normalized": d.origin.domain_name.lstrip("www."),
             "origin_domain_root": extract(d.origin.domain_name).registered_domain
