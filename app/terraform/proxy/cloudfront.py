@@ -82,7 +82,7 @@ def import_cloudfront_values():
         ['terraform', 'show', '-json'],
         cwd=os.path.join(
             app.config['TERRAFORM_DIRECTORY'],
-            "cloudfront"),
+            "proxy_cloudfront"),
         stdout=subprocess.PIPE)
     state = json.loads(terraform.stdout)
 
