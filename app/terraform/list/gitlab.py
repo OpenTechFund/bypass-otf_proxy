@@ -48,7 +48,7 @@ class ListGitlabAutomation(ListAutomation):
 
 if __name__ == "__main__":
     with app.app_context():
-        auto = ListGitlabAutomation
+        auto = ListGitlabAutomation()
         auto.generate_terraform()
         auto.terraform_init()
         auto.terraform_apply()
