@@ -114,12 +114,10 @@ def edit_origin(origin_id):
                                         message="The requested origin could not be found."),
                         status=404)
     form = EditOriginForm(group=origin.group_id,
-                          domain_name=origin.domain_name,
                           description=origin.description)
     form.group.choices = [(x.id, x.group_name) for x in Group.query.all()]
     if form.validate_on_submit():
         origin.group_id = form.group.data
-        origin.domain_name = form.domain_name.data
         origin.description = form.description.data
         origin.updated = datetime.utcnow()
         try:
