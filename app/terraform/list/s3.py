@@ -27,7 +27,7 @@ class ListGithubAutomation(ListAutomation):
     }
 
     {% for list in lists %}
-    resource "aws_s3_bucket_object" "object_{{ list.id }}" {
+    resource "aws_s3_object" "object_{{ list.id }}" {
       bucket              = "{{ list.container }}"
       key                 = "{{ list.filename }}"
       source              = "{{ list.format }}.json"
