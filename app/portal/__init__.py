@@ -94,7 +94,7 @@ def new_origin(group_id=None):
             db.session.add(origin)
             db.session.commit()
             flash(f"Created new origin {origin.domain_name}.", "success")
-            return redirect(url_for("portal.edit_origin", group_id=origin.id))
+            return redirect(url_for("portal.edit_origin", origin_id=origin.id))
         except exc.SQLAlchemyError as e:
             print(e)
             flash("Failed to create new origin.", "danger")
