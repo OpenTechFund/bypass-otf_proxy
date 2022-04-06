@@ -35,16 +35,21 @@ class EotkAutomation(BaseAutomation):
       label_order = ["namespace", "tenant", "name", "attributes"]
     }
     
-    module "log_bucket_{{ group.id }}" {
-      source = "cloudposse/s3-log-storage/aws"
-      version = "0.28.0"
-      context = module.label_{{ group.id }}.context
-      name = "logs"
-      attributes = ["eotk"]
-      acl                      = "log-delivery-write"
-      standard_transition_days = 30
-      glacier_transition_days  = 60
-      expiration_days          = 90
+    module "bucket_{{ group.id }}" {
+      source = "cloudposse/s3-bucket/aws"
+      version = "0.49.0"
+      acl                      = "private"
+      enabled                  = true
+      user_enabled             = true
+      versioning_enabled       = false
+      allowed_bucket_actions   = [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:ListBucket",
+        "s3:GetBucketLocation"
+      ]
+      name                     = "logs"
+      attributes               = ["eotk"]
     }
     
     resource "aws_sns_topic" "alarms_{{ group.id }}" {
