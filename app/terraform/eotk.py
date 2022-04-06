@@ -48,6 +48,7 @@ class EotkAutomation(BaseAutomation):
         "s3:ListBucket",
         "s3:GetBucketLocation"
       ]
+      context = module.label_{{ group.id }}.context
       name                     = "logs"
       attributes               = ["eotk"]
     }
