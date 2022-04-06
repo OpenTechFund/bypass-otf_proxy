@@ -1,7 +1,7 @@
 import json
 
 from app import app
-from app.mirror_sites import bridgelines, mirror_sites
+from app.mirror_sites import bridgelines, mirror_sites, mirror_mapping
 from app.models import MirrorList
 from app.terraform import BaseAutomation
 
@@ -22,5 +22,7 @@ class ListAutomation(BaseAutomation):
         )
         with open(self.working_directory('bc2.json'), 'w') as out:
             json.dump(mirror_sites(), out, indent=2, sort_keys=True)
+        with open(self.working_directory('bca.json'), 'w') as out:
+            json.dump(mirror_mapping(), out, indent=2, sort_keys=True)
         with open(self.working_directory('bridgelines.json'), 'w') as out:
             json.dump(bridgelines(), out, indent=2, sort_keys=True)
