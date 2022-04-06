@@ -83,7 +83,7 @@ class BridgeOvhAutomation(BridgeAutomation):
     
     module "bridge_{{ bridge.id }}" {
       source = "sr2c/tor-bridge/openstack"
-      version = "0.0.4"
+      version = "0.0.6"
       region = one(random_shuffle.region_{{ bridge.id }}.result)
       context = module.label_{{ bridgeconf.group.id }}.context
       name = "br"

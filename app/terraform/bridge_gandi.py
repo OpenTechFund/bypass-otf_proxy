@@ -52,7 +52,7 @@ class BridgeGandiAutomation(BridgeAutomation):
     {% if not bridge.destroyed %}
     module "bridge_{{ bridge.id }}" {
       source = "sr2c/tor-bridge/openstack"
-      version = "0.0.4"
+      version = "0.0.6"
       context = module.label_{{ bridgeconf.group.id }}.context
       name = "br"
       attributes = ["{{ bridge.id }}"]
