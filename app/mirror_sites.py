@@ -48,5 +48,5 @@ def mirror_mapping():
             "origin_domain": d.origin.domain_name,
             "origin_domain_normalized": d.origin.domain_name.lstrip("www."),
             "origin_domain_root": extract(d.origin.domain_name).registered_domain
-        } for d in Proxy.query.all()
+        } for d in Proxy.query.all() if d.url is not None
     }
