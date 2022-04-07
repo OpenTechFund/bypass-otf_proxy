@@ -4,7 +4,6 @@ import random
 
 from azure.identity import ClientSecretCredential
 from azure.mgmt.alertsmanagement import AlertsManagementClient
-import requests
 import tldextract
 
 from app import app
@@ -186,6 +185,7 @@ class ProxyAzureCdnAutomation(ProxyAutomation):
                     proxy.provider = "azure_cdn"
                     proxy.slug = tldextract.extract(origin.domain_name).domain[:5] + ''.join(
                         random.choices(string.ascii_lowercase, k=random.randint(10, 15)))
+                    proxy.url = f"https://{proxy.slug}.azureedge.net"
                     proxy.added = datetime.datetime.utcnow()
                     proxy.updated = datetime.datetime.utcnow()
                     db.session.add(proxy)
@@ -198,18 +198,7 @@ def set_urls():
         Proxy.destroyed == None
     ).all()
     for proxy in proxies:
-        if not proxy.url:
-            try:
-                proxy_url = f"https://{proxy.slug}.azureedge.net"
-                r = requests.get(proxy_url, timeout=5)
-                r.raise_for_status()
-                proxy.url = proxy_url
-            except (requests.ConnectionError, requests.Timeout):
-                # Not deployed yet
-                print(f"Connection failure {proxy.slug}")
-            except requests.HTTPError:
-                # TODO: Add an alarm
-                print(f"HTTP failure {proxy.slug}")
+        proxy.url = f"https://{proxy.slug}.azureedge.net"
     db.session.commit()
 
 
