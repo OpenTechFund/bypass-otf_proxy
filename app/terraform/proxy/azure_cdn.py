@@ -7,6 +7,7 @@ from azure.mgmt.alertsmanagement import AlertsManagementClient
 import tldextract
 
 from app import app
+from app.alarms import get_proxy_alarm
 from app.extensions import db
 from app.models import Group, Proxy, Alarm, AlarmState
 from app.terraform.proxy import ProxyAutomation
@@ -218,25 +219,11 @@ def import_monitor_alerts():
         Proxy.provider == "azure_cdn",
         Proxy.destroyed == None
     ):
-        alarm = Alarm.query.filter(
-            Alarm.proxy_id == proxy.id,
-            Alarm.alarm_type == "bandwidth-out-high"
-        ).first()
-        if alarm is None:
-            alarm = Alarm()
-            alarm.target = "proxy"
-            alarm.proxy_id = proxy.id
-            alarm.alarm_type = "bandwidth-out-high"
-            alarm.state_changed = datetime.datetime.utcnow()
-            db.session.add(alarm)
-        alarm.last_updated = datetime.datetime.utcnow()
-        old_state = alarm.alarm_state
-        alarm.alarm_state = (AlarmState.OK
-                                   if proxy.origin.group.group_name.lower() not in firing else
-                                   AlarmState.CRITICAL)
-        if alarm.alarm_state != old_state:
-            alarm.state_changed = datetime.datetime.utcnow()
-    db.session.commit()
+        alarm = get_proxy_alarm(proxy.id, "bandwidth-out-high")
+        if proxy.origin.group.group_name.lower() not in firing:
+            alarm.update_state(AlarmState.OK, "Azure monitor alert not firing")
+        else:
+            alarm.update_state(AlarmState.CRITICAL, "Azure monitor alert firing")
 
 
 if __name__ == "__main__":

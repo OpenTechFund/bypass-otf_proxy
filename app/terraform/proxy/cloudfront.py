@@ -6,6 +6,7 @@ import subprocess
 import boto3
 
 from app import app
+from app.alarms import get_proxy_alarm
 from app.extensions import db
 from app.models import Proxy, Alarm, AlarmState
 from app.terraform.proxy import ProxyAutomation
@@ -112,30 +113,14 @@ def import_cloudwatch_alarms():
             if proxy is None:
                 print("Skipping unknown proxy " + dist_id)
                 continue
-            alarm = Alarm.query.filter(
-                Alarm.proxy_id == proxy.id,
-                Alarm.alarm_type == "bandwidth-out-high"
-            ).first()
-            if alarm is None:
-                alarm = Alarm()
-                alarm.target = "proxy"
-                alarm.proxy_id = proxy.id
-                alarm.alarm_type = "bandwidth-out-high"
-                alarm.state_changed = datetime.datetime.utcnow()
-                db.session.add(alarm)
-            alarm.last_updated = datetime.datetime.utcnow()
-            old_state = alarm.alarm_state
+            alarm = get_proxy_alarm(proxy.id, "bandwidth-out-high")
             if cw_alarm['StateValue'] == "OK":
-                alarm.alarm_state = AlarmState.OK
+                alarm.update_state(AlarmState.OK, "CloudWatch alarm OK")
             elif cw_alarm['StateValue'] == "ALARM":
-                alarm.alarm_state = AlarmState.CRITICAL
+                alarm.update_state(AlarmState.CRITICAL, "CloudWatch alarm ALARM")
             else:
-                alarm.alarm_state = AlarmState.UNKNOWN
-            if alarm.alarm_state != old_state:
-                alarm.state_changed = datetime.datetime.utcnow()
-        db.session.commit()
+                alarm.update_state(AlarmState.UNKNOWN, f"CloudWatch alarm {cw_alarm['StateValue']}")
     alarm = Alarm.query.filter(
-        Alarm.proxy_id == None,
         Alarm.alarm_type == "cloudfront-quota"
     ).first()
     if alarm is None:

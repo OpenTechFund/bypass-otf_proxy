@@ -1,5 +1,3 @@
-import datetime
-
 import requests
 
 from app import app
@@ -16,10 +14,8 @@ def set_http_alarm(proxy_id: int, state: AlarmState, text: str):
         alarm = Alarm()
         alarm.proxy_id = proxy_id
         alarm.alarm_type = "http-status"
-    alarm.alarm_state = state
-    alarm.state_changed = datetime.datetime.utcnow()
-    alarm.text = text
-    db.session.commit()
+        db.session.add(alarm)
+    alarm.update_state(state, text)
 
 
 def check_http():

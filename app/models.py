@@ -61,6 +61,7 @@ class Origin(db.Model):
     description = db.Column(db.String(255), nullable=False)
     added = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
     updated = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
+    destroyed = db.Column(db.DateTime(), nullable=True)
 
     group = db.relationship("Group", back_populates="origins")
     mirrors = db.relationship("Mirror", back_populates="origin")
@@ -148,11 +149,20 @@ class Alarm(db.Model):
     alarm_state = db.Column(db.Enum(AlarmState), default=AlarmState.UNKNOWN, nullable=False)
     state_changed = db.Column(db.DateTime(), nullable=False)
     last_updated = db.Column(db.DateTime())
+    text = db.Column(db.String(255))
 
     group = db.relationship("Group", back_populates="alarms")
     origin = db.relationship("Origin", back_populates="alarms")
     proxy = db.relationship("Proxy", back_populates="alarms")
     bridge = db.relationship("Bridge", back_populates="alarms")
+
+    def update_state(self, state: AlarmState, text: str):
+        if self.state != state:
+            self.state_changed = datetime.utcnow()
+        self.alarm_state = state
+        self.text = text
+        self.last_updated = datetime.utcnow()
+        db.session.commit()
 
 
 class BridgeConf(db.Model):
