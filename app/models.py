@@ -4,6 +4,21 @@ from datetime import datetime
 from app.extensions import db
 
 
+class AbstractConfiguration(db.Model):
+    __abstract__ = True
+
+    id = db.Column(db.Integer, primary_key=True)
+    description = db.Column(db.String(255), nullable=False)
+    added = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
+    updated = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
+    destroyed = db.Column(db.DateTime(), nullable=True)
+
+    def destroy(self):
+        self.destroyed = datetime.utcnow()
+        self.updated = datetime.utcnow()
+        db.session.commit()
+
+
 class AbstractResource(db.Model):
     __abstract__ = True
 
@@ -54,14 +69,9 @@ class Group(db.Model):
         return '<Group %r>' % self.group_name
 
 
-class Origin(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+class Origin(AbstractConfiguration):
     group_id = db.Column(db.Integer, db.ForeignKey("group.id"), nullable=False)
     domain_name = db.Column(db.String(255), unique=True, nullable=False)
-    description = db.Column(db.String(255), nullable=False)
-    added = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
-    updated = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
-    destroyed = db.Column(db.DateTime(), nullable=True)
 
     group = db.relationship("Group", back_populates="origins")
     mirrors = db.relationship("Mirror", back_populates="origin")

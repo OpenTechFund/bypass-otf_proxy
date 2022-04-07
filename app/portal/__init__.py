@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, Response, flash, redirect, url_for
 from sqlalchemy import exc, desc, or_
 
 from app.extensions import db
-from app.models import Group, Origin, Proxy, Alarm, BridgeConf, Bridge, MirrorList
+from app.models import Group, Origin, Proxy, Alarm, BridgeConf, Bridge, MirrorList, AbstractResource
 from app.portal.forms import EditGroupForm, NewGroupForm, NewOriginForm, EditOriginForm, LifecycleForm, \
     NewBridgeConfForm, EditBridgeConfForm, NewMirrorListForm
 
@@ -154,7 +154,7 @@ def blocked_proxy(proxy_id):
         proxy.deprecate()
         flash("Proxy will be shortly replaced.", "success")
         return redirect(url_for("portal.edit_origin", origin_id=proxy.origin.id))
-    return render_template("blocked.html.j2",
+    return render_template("lifecycle.html.j2",
                            header=f"Mark proxy for {proxy.origin.domain_name} as blocked?",
                            message=proxy.url,
                            section="proxy",
@@ -316,28 +316,69 @@ def blocked_bridge(bridge_id):
         bridge.deprecate()
         flash("Bridge will be shortly replaced.", "success")
         return redirect(url_for("portal.edit_bridgeconf", bridgeconf_id=bridge.conf_id))
-    return render_template("blocked.html.j2",
+    return render_template("lifecycle.html.j2",
                            header=f"Mark bridge {bridge.hashed_fingerprint} as blocked?",
                            message=bridge.hashed_fingerprint,
                            section="bridge",
                            form=form)
 
 
-@portal.route("/bridgeconf/destroy/<bridgeconf_id>", methods=['GET', 'POST'])
-def destroy_bridgeconf(bridgeconf_id):
-    bridgeconf = BridgeConf.query.filter(BridgeConf.id == bridgeconf_id, BridgeConf.destroyed == None).first()
-    if bridgeconf is None:
-        return Response(render_template("error.html.j2",
-                                        header="404 Proxy Not Found",
-                                        message="The requested bridge configuration could not be found."))
+def response_404(message: str):
+    return Response(render_template("error.html.j2",
+                             header="404 Not Found",
+                             message=message))
+
+
+def view_lifecycle(*,
+                   header: str,
+                   message: str,
+                   success_message: str,
+                   success_view: str,
+                   section: str,
+                   resource: AbstractResource,
+                   action: str):
     form = LifecycleForm()
     if form.validate_on_submit():
-        bridgeconf.destroy()
-        flash("All bridges from the destroyed configuration will shortly be destroyed at their providers.", "success")
-        return redirect(url_for("portal.view_bridgeconfs"))
-    return render_template("blocked.html.j2",
-                           header=f"Destroy?",
-                           message=bridgeconf.description,
-                           section="bridgeconf",
+        if action == "destroy":
+            resource.destroy()
+        elif action == "deprecate":
+            resource.deprecate()
+        flash(success_message, "success")
+        return redirect(url_for(success_view))
+    return render_template("lifecycle.html.j2",
+                           header=header,
+                           message=message,
+                           section=section,
                            form=form)
 
+
+@portal.route("/bridgeconf/destroy/<bridgeconf_id>", methods=['GET', 'POST'])
+def destroy_bridgeconf(bridgeconf_id: int):
+    bridgeconf = BridgeConf.query.filter(BridgeConf.id == bridgeconf_id, BridgeConf.destroyed == None).first()
+    if bridgeconf is None:
+        return response_404("The requested bridge configuration could not be found.")
+    return view_lifecycle(
+        header=f"Destroy bridge configuration?",
+        message=bridgeconf.description,
+        success_view="portal.view_bridgeconfs",
+        success_message="All bridges from the destroyed configuration will shortly be destroyed at their providers.",
+        section="bridgeconf",
+        resource=bridgeconf,
+        action="destroy"
+    )
+
+
+@portal.route("/origin/destroy/<origin_id>", methods=['GET', 'POST'])
+def destroy_origin(origin_id: int):
+    origin = Origin.query.filter(Origin.id == origin_id, Origin.destroyed == None).first()
+    if origin is None:
+        return response_404("The requested origin could not be found.")
+    return view_lifecycle(
+        header=f"Destroy origin {origin.domain_name}",
+        message=origin.description,
+        success_message="All proxies from the destroyed origin will shortly be destroyed at their providers.",
+        success_view="portal.view_origins",
+        section="origin",
+        resource=origin,
+        action="destroy"
+    )

@@ -13,6 +13,7 @@
             </thead>
             <tbody>
             {% for origin in origins %}
+                {% if not origin.destroyed %}
                 <tr>
                     <td>
                         <a href="https://{{ origin.domain_name }}" target="_bypass" rel="noopener noreferer"
@@ -30,6 +31,7 @@
                            class="btn btn-primary btn-sm">View/Edit</a>
                     </td>
                 </tr>
+                {% endif %}
             {% endfor %}
             </tbody>
         </table>
