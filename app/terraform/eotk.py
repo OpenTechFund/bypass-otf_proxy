@@ -76,4 +76,4 @@ if __name__ == "__main__":
         auto = EotkAutomation()
         auto.generate_terraform()
         auto.terraform_init()
-        #auto.terraform_apply()
+        auto.terraform_apply()

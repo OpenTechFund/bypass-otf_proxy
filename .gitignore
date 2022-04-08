@@ -1,7 +1,6 @@
 # Secrets
 config.yaml
 app/example.db*
-terraform
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
