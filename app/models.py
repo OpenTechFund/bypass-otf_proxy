@@ -9,8 +9,8 @@ class AbstractConfiguration(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String(255), nullable=False)
-    added = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
-    updated = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
+    added = db.Column(db.DateTime(), default=datetime.utcnow, nullable=False)
+    updated = db.Column(db.DateTime(), default=datetime.utcnow, nullable=False)
     destroyed = db.Column(db.DateTime(), nullable=True)
 
     def destroy(self):
@@ -23,8 +23,8 @@ class AbstractResource(db.Model):
     __abstract__ = True
 
     id = db.Column(db.Integer, primary_key=True)
-    added = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
-    updated = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
+    added = db.Column(db.DateTime(), default=datetime.utcnow, nullable=False)
+    updated = db.Column(db.DateTime(), default=datetime.utcnow, nullable=False)
     deprecated = db.Column(db.DateTime(), nullable=True)
     destroyed = db.Column(db.DateTime(), nullable=True)
 
@@ -49,8 +49,8 @@ class Group(db.Model):
     group_name = db.Column(db.String(80), unique=True, nullable=False)
     description = db.Column(db.String(255), nullable=False)
     eotk = db.Column(db.Boolean())
-    added = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
-    updated = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
+    added = db.Column(db.DateTime(), default=datetime.utcnow, nullable=False)
+    updated = db.Column(db.DateTime(), default=datetime.utcnow, nullable=False)
 
     origins = db.relationship("Origin", back_populates="group")
     bridgeconfs = db.relationship("BridgeConf", back_populates="group")
@@ -120,8 +120,8 @@ class Mirror(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     origin_id = db.Column(db.Integer, db.ForeignKey("origin.id"), nullable=False)
     url = db.Column(db.String(255), unique=True, nullable=False)
-    added = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
-    updated = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
+    added = db.Column(db.DateTime(), default=datetime.utcnow, nullable=False)
+    updated = db.Column(db.DateTime(), default=datetime.utcnow, nullable=False)
     deprecated = db.Column(db.DateTime(), nullable=True)
     destroyed = db.Column(db.DateTime(), nullable=True)
 
@@ -182,8 +182,8 @@ class BridgeConf(db.Model):
     method = db.Column(db.String(20), nullable=False)
     description = db.Column(db.String(255))
     number = db.Column(db.Integer())
-    added = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
-    updated = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
+    added = db.Column(db.DateTime(), default=datetime.utcnow, nullable=False)
+    updated = db.Column(db.DateTime(), default=datetime.utcnow, nullable=False)
     destroyed = db.Column(db.DateTime(), nullable=True)
 
     group = db.relationship("Group", back_populates="bridgeconfs")
@@ -219,8 +219,8 @@ class MirrorList(db.Model):
     container = db.Column(db.String(255), nullable=False)
     branch = db.Column(db.String(255), nullable=False)
     filename = db.Column(db.String(255), nullable=False)
-    added = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
-    updated = db.Column(db.DateTime(), default=datetime.utcnow(), nullable=False)
+    added = db.Column(db.DateTime(), default=datetime.utcnow, nullable=False)
+    updated = db.Column(db.DateTime(), default=datetime.utcnow, nullable=False)
     deprecated = db.Column(db.DateTime(), nullable=True)
     destroyed = db.Column(db.DateTime(), nullable=True)
 
